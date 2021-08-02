@@ -1,7 +1,13 @@
 absl-py==0.13.0
+blessed==1.17.6
+inquirer==2.7.0
 isodate==0.6.0
+pkg-resources==0.0.0
 pymongo==3.12.0
 pyparsing==2.4.7
+python-editor==1.0.4
 rdflib==6.0.0
+readchar==2.0.1
 six==1.16.0
 SPARQLWrapper==1.8.5
+wcwidth==0.2.5

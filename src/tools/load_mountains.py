@@ -5,12 +5,14 @@
 from absl import app
 from absl import flags
 from absl import logging
+import inquirer
 import json
 import pymongo
 import SPARQLWrapper
 
 FLAGS = flags.FLAGS
 
+flags.DEFINE_string('name', '', 'Name of mountain to search for and insert.')
 flags.DEFINE_string('uri', '', 'URI of mountain to insert (-n is ignored if this is specified).')
 flags.DEFINE_integer('n', 1, 'Number of mountains to retrieve (anything less than 0 retrieves all).')
 flags.DEFINE_integer('sparql_page_size', 100, 'Max number of mountain URIs to retrieve at once.')
@@ -62,10 +64,37 @@ def insert_mountain(collection, uri, mountain):
     mountain["_id"] = uri
     collection.insert_one(mountain)
 
+def search_by_name(name):
+    sparql = SPARQLWrapper.SPARQLWrapper(_DBPEDIA_SPARQL_ENDPOINT)
+    query = """
+        select * {{
+            ?mountain a dbo:Mountain .
+            ?mountain dbp:name ?name .
+            filter contains(str(?name), "{}")
+        }}
+    """.format(name)
+    sparql.setQuery(query)
+    sparql.setReturnFormat(SPARQLWrapper.JSON)
+    result = sparql.query().convert()
+
+    uris = [binding["mountain"]["value"] for binding in result["results"]["bindings"]]
+
+    if len(uris) == 1:
+        return uris[0]
+    
+    questions = [inquirer.List("uri", message="Which one?", choices=uris)]
+    answers = inquirer.prompt(questions)
+    return answers["uri"]
+
 def main(argv):
     mongo_client = pymongo.MongoClient(FLAGS.mongodb_endpoint)
     db = mongo_client[FLAGS.mongodb_db]
     collection = db[FLAGS.mongodb_collection]
+
+    if FLAGS.name:
+        uri = search_by_name(FLAGS.name)
+        insert_mountain(collection, uri, get_mountain(uri))
+        return
 
     if FLAGS.uri:
         insert_mountain(collection, FLAGS.uri, get_mountain(FLAGS.uri))
