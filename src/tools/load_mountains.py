@@ -11,6 +11,7 @@ import SPARQLWrapper
 
 FLAGS = flags.FLAGS
 
+flags.DEFINE_string('uri', '', 'URI of mountain to insert (-n is ignored if this is specified).')
 flags.DEFINE_integer('n', 1, 'Number of mountains to retrieve (anything less than 0 retrieves all).')
 flags.DEFINE_integer('sparql_page_size', 100, 'Max number of mountain URIs to retrieve at once.')
 flags.DEFINE_string('mongodb_endpoint', '127.0.0.1', 'Endpoint of the mongodb server to populate.')
@@ -56,15 +57,22 @@ def get_mountains(n):
 
         offset += FLAGS.sparql_page_size
 
+def insert_mountain(collection, uri, mountain):
+    logging.info("Inserting: {}".format(uri))
+    mountain["_id"] = uri
+    collection.insert_one(mountain)
+
 def main(argv):
     mongo_client = pymongo.MongoClient(FLAGS.mongodb_endpoint)
     db = mongo_client[FLAGS.mongodb_db]
     collection = db[FLAGS.mongodb_collection]
 
+    if FLAGS.uri:
+        insert_mountain(collection, FLAGS.uri, get_mountain(FLAGS.uri))
+        return
+
     for uri, mountain in get_mountains(FLAGS.n):
-        logging.info("Inserting: {}".format(uri))
-        mountain["_id"] = uri
-        collection.insert_one(mountain)
+        insert_mountain(collection, uri, mountain)
 
 if __name__ == "__main__":
    app.run(main)
