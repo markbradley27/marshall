@@ -19,20 +19,20 @@ flags.DEFINE_string('mongodb_collection', 'mountains', 'DB collection to populat
 
 _DBPEDIA_SPARQL_ENDPOINT = "http://dbpedia.org/sparql"
 
-def parseSparqlMountain(sparql_json):
+def parse_sparql_mountain(sparql_json):
     parsed = {}
     for spo in sparql_json["results"]["bindings"]:
         parsed[spo["p"]["value"]] = spo["o"]["value"]
     return parsed
 
-def getMountain(uri):
+def get_mountain(uri):
     sparql = SPARQLWrapper.SPARQLWrapper(_DBPEDIA_SPARQL_ENDPOINT)
     sparql.setQuery("describe <{}>".format(uri))
     sparql.setReturnFormat(SPARQLWrapper.JSON)
     result = sparql.query().convert()
-    return parseSparqlMountain(result)
+    return parse_sparql_mountain(result)
 
-def getMountains(n):
+def get_mountains(n):
     offset = 0
     base_query = "select * {?mountain a dbo:Mountain}"
     while offset < n or n < 0:
@@ -52,7 +52,7 @@ def getMountains(n):
             return
         for result in bindings:
             uri = result["mountain"]["value"]
-            yield uri, getMountain(uri)
+            yield uri, get_mountain(uri)
 
         offset += FLAGS.sparql_page_size
 
@@ -61,7 +61,7 @@ def main(argv):
     db = mongo_client[FLAGS.mongodb_db]
     collection = db[FLAGS.mongodb_collection]
 
-    for uri, mountain in getMountains(FLAGS.n):
+    for uri, mountain in get_mountains(FLAGS.n):
         logging.info("Inserting: {}".format(uri))
         mountain["_id"] = uri
         collection.insert_one(mountain)
