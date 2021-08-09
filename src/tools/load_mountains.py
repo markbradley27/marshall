@@ -1,7 +1,5 @@
 #! /usr/bin/env python3
 
-# TODO: Pytype annotations.
-
 import abc
 from absl import app
 from absl import flags
@@ -11,6 +9,7 @@ import json
 import psycopg2
 import pymongo
 import SPARQLWrapper
+from typing import Any, Dict, Generator, Text, Tuple
 
 FLAGS = flags.FLAGS
 
@@ -42,18 +41,18 @@ _DBPEDIA_SPARQL_ENDPOINT = "http://dbpedia.org/sparql"
 class DBInterface(metaclass=abc.ABCMeta):
 
   @abc.abstractmethod
-  def insert_mountain(self):
+  def insert_mountain(self, uri: Text, mountain: Dict[Text, Text]) -> None:
     pass
 
 
 class MongoDB(DBInterface):
 
-  def __init__(self, endpoint, db_name, collection):
+  def __init__(self, endpoint: Text, db_name: Text, collection: Text):
     self._mongo_client = pymongo.MongoClient(endpoint)
     self._db = self._mongo_client[db_name]
     self._collection = self._db[collection]
 
-  def insert_mountain(self, uri, mountain):
+  def insert_mountain(self, uri: Text, mountain: Dict[Text, Any]) -> None:
     logging.info("Inserting: {}".format(uri))
     mountain["_id"] = uri
     self._collection.insert_one(mountain)
@@ -61,13 +60,13 @@ class MongoDB(DBInterface):
 
 class PostgresDB(DBInterface):
 
-  def __init__(self, db_name, username):
+  def __init__(self, db_name: Text, username: Text):
     self._conn = psycopg2.connect("dbname={} user={}".format(db_name, username))
 
   def __del__(self):
     self._conn.close()
 
-  def insert_mountain(self, uri, mountain):
+  def insert_mountain(self, uri: Text, mountain: Dict[Text, Any]) -> None:
     logging.info("Inserting: {}".format(uri))
     with self._conn.cursor() as cur:
       cur.execute(
@@ -79,14 +78,14 @@ class PostgresDB(DBInterface):
       self._conn.commit()
 
 
-def parse_sparql_mountain(sparql_json):
+def parse_sparql_mountain(sparql_json: Dict[Text, Any]) -> Dict[Text, Any]:
   parsed = {}
   for spo in sparql_json["results"]["bindings"]:
     parsed[spo["p"]["value"]] = spo["o"]["value"]
   return parsed
 
 
-def get_mountain(uri):
+def get_mountain(uri: Text) -> Dict[Text, Any]:
   sparql = SPARQLWrapper.SPARQLWrapper(_DBPEDIA_SPARQL_ENDPOINT)
   sparql.setQuery("describe <{}>".format(uri))
   sparql.setReturnFormat(SPARQLWrapper.JSON)
@@ -94,7 +93,8 @@ def get_mountain(uri):
   return parse_sparql_mountain(result)
 
 
-def get_mountains(n):
+def get_mountains(
+    n: int) -> Generator[Tuple[Text, Dict[Text, Any]], None, None]:
   offset = 0
   base_query = "select * {?mountain a dbo:Mountain}"
   while offset < n or n < 0:
@@ -119,7 +119,7 @@ def get_mountains(n):
     offset += FLAGS.sparql_page_size
 
 
-def search_by_name(name):
+def search_by_name(name: Text) -> Text:
   sparql = SPARQLWrapper.SPARQLWrapper(_DBPEDIA_SPARQL_ENDPOINT)
   query = """
         select * {{
