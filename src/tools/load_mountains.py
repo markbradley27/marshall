@@ -4,10 +4,12 @@ import abc
 from absl import app
 from absl import flags
 from absl import logging
+import bs4
 import inquirer
 import json
 import psycopg2
 import pymongo
+import requests
 import SPARQLWrapper
 from typing import Any, Dict, Generator, Text, Tuple
 
@@ -69,20 +71,67 @@ class PostgresDB(DBInterface):
   def insert_mountain(self, uri: Text, mountain: Dict[Text, Any]) -> None:
     logging.info("Inserting: {}".format(uri))
     with self._conn.cursor() as cur:
+      # TODO: Handle (scrape) elevation too.
       cur.execute(
-          "INSERT INTO mountains VALUES (%s, ST_MakePoint(%s, %s, %s)::geography, %s)",
-          (uri, mountain['http://www.w3.org/2003/01/geo/wgs84_pos#long'],
-           mountain['http://www.w3.org/2003/01/geo/wgs84_pos#lat'],
-           mountain['http://dbpedia.org/ontology/elevation'],
-           json.dumps(mountain)))
+          "INSERT INTO mountains VALUES (%s, ST_MakePoint(%s, %s, 0)::geography, %s)",
+          (uri, mountain["loc"][0], mountain["loc"][1], json.dumps(mountain)))
       self._conn.commit()
 
 
 def parse_sparql_mountain(sparql_json: Dict[Text, Any]) -> Dict[Text, Any]:
   parsed = {}
   for spo in sparql_json["results"]["bindings"]:
-    parsed[spo["p"]["value"]] = spo["o"]["value"]
+    predicate = spo["p"]["value"]
+    obj = spo["o"]["value"]
+    if predicate not in parsed:
+      parsed[predicate] = obj
+    else:
+      if isinstance(parsed[predicate], list):
+        parsed[predicate].append(obj)
+      else:
+        parsed[predicate] = [parsed[predicate], obj]
   return parsed
+
+
+# Given parsed sparql info about a mountain, returns the (long, lat) for that
+# mountain, either sourced directly from the sparql data or the scraped
+# wikipedia page.
+def get_loc(parsed: Dict[Text, Any]) -> Tuple[float, float]:
+  if ("http://www.w3.org/2003/01/geo/wgs84_pos#long" in parsed and
+      "http://www.w3.org/2003/01/geo/wgs84_pos#lat" in parsed):
+    return (parsed["http://www.w3.org/2003/01/geo/wgs84_pos#long"],
+            parsed["http://www.w3.org/2003/01/geo/wgs84_pos#lat"])
+
+  # TODO: This should be a function.
+  # TODO: Beautiful soup parsing could probably be more elegant.
+  wiki_page_link = parsed["http://xmlns.com/foaf/0.1/isPrimaryTopicOf"]
+  wiki_page_req = requests.get(wiki_page_link)
+  wiki_page = bs4.BeautifulSoup(wiki_page_req.text, "html.parser")
+
+  def is_infobox_table(tag):
+    return tag.name == "table" and "infobox" in tag.get_attribute_list("class")
+
+  infobox_table_tags = wiki_page.find_all(is_infobox_table)
+  if len(infobox_table_tags) > 1:
+    raise ValueError(
+        "Found more than one infobox table for {}".format(wiki_page_link))
+  infobox_table = infobox_table_tags[0]
+
+  def is_coordinates_tr(tag):
+    return (tag.name == "tr" and tag.th is not None and tag.th.a is not None and
+            tag.th.a.contents[0] == "Coordinates")
+
+  coordinates_tags = infobox_table.find_all(is_coordinates_tr)
+  if len(coordinates_tags) > 1:
+    raise ValueError(
+        "Found more than one coordinates row in the infobox for {}".format(
+            wiki_page_link))
+  coordinates = coordinates_tags[0]
+  logging.info(coordinates.prettify())
+
+  coordinates_text = coordinates.find(**{"class": "geo"}).contents[0]
+  lat_text, long_text = coordinates_text.split("; ")
+  return (float(long_text), float(lat_text))
 
 
 def get_mountain(uri: Text) -> Dict[Text, Any]:
@@ -90,7 +139,9 @@ def get_mountain(uri: Text) -> Dict[Text, Any]:
   sparql.setQuery("describe <{}>".format(uri))
   sparql.setReturnFormat(SPARQLWrapper.JSON)
   result = sparql.query().convert()
-  return parse_sparql_mountain(result)
+  parsed = parse_sparql_mountain(result)
+  logging.info(json.dumps(parsed, indent=2))
+  return {"uri": uri, "parsed": parsed, "loc": get_loc(parsed)}
 
 
 def get_mountains(

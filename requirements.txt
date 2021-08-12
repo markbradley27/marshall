@@ -1,6 +1,10 @@
 absl-py==0.13.0
 attrs==21.2.0
+beautifulsoup4==4.9.3
 blessed==1.17.6
+certifi==2021.5.30
+charset-normalizer==2.0.4
+idna==3.2
 importlab==0.6.1
 inquirer==2.7.0
 isodate==0.6.0
@@ -15,9 +19,12 @@ pytype==2021.8.3
 PyYAML==5.4.1
 rdflib==6.0.0
 readchar==2.0.1
+requests==2.26.0
 six==1.16.0
+soupsieve==2.2.1
 SPARQLWrapper==1.8.5
 tabulate==0.8.9
 toml==0.10.2
 typed-ast==1.4.3
+urllib3==1.26.6
 wcwidth==0.2.5
