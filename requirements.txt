@@ -11,6 +11,7 @@ isodate==0.6.0
 networkx==2.6.2
 ninja==1.10.2
 pkg-resources==0.0.0
+polyline==1.4.0
 psycopg2-binary==2.9.1
 pymongo==3.12.0
 pyparsing==2.4.7
