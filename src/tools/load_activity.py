@@ -6,6 +6,7 @@ from absl import logging
 import json
 import polyline
 import psycopg2
+import requests
 from typing import Any, Dict, Text
 
 FLAGS = flags.FLAGS
@@ -22,7 +23,10 @@ flags.DEFINE_string("postgres_username", "", "PostgreSQL username.")
 
 
 def load_from_strava(id: int, access_token: Text) -> Dict[Text, Any]:
-  logging.fatal("Loading directly from Strava not supported yet.")
+  url = "https://www.strava.com/api/v3/activities/{}".format(id)
+  headers = {"Authorization": "Bearer {}".format(access_token)}
+  r = requests.get(url, headers=headers)
+  return r.json()
 
 
 def load_local(path: Text) -> Dict[Text, Any]:
