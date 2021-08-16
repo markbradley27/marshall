@@ -40,7 +40,8 @@ def polyline_to_linestring(polyline_string: Text) -> Text:
       ("{} {}".format(long, lat) for lat, long in lat_longs)) + ")"
 
 
-def insert_activity(db_name: Text, username: Text, activity: Dict[Text, Any]):
+def insert_activity(db_name: Text, username: Text, activity: Dict[Text,
+                                                                  Any]) -> None:
   linestring = polyline_to_linestring(activity["map"]["polyline"])
   with psycopg2.connect("dbname={} user={}".format(db_name, username)) as conn:
     with conn.cursor() as cur:
