@@ -1,5 +1,8 @@
-data/db/
+dist/
+node_modules/
 venv/
+
+.env
 
 *.swp
 .ycm_extra_conf.py
