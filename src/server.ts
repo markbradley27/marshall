@@ -1,4 +1,7 @@
 import express from "express";
+import {Logger} from "tslog";
+const logger: Logger = new Logger();
+
 
 class Server {
   #app: express.Application;
@@ -23,9 +26,7 @@ class Server {
 
   listen() {
     this.#app.listen(this.#port, () => {
-      // TODO: Remove this.
-      // tslint:disable-next-line:no-console
-      console.log("Server running on port: ", this.#port);
+      logger.info("Server running on port: ", this.#port);
     });
   }
 }
