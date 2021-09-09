@@ -1,7 +1,8 @@
+import "./model/model";
 import express from "express";
 import {Logger} from "tslog";
-const logger: Logger = new Logger();
 
+const logger: Logger = new Logger();
 
 class Server {
   #app: express.Application;
