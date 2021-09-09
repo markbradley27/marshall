@@ -5,9 +5,10 @@
     "main": "dist/app.js",
     "scripts": {
         "clean": "rimraf dist/*",
+        "format": "prettier --write src",
         "lint": "tslint -c tslint.json -p tsconfig.json --fix",
         "tsc": "tsc",
-        "build": "npm-run-all clean lint tsc",
+        "build": "npm-run-all clean format lint tsc",
         "dev:start": "npm-run-all build start",
         "dev": "nodemon --watch src -e ts --exec npm run dev:start",
         "start": "node ."
