@@ -1,4 +1,4 @@
-import "./model/model";
+import "./model";
 import express from "express";
 import { Logger } from "tslog";
 
