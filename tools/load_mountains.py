@@ -5,6 +5,7 @@ from absl import app
 from absl import flags
 from absl import logging
 import bs4
+import datetime
 import inquirer
 import json
 import psycopg2
@@ -72,9 +73,11 @@ class PostgresDB(DBInterface):
     logging.info("Inserting: {}".format(uri))
     with self._conn.cursor() as cur:
       # TODO: Handle (scrape) elevation too.
+      now = datetime.datetime.now()
       cur.execute(
-          "INSERT INTO mountains VALUES (%s, ST_MakePoint(%s, %s, 0)::geography, %s)",
-          (uri, mountain["loc"][0], mountain["loc"][1], json.dumps(mountain)))
+          """INSERT INTO "Mountains" (source, name, location, "createdAt", "updatedAt") VALUES (%s, %s, ST_MakePoint(%s, %s, 0)::geography, %s, %s)""",
+          (uri, mountain["parsed"]["http://xmlns.com/foaf/0.1/name"],
+           mountain["loc"][0], mountain["loc"][1], now, now))
       self._conn.commit()
 
 
