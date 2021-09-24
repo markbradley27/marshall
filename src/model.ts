@@ -110,7 +110,43 @@ Activity.init(
     },
     description: DataTypes.STRING,
   },
-  { sequelize }
+  {
+    hooks: {
+      afterCreate: async (activity, options) => {
+        const user = await activity.getUser();
+
+        const mountainsAscended = await Mountain.findAll({
+          where: Sequelize.where(
+            Sequelize.fn(
+              "ST_DWithin",
+              Sequelize.col("location"),
+              Sequelize.cast(
+                Sequelize.fn(
+                  "ST_GeomFromGeoJSON",
+                  JSON.stringify(activity.path)
+                ),
+                "geography"
+              ),
+              25
+            ),
+            "true"
+          ),
+        });
+
+        await Ascent.bulkCreate(
+          mountainsAscended.map((mountain) => {
+            return {
+              date: activity.date,
+              ActivityId: activity.id,
+              MountainId: mountain.id,
+              UserId: user.id,
+            };
+          })
+        );
+      },
+    },
+    sequelize,
+  }
 );
 
 interface AscentAttributes {
