@@ -87,7 +87,7 @@ Activity.init(
   {
     id: {
       type: DataTypes.INTEGER.UNSIGNED,
-      allowNull: false,
+      autoIncrement: true,
       primaryKey: true,
     },
     // TODO: Think about how to encode this a bit more, string is a lazy
@@ -143,7 +143,7 @@ Ascent.init(
   {
     id: {
       type: DataTypes.INTEGER.UNSIGNED,
-      allowNull: false,
+      autoIncrement: true,
       primaryKey: true,
     },
     date: {
@@ -200,7 +200,7 @@ Mountain.init(
   {
     id: {
       type: DataTypes.INTEGER.UNSIGNED,
-      allowNull: false,
+      autoIncrement: true,
       primaryKey: true,
     },
     source: {
