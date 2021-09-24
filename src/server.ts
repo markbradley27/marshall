@@ -1,5 +1,8 @@
 import "./model";
+import gpx from "./middleware/gpx";
+
 import express from "express";
+
 import { Logger } from "tslog";
 
 const logger: Logger = new Logger();
@@ -18,6 +21,7 @@ class Server {
 
   middlewares() {
     this.#app.use(express.json());
+    this.#app.use(gpx);
   }
 
   // Bind controllers to routes
