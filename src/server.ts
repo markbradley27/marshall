@@ -1,4 +1,5 @@
 import "./model";
+import ClientService from "./services/client";
 import gpx from "./middleware/gpx";
 
 import express from "express";
@@ -11,9 +12,13 @@ class Server {
   #app: express.Application;
   #port: number;
 
+  #clientService: ClientService;
+
   constructor() {
     this.#app = express();
     this.#port = parseInt(process.env.PORT, 10);
+
+    this.#clientService = new ClientService();
 
     this.middlewares();
     this.routes();
@@ -26,7 +31,7 @@ class Server {
 
   // Bind controllers to routes
   routes() {
-    // pass
+    this.#app.use("/api/client", this.#clientService.router);
   }
 
   listen() {
