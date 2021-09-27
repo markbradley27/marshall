@@ -9,7 +9,6 @@ import datetime
 import inquirer
 import json
 import psycopg2
-import pymongo
 import requests
 import SPARQLWrapper
 from typing import Any, Dict, Generator, Text, Tuple
@@ -26,14 +25,8 @@ flags.DEFINE_integer(
 flags.DEFINE_integer('sparql_page_size', 100,
                      'Max number of mountain URIs to retrieve at once.')
 
-flags.DEFINE_enum('db', 'postgres', ['mongo', 'postgres'],
+flags.DEFINE_enum('db', 'postgres', ['postgres'],
                   'DB type to connect to.')
-
-flags.DEFINE_string('mongo_endpoint', '127.0.0.1',
-                    'Endpoint of the mongodb server to populate.')
-flags.DEFINE_string('mongo_db', 'marshall', 'DB name to populate.')
-flags.DEFINE_string('mongo_collection', 'mountains',
-                    'DB collection to populate.')
 
 flags.DEFINE_string('postgres_db', 'marshall', 'DB name to populate.')
 flags.DEFINE_string('postgres_username', '', 'PostgreSQL username.')
@@ -46,19 +39,6 @@ class DBInterface(metaclass=abc.ABCMeta):
   @abc.abstractmethod
   def insert_mountain(self, uri: Text, mountain: Dict[Text, Text]) -> None:
     pass
-
-
-class MongoDB(DBInterface):
-
-  def __init__(self, endpoint: Text, db_name: Text, collection: Text):
-    self._mongo_client = pymongo.MongoClient(endpoint)
-    self._db = self._mongo_client[db_name]
-    self._collection = self._db[collection]
-
-  def insert_mountain(self, uri: Text, mountain: Dict[Text, Any]) -> None:
-    logging.info("Inserting: {}".format(uri))
-    mountain["_id"] = uri
-    self._collection.insert_one(mountain)
 
 
 class PostgresDB(DBInterface):
@@ -199,9 +179,7 @@ def search_by_name(name: Text) -> Text:
 
 
 def main(argv):
-  if FLAGS.db == 'mongo':
-    db = MongoDB(FLAGS.mongo_endpoint, FLAGS.mongo_db, FLAGS.mongo_collection)
-  elif FLAGS.db == 'postgres':
+  if FLAGS.db == 'postgres':
     db = PostgresDB(FLAGS.postgres_db, FLAGS.postgres_username)
 
   if FLAGS.name:
