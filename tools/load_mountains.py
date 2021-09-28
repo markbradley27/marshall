@@ -12,6 +12,7 @@ import psycopg2
 import re
 import requests
 import SPARQLWrapper
+import subprocess
 from typing import Any, Dict, Generator, Text, Tuple
 
 FLAGS = flags.FLAGS
@@ -26,7 +27,7 @@ flags.DEFINE_integer(
 flags.DEFINE_integer('sparql_page_size', 100,
                      'Max number of mountain URIs to retrieve at once.')
 
-flags.DEFINE_enum('db', 'postgres', ['postgres', 'log'],
+flags.DEFINE_enum('db', 'sequelize', ['postgres', 'sequelize', 'log'],
                   'DB type to connect to.')
 
 flags.DEFINE_string('postgres_db', 'marshall', 'DB name to populate.')
@@ -66,6 +67,27 @@ class PostgresDB(DBInterface):
            mountain["location"]["lat"], mountain["location"]["elevation"], now,
            now))
       self._conn.commit()
+
+
+# Bit of a misnomer, sequelize spins up a ts-node process that commits to the
+# Postgres DB using the Sequelize model (as opposed to the PostgresDB class
+# which commits directly and likely incorrectly to the DB).
+class SequelizeDB(DBInterface):
+
+  def __init__(self):
+    self.ts_load_mountains = subprocess.Popen(
+        ["npx", "ts-node", "tools/load_mountains.ts"],
+        stdin=subprocess.PIPE,
+        encoding="utf-8")
+
+  def __del__(self):
+    self.ts_load_mountains.stdin.flush()
+    self.ts_load_mountains.stdin.close()
+    self.ts_load_mountains.wait()
+
+  def insert_mountain(self, mountain: Dict[Text, Any]) -> None:
+    logging.info("Inserting via Sequelize: %s", mountain["uri"])
+    self.ts_load_mountains.stdin.write("{}\r\n".format(json.dumps(mountain)))
 
 
 class LogDB(DBInterface):
@@ -231,6 +253,8 @@ def search_by_name(name: Text) -> Text:
 def main(argv):
   if FLAGS.db == 'postgres':
     db = PostgresDB(FLAGS.postgres_db, FLAGS.postgres_username)
+  elif FLAGS.db == 'sequelize':
+    db = SequelizeDB()
   elif FLAGS.db == 'log':
     db = LogDB(FLAGS.log_raw_parsed)
 

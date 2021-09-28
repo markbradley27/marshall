@@ -1,5 +1,9 @@
 // This is kind of gross, but Sequelize doesn't play nice with Typescript...
 // tslint:disable max-classes-per-file
+//
+// TODO: Currently all geography types are declared as 'any'.
+// DataTypes.GeographyDataType seems like the thing to use instead, but that
+// doesn't seem to work...
 
 import {
   Association,
@@ -40,7 +44,7 @@ interface ActivityAttributes {
   source: string;
   name: string;
   date: Date;
-  path: DataTypes.GeographyDataType;
+  path: any;
   description: string;
 }
 
@@ -55,7 +59,7 @@ class Activity
   source!: string;
   name!: string;
   date!: Date;
-  path!: DataTypes.GeographyDataType;
+  path!: any;
   description!: string;
 
   createdAt!: Date;
@@ -194,7 +198,7 @@ interface MountainAttributes {
   id: number;
   source: string;
   name: string;
-  location: DataTypes.GeographyDataType;
+  location: any;
   description: string;
 }
 
@@ -208,7 +212,7 @@ class Mountain
   id!: number;
   source!: string;
   name!: string;
-  location!: DataTypes.GeographyDataType;
+  location!: any;
   description!: string;
 
   createdAt!: Date;
@@ -334,4 +338,4 @@ User.hasMany(Ascent);
 sequelize.query("CREATE EXTENSION IF NOT EXISTS postgis", { raw: true });
 sequelize.sync();
 
-export { sequelize, User };
+export { sequelize, Activity, Ascent, Mountain, User };
