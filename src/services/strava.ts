@@ -1,7 +1,13 @@
-import { User } from "../model";
+import { Activity, User } from "../model";
 
 import express from "express";
+import geojsonPolyline from "geojson-polyline";
+import got from "got";
 import https from "https";
+
+import { Logger } from "tslog";
+
+const logger: Logger = new Logger();
 
 class StravaService {
   router: express.Router;
@@ -16,6 +22,7 @@ class StravaService {
     this.router = express.Router();
     this.router.get("/authorize", this.authorize.bind(this));
     this.router.get("/authorize_callback", this.authorizeCallback.bind(this));
+    this.router.get("/load_activities", this.loadActivities.bind(this));
   }
 
   swapAuthCodeForAccessToken(userId: number, authCode: string) {
@@ -55,6 +62,31 @@ class StravaService {
     tokenReq.end();
   }
 
+  // TODO: You can do better than any.
+  // TODO: Passing around the user ID maybe isn't great? But this will probably
+  //       be resolved-ish once I do proper auth.
+  async loadActivity(activity: any, userId: number) {
+    logger.info("Told to load activity:", activity.id, activity.name);
+
+    if (!activity.map.polyline && !activity.map.summary_polyline) {
+      logger.info("Skipping activity without map.");
+      return;
+    }
+    const pathJson = geojsonPolyline.decode({
+      type: "LineString",
+      coordinates: activity.map.polyline || activity.map.summary_polyline,
+    });
+
+    await User.findOne({ where: { id: userId } }).then(async (user) => {
+      await user.createActivity({
+        source: "strava",
+        name: activity.name,
+        date: activity.start_date,
+        path: pathJson,
+      });
+    });
+  }
+
   authorize(req: express.Request, res: express.Response) {
     // TODO: Use actual auth eventually.
     if (req.query.user_id == null) {
@@ -84,6 +116,69 @@ class StravaService {
 
     res.status(200);
     res.send("Got it!");
+  }
+
+  async loadActivities(req: express.Request, res: express.Response) {
+    if (req.query.user_id == null) {
+      res.status(400);
+      res.send("Request missing user ID");
+      return;
+    }
+    const userId = parseInt(req.query.user_id as string, 10);
+    const user = await User.findOne({ where: { id: userId } });
+
+    if (req.query.activity_id != null) {
+      const activityId = parseInt(req.query.activity_id as string, 10);
+
+      const getActivityUrl = new URL(
+        "https://www.strava.com/api/v3/activities/" + activityId.toString()
+      );
+      try {
+        const listActivitiesRes = await got(getActivityUrl, {
+          headers: { Authorization: "Bearer " + user.stravaAccessToken },
+          responseType: "json",
+        });
+        const activity = listActivitiesRes.body;
+        await this.loadActivity(activity, userId);
+      } catch (error) {
+        logger.error(error.response.body);
+      }
+
+      res.status(200);
+      res.send("Done.");
+      return;
+    }
+
+    const listActivitiesUrl = new URL(
+      "https://www.strava.com/api/v3/athlete/activities"
+    );
+
+    for (let page = 1; ; page++) {
+      listActivitiesUrl.searchParams.append("page", page.toString());
+
+      // TODO: Do better.
+      let activities: any;
+      try {
+        const listActivitiesRes = await got(listActivitiesUrl, {
+          headers: { Authorization: "Bearer " + user.stravaAccessToken },
+          responseType: "json",
+        });
+        activities = listActivitiesRes.body;
+      } catch (error) {
+        logger.error(error.response.body);
+      }
+
+      if (activities.length === 0) {
+        break;
+      }
+
+      for (const activity of activities) {
+        await this.loadActivity(activity, userId);
+      }
+    }
+
+    res.status(200);
+    res.send("Done!");
   }
 }
 
