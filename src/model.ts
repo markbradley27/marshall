@@ -261,7 +261,7 @@ Mountain.init(
 );
 
 interface UserAttributes {
-  id: number;
+  id: string;
   name: string;
   stravaAccessToken: string;
   stravaRefreshToken: string;
@@ -281,7 +281,7 @@ class User
   extends Model<UserAttributes, UserCreationAttributes>
   implements UserAttributes
 {
-  id!: number;
+  id!: string;
   name!: string;
   stravaAccessToken!: string;
   stravaRefreshToken!: string;
@@ -324,8 +324,7 @@ class User
 User.init(
   {
     id: {
-      type: DataTypes.INTEGER,
-      autoIncrement: true,
+      type: DataTypes.STRING,
       primaryKey: true,
     },
     name: {

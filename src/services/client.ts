@@ -1,21 +1,56 @@
 import { sequelize, User } from "../model";
+import { verifyIdToken } from "../middleware/auth";
 
+import admin from "firebase-admin";
 import express from "express";
 import togeojson from "togeojson";
 
 import { Logger } from "tslog";
+
+const logger = new Logger();
 
 class ClientService {
   router: express.Router;
 
   constructor() {
     this.router = express.Router();
-    this.router.post("/gpx", this.postGpx.bind(this));
     this.router.post("/user", this.postUser.bind(this));
+    this.router.post("/gpx", verifyIdToken, this.postGpx.bind(this));
   }
 
+  // Registers a user with firebase and in the local db.
   async postUser(req: express.Request, res: express.Response) {
-    await User.create({ name: req.query.name as string });
+    logger.info("Query:", req.query);
+    const email = req.query.email as string;
+    const password = req.query.password as string;
+    const name = req.query.name as string;
+    if (email == null || password == null || name == null) {
+      res.status(400);
+      res.send("Must provide email, password, and name.");
+      return;
+    }
+
+    let uid: string;
+    try {
+      const userRecord = await admin.auth().createUser({
+        email,
+        password,
+        displayName: name,
+      });
+      uid = userRecord.uid;
+    } catch (error) {
+      res.status(400);
+      res.send(error);
+    }
+
+    // TODO: Clean up firebase user if this fails?
+    try {
+      await User.create({ id: uid, name });
+    } catch (error) {
+      res.status(400);
+      res.send(error);
+    }
+
     res.sendStatus(200);
   }
 
@@ -32,11 +67,8 @@ class ClientService {
     }
 
     const user = await User.findOne({
-      where: { name: req.query.user },
+      where: { id: req.uid },
     });
-    if (user === null) {
-      res.status(404).send("User not found");
-    }
 
     await user.createActivity({
       source: "gpx_file",

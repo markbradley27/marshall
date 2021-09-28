@@ -3,6 +3,7 @@ import ClientService from "./services/client";
 import gpx from "./middleware/gpx";
 import StravaService from "./services/strava";
 
+import admin from "firebase-admin";
 import express from "express";
 
 import { Logger } from "tslog";
@@ -12,13 +13,17 @@ const logger: Logger = new Logger();
 class Server {
   #app: express.Application;
   #port: number;
-  #stravaService: StravaService;
 
+  #stravaService: StravaService;
   #clientService: ClientService;
 
   constructor() {
     this.#app = express();
     this.#port = parseInt(process.env.PORT, 10);
+
+    admin.initializeApp({
+      credential: admin.credential.applicationDefault(),
+    });
 
     this.#clientService = new ClientService();
     this.#stravaService = new StravaService(
