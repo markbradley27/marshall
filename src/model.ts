@@ -109,7 +109,7 @@ Activity.init(
       allowNull: false,
     },
     path: {
-      type: DataTypes.GEOGRAPHY("LINESTRINGZ"),
+      type: DataTypes.GEOGRAPHY("LINESTRING"),
       allowNull: false,
     },
     description: DataTypes.STRING,
