@@ -90,7 +90,7 @@ class Activity
 Activity.init(
   {
     id: {
-      type: DataTypes.INTEGER.UNSIGNED,
+      type: DataTypes.INTEGER,
       autoIncrement: true,
       primaryKey: true,
     },
@@ -182,7 +182,7 @@ class Ascent
 Ascent.init(
   {
     id: {
-      type: DataTypes.INTEGER.UNSIGNED,
+      type: DataTypes.INTEGER,
       autoIncrement: true,
       primaryKey: true,
     },
@@ -239,7 +239,7 @@ class Mountain
 Mountain.init(
   {
     id: {
-      type: DataTypes.INTEGER.UNSIGNED,
+      type: DataTypes.INTEGER,
       autoIncrement: true,
       primaryKey: true,
     },
@@ -324,7 +324,7 @@ class User
 User.init(
   {
     id: {
-      type: DataTypes.INTEGER.UNSIGNED,
+      type: DataTypes.INTEGER,
       autoIncrement: true,
       primaryKey: true,
     },
