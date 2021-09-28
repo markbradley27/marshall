@@ -263,9 +263,19 @@ Mountain.init(
 interface UserAttributes {
   id: number;
   name: string;
+  stravaAccessToken: string;
+  stravaRefreshToken: string;
+  stravaAccessTokenExpiresAt: Date;
 }
 
-interface UserCreationAttributes extends Optional<UserAttributes, "id"> {}
+interface UserCreationAttributes
+  extends Optional<
+    UserAttributes,
+    | "id"
+    | "stravaAccessToken"
+    | "stravaRefreshToken"
+    | "stravaAccessTokenExpiresAt"
+  > {}
 
 class User
   extends Model<UserAttributes, UserCreationAttributes>
@@ -273,6 +283,9 @@ class User
 {
   id!: number;
   name!: string;
+  stravaAccessToken!: string;
+  stravaRefreshToken!: string;
+  stravaAccessTokenExpiresAt!: Date;
 
   createdAt!: Date;
   updatedAt!: Date;
@@ -319,6 +332,9 @@ User.init(
       type: DataTypes.STRING,
       allowNull: false,
     },
+    stravaAccessToken: DataTypes.STRING,
+    stravaRefreshToken: DataTypes.STRING,
+    stravaAccessTokenExpiresAt: DataTypes.DATE,
   },
   { sequelize }
 );
