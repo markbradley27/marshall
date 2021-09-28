@@ -9,6 +9,7 @@ import datetime
 import inquirer
 import json
 import psycopg2
+import re
 import requests
 import SPARQLWrapper
 from typing import Any, Dict, Generator, Text, Tuple
@@ -25,11 +26,15 @@ flags.DEFINE_integer(
 flags.DEFINE_integer('sparql_page_size', 100,
                      'Max number of mountain URIs to retrieve at once.')
 
-flags.DEFINE_enum('db', 'postgres', ['postgres'],
+flags.DEFINE_enum('db', 'postgres', ['postgres', 'log'],
                   'DB type to connect to.')
 
 flags.DEFINE_string('postgres_db', 'marshall', 'DB name to populate.')
 flags.DEFINE_string('postgres_username', '', 'PostgreSQL username.')
+
+flags.DEFINE_bool(
+    'log_raw_parsed', False,
+    'If logging output, controls whether the raw_parsed object is logged.')
 
 _DBPEDIA_SPARQL_ENDPOINT = "http://dbpedia.org/sparql"
 
@@ -37,7 +42,7 @@ _DBPEDIA_SPARQL_ENDPOINT = "http://dbpedia.org/sparql"
 class DBInterface(metaclass=abc.ABCMeta):
 
   @abc.abstractmethod
-  def insert_mountain(self, uri: Text, mountain: Dict[Text, Text]) -> None:
+  def insert_mountain(self, mountain: Dict[Text, Text]) -> None:
     pass
 
 
@@ -49,18 +54,33 @@ class PostgresDB(DBInterface):
   def __del__(self):
     self._conn.close()
 
-  def insert_mountain(self, uri: Text, mountain: Dict[Text, Any]) -> None:
-    logging.info("Inserting: {}".format(uri))
+  def insert_mountain(self, mountain: Dict[Text, Any]) -> None:
+    logging.info("Inserting via Postgres: {}".format(mountain["uri"]))
     with self._conn.cursor() as cur:
-      # TODO: Handle (scrape) elevation too.
       now = datetime.datetime.now()
       cur.execute(
-          """INSERT INTO "Mountains" (source, name, location, "createdAt", "updatedAt") VALUES (%s, %s, ST_MakePoint(%s, %s, 0)::geography, %s, %s)""",
-          (uri, mountain["parsed"]["http://xmlns.com/foaf/0.1/name"],
-           mountain["loc"][0], mountain["loc"][1], now, now))
+          """INSERT INTO "Mountains" 
+          (source, name, location, "createdAt", "updatedAt")
+          VALUES (%s, %s, ST_MakePoint(%s, %s, %s)::geography, %s, %s)""",
+          (mountain["uri"], mountain["name"], mountain["location"]["long"],
+           mountain["location"]["lat"], mountain["location"]["elevation"], now,
+           now))
       self._conn.commit()
 
 
+class LogDB(DBInterface):
+
+  def __init__(self, log_raw_parsed):
+    self._log_raw_parsed = log_raw_parsed
+
+  def insert_mountain(self, mountain: Dict[Text, Any]) -> None:
+    if not self._log_raw_parsed:
+      mountain["raw_parsed"] = "<redacted>"
+    logging.info(json.dumps(mountain))
+
+
+# Takes the big awful s/p/o format spat out by sparql and turns it in to a key:
+# val dictionary.
 def parse_sparql_mountain(sparql_json: Dict[Text, Any]) -> Dict[Text, Any]:
   parsed = {}
   for spo in sparql_json["results"]["bindings"]:
@@ -76,16 +96,8 @@ def parse_sparql_mountain(sparql_json: Dict[Text, Any]) -> Dict[Text, Any]:
   return parsed
 
 
-# Given parsed sparql info about a mountain, returns the (long, lat) for that
-# mountain, either sourced directly from the sparql data or the scraped
-# wikipedia page.
-def get_loc(parsed: Dict[Text, Any]) -> Tuple[float, float]:
-  if ("http://www.w3.org/2003/01/geo/wgs84_pos#long" in parsed and
-      "http://www.w3.org/2003/01/geo/wgs84_pos#lat" in parsed):
-    return (parsed["http://www.w3.org/2003/01/geo/wgs84_pos#long"],
-            parsed["http://www.w3.org/2003/01/geo/wgs84_pos#lat"])
-
-  # TODO: This should be a function.
+def scrape_location_from_wikipedia(
+    parsed: Dict[Text, Any]) -> Tuple[float, float, float]:
   # TODO: Beautiful soup parsing could probably be more elegant.
   wiki_page_link = parsed["http://xmlns.com/foaf/0.1/isPrimaryTopicOf"]
   wiki_page_req = requests.get(wiki_page_link)
@@ -110,25 +122,63 @@ def get_loc(parsed: Dict[Text, Any]) -> Tuple[float, float]:
         "Found more than one coordinates row in the infobox for {}".format(
             wiki_page_link))
   coordinates = coordinates_tags[0]
-  logging.info(coordinates.prettify())
 
   coordinates_text = coordinates.find(**{"class": "geo"}).contents[0]
   lat_text, long_text = coordinates_text.split("; ")
-  return (float(long_text), float(lat_text))
+
+  def is_elevation_tr(tag):
+    return (tag.name == "tr" and tag.th is not None and tag.th.a is not None and
+            tag.th.a.contents[0] == "Elevation")
+
+  elevation_tags = infobox_table.find_all(is_elevation_tr)
+  if len(elevation_tags) > 1:
+    raise ValueError(
+        "Found more than one elevation row in the infobox for {}".format(
+            wiki_page_link))
+  elevation_tag = elevation_tags[0]
+  elevation_text = elevation_tag.find(**{"class": "infobox-data"}).get_text()
+  elevation_match = re.search(r"\(([\d,]+)[\+]?\s+m\)", elevation_text)
+  elevation = float(elevation_match.group(1).replace(',', ''))
+
+  return (float(long_text), float(lat_text), elevation)
 
 
+# Given parsed sparql info about a mountain, returns the (long, lat, elevation)
+# for that mountain, either sourced directly from the sparql data or the
+# scraped wikipedia page.
+def get_location(parsed: Dict[Text, Any]) -> Tuple[float, float, float]:
+  if ("http://www.w3.org/2003/01/geo/wgs84_pos#long" in parsed and
+      "http://www.w3.org/2003/01/geo/wgs84_pos#lat" in parsed and
+      "http://dbpedia.org/ontology/elevation" in parsed):
+    return (parsed["http://www.w3.org/2003/01/geo/wgs84_pos#long"],
+            parsed["http://www.w3.org/2003/01/geo/wgs84_pos#lat"],
+            parsed["http://dbpedia.org/ontology/elevation"])
+
+  return scrape_location_from_wikipedia(parsed)
+
+
+# Given a URI, retrieves mountain data from DBPedia and elsewhere.
+# Returns it in a nice-ish dictionary.
 def get_mountain(uri: Text) -> Dict[Text, Any]:
   sparql = SPARQLWrapper.SPARQLWrapper(_DBPEDIA_SPARQL_ENDPOINT)
   sparql.setQuery("describe <{}>".format(uri))
   sparql.setReturnFormat(SPARQLWrapper.JSON)
   result = sparql.query().convert()
   parsed = parse_sparql_mountain(result)
-  logging.info(json.dumps(parsed, indent=2))
-  return {"uri": uri, "parsed": parsed, "loc": get_loc(parsed)}
+  location = get_location(parsed)
+  return {
+      "uri": uri,
+      "name": parsed["http://xmlns.com/foaf/0.1/name"],
+      "location": {
+          "long": location[0],
+          "lat": location[1],
+          "elevation": location[2],
+      },
+      "raw_parsed": parsed
+  }
 
 
-def get_mountains(
-    n: int) -> Generator[Tuple[Text, Dict[Text, Any]], None, None]:
+def get_mountains(n: int) -> Generator[Dict[Text, Any], None, None]:
   offset = 0
   base_query = "select * {?mountain a dbo:Mountain}"
   while offset < n or n < 0:
@@ -148,7 +198,7 @@ def get_mountains(
       return
     for result in bindings:
       uri = result["mountain"]["value"]
-      yield uri, get_mountain(uri)
+      yield get_mountain(uri)
 
     offset += FLAGS.sparql_page_size
 
@@ -181,18 +231,20 @@ def search_by_name(name: Text) -> Text:
 def main(argv):
   if FLAGS.db == 'postgres':
     db = PostgresDB(FLAGS.postgres_db, FLAGS.postgres_username)
+  elif FLAGS.db == 'log':
+    db = LogDB(FLAGS.log_raw_parsed)
 
   if FLAGS.name:
     uri = search_by_name(FLAGS.name)
-    db.insert_mountain(uri, get_mountain(uri))
+    db.insert_mountain(get_mountain(uri))
     return
 
   if FLAGS.uri:
-    db.insert_mountain(FLAGS.uri, get_mountain(FLAGS.uri))
+    db.insert_mountain(get_mountain(FLAGS.uri))
     return
 
-  for uri, mountain in get_mountains(FLAGS.n):
-    db.insert_mountain(uri, mountain)
+  for mountain in get_mountains(FLAGS.n):
+    db.insert_mountain(mountain)
 
 
 if __name__ == "__main__":
