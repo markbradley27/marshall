@@ -15,7 +15,7 @@ class ClientService {
   }
 
   async postUser(req: express.Request, res: express.Response) {
-    await User.create({ name: req.body.name });
+    await User.create({ name: req.query.name as string });
     res.sendStatus(200);
   }
 
