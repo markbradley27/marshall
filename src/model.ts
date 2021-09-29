@@ -266,6 +266,7 @@ interface UserAttributes {
   stravaAccessToken: string;
   stravaRefreshToken: string;
   stravaAccessTokenExpiresAt: Date;
+  stravaAthleteId: number;
 }
 
 interface UserCreationAttributes
@@ -275,6 +276,7 @@ interface UserCreationAttributes
     | "stravaAccessToken"
     | "stravaRefreshToken"
     | "stravaAccessTokenExpiresAt"
+    | "stravaAthleteId"
   > {}
 
 class User
@@ -286,6 +288,7 @@ class User
   stravaAccessToken!: string;
   stravaRefreshToken!: string;
   stravaAccessTokenExpiresAt!: Date;
+  stravaAthleteId!: number;
 
   createdAt!: Date;
   updatedAt!: Date;
@@ -334,6 +337,7 @@ User.init(
     stravaAccessToken: DataTypes.STRING,
     stravaRefreshToken: DataTypes.STRING,
     stravaAccessTokenExpiresAt: DataTypes.DATE,
+    stravaAthleteId: DataTypes.INTEGER,
   },
   { sequelize }
 );

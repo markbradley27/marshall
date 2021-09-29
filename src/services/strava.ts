@@ -57,6 +57,7 @@ class StravaService {
                 stravaAccessToken: token.access_token,
                 stravaRefreshToken: token.refresh_token,
                 stravaAccessTokenExpiresAt: token.expires_at,
+                stravaAthleteId: token.athlete.id,
               },
               { where: { id: uid } }
             );
