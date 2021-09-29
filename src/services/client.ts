@@ -1,5 +1,3 @@
-// TODO: Better error logging and handling.
-
 import { User } from "../model";
 import { verifyIdToken } from "../middleware/auth";
 import { checkValidation } from "../middleware/validation";

@@ -1,4 +1,3 @@
-// TODO: Better error logging and handling.
 // TODO: Gracefully handle duplicate activities.
 
 import { User } from "../model";
@@ -6,7 +5,7 @@ import { verifyIdToken } from "../middleware/auth";
 import { checkValidation } from "../middleware/validation";
 
 import express from "express";
-import { oneOf, query, validationResult } from "express-validator";
+import { oneOf, query } from "express-validator";
 import geojsonPolyline from "geojson-polyline";
 import got from "got";
 
