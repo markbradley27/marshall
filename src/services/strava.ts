@@ -1,11 +1,11 @@
 // TODO: Better error logging and handling.
-// TODO: Query validation (pretty sure there's express middleware for this.
 // TODO: Gracefully handle duplicate activities.
 
 import { User } from "../model";
 import { verifyIdToken } from "../middleware/auth";
 
 import express from "express";
+import { oneOf, query, validationResult } from "express-validator";
 import geojsonPolyline from "geojson-polyline";
 import got from "got";
 
@@ -54,10 +54,18 @@ class StravaService {
     this.router.get("/authorize", verifyIdToken, this.getAuthorize.bind(this));
     this.router.get(
       "/authorize_callback",
+      query("error").not().exists(),
+      query("code").isString(),
+      oneOf([
+        query("scope").contains("activity:read"),
+        query("scope").contains("activity:read_all"),
+      ]),
+      query("state").isString(),
       this.getAuthorizeCallback.bind(this)
     );
     this.router.get(
       "/load_activities",
+      query("activity_id").optional().isInt(),
       verifyIdToken,
       this.getLoadActivities.bind(this)
     );
@@ -134,21 +142,37 @@ class StravaService {
   }
 
   getAuthorizeCallback(req: express.Request, res: express.Response) {
-    // TODO: Verify we got the scope we wanted (and probably other stuff).
-    const uid = req.query.state as string;
+    try {
+      validationResult(req).throw();
+    } catch (error) {
+      logger.error("getAuthorizeCallback validation result:", error);
+      res.sendStatus(400);
+      return;
+    }
+
     const authCode = req.query.code as string;
+    const uid = req.query.state as string;
 
     try {
       this.getAccessTokenFromAuthCode(authCode, uid);
     } catch (error) {
       logger.error("getAccessTokenFromAuthCode:", error);
       res.sendStatus(500);
+      return;
     }
 
     res.sendStatus(200);
   }
 
   async getLoadActivities(req: express.Request, res: express.Response) {
+    try {
+      validationResult(req).throw();
+    } catch (error) {
+      logger.error("getLoadActivities validation result:", error);
+      res.sendStatus(400);
+      return;
+    }
+
     const user = await User.findOne({ where: { id: req.uid } });
 
     if (req.query.activity_id != null) {

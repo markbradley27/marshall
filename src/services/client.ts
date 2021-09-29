@@ -1,32 +1,45 @@
 // TODO: Better error logging and handling.
-// TODO: Query validation (pretty sure there's express middleware for this.
 
 import { User } from "../model";
 import { verifyIdToken } from "../middleware/auth";
 
 import admin from "firebase-admin";
 import express from "express";
+import { query, validationResult } from "express-validator";
 import togeojson from "togeojson";
+
+import { Logger } from "tslog";
+
+const logger: Logger = new Logger();
 
 class ClientService {
   router: express.Router;
 
   constructor() {
     this.router = express.Router();
-    this.router.post("/user", this.postUser.bind(this));
+    this.router.post(
+      "/user",
+      query("email").isEmail(),
+      query("password").isString(),
+      query("name").isString(),
+      this.postUser.bind(this)
+    );
     this.router.post("/gpx", verifyIdToken, this.postGpx.bind(this));
   }
 
   // Registers a user with firebase and in the local db.
   async postUser(req: express.Request, res: express.Response) {
+    try {
+      validationResult(req).throw();
+    } catch (error) {
+      logger.error("postUser validation result:", error);
+      res.sendStatus(400);
+      return;
+    }
+
     const email = req.query.email as string;
     const password = req.query.password as string;
     const name = req.query.name as string;
-    if (!email || !password || !name) {
-      res.status(400);
-      res.send("Must provide email, password, and name.");
-      return;
-    }
 
     let uid: string;
     try {
@@ -37,16 +50,16 @@ class ClientService {
       });
       uid = userRecord.uid;
     } catch (error) {
-      res.status(400);
-      res.send(error);
+      res.status(400).send(error);
+      return;
     }
 
     // TODO: Clean up firebase user if this fails?
     try {
       await User.create({ id: uid, name });
     } catch (error) {
-      res.status(400);
-      res.send(error);
+      res.status(400).send(error);
+      return;
     }
 
     res.sendStatus(200);
