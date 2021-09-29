@@ -2,15 +2,12 @@
 
 import { User } from "../model";
 import { verifyIdToken } from "../middleware/auth";
+import { checkValidation } from "../middleware/validation";
 
 import admin from "firebase-admin";
 import express from "express";
-import { query, validationResult } from "express-validator";
+import { query } from "express-validator";
 import togeojson from "togeojson";
-
-import { Logger } from "tslog";
-
-const logger: Logger = new Logger();
 
 class ClientService {
   router: express.Router;
@@ -22,6 +19,7 @@ class ClientService {
       query("email").isEmail(),
       query("password").isString(),
       query("name").isString(),
+      checkValidation,
       this.postUser.bind(this)
     );
     this.router.post("/gpx", verifyIdToken, this.postGpx.bind(this));
@@ -29,14 +27,6 @@ class ClientService {
 
   // Registers a user with firebase and in the local db.
   async postUser(req: express.Request, res: express.Response) {
-    try {
-      validationResult(req).throw();
-    } catch (error) {
-      logger.error("postUser validation result:", error);
-      res.sendStatus(400);
-      return;
-    }
-
     const email = req.query.email as string;
     const password = req.query.password as string;
     const name = req.query.name as string;

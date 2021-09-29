@@ -3,6 +3,7 @@
 
 import { User } from "../model";
 import { verifyIdToken } from "../middleware/auth";
+import { checkValidation } from "../middleware/validation";
 
 import express from "express";
 import { oneOf, query, validationResult } from "express-validator";
@@ -61,11 +62,13 @@ class StravaService {
         query("scope").contains("activity:read_all"),
       ]),
       query("state").isString(),
+      checkValidation,
       this.getAuthorizeCallback.bind(this)
     );
     this.router.get(
       "/load_activities",
       query("activity_id").optional().isInt(),
+      checkValidation,
       verifyIdToken,
       this.getLoadActivities.bind(this)
     );
@@ -142,14 +145,6 @@ class StravaService {
   }
 
   getAuthorizeCallback(req: express.Request, res: express.Response) {
-    try {
-      validationResult(req).throw();
-    } catch (error) {
-      logger.error("getAuthorizeCallback validation result:", error);
-      res.sendStatus(400);
-      return;
-    }
-
     const authCode = req.query.code as string;
     const uid = req.query.state as string;
 
@@ -165,14 +160,6 @@ class StravaService {
   }
 
   async getLoadActivities(req: express.Request, res: express.Response) {
-    try {
-      validationResult(req).throw();
-    } catch (error) {
-      logger.error("getLoadActivities validation result:", error);
-      res.sendStatus(400);
-      return;
-    }
-
     const user = await User.findOne({ where: { id: req.uid } });
 
     if (req.query.activity_id != null) {
