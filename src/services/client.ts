@@ -1,4 +1,7 @@
-import { sequelize, User } from "../model";
+// TODO: Better error logging and handling.
+// TODO: Query validation (pretty sure there's express middleware for this.
+
+import { User } from "../model";
 import { verifyIdToken } from "../middleware/auth";
 
 import admin from "firebase-admin";
@@ -19,7 +22,7 @@ class ClientService {
     const email = req.query.email as string;
     const password = req.query.password as string;
     const name = req.query.name as string;
-    if (email == null || password == null || name == null) {
+    if (!email || !password || !name) {
       res.status(400);
       res.send("Must provide email, password, and name.");
       return;

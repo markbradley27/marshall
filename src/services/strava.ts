@@ -1,14 +1,44 @@
-import { Activity, User } from "../model";
+// TODO: Better error logging and handling.
+// TODO: Query validation (pretty sure there's express middleware for this.
+// TODO: Gracefully handle duplicate activities.
+
+import { User } from "../model";
 import { verifyIdToken } from "../middleware/auth";
 
 import express from "express";
 import geojsonPolyline from "geojson-polyline";
 import got from "got";
-import https from "https";
 
 import { Logger } from "tslog";
 
 const logger: Logger = new Logger();
+
+const ACTIVITIES_URL = "https://www.strava.com/api/v3/activities";
+const AUTH_URL = "https://www.strava.com/oauth/authorize";
+const TOKEN_URL = "https://www.strava.com/oauth/token";
+
+interface AthleteInfo {
+  id: number;
+}
+
+interface AccessToken {
+  access_token: string;
+  refresh_token: string;
+  expires_at: number;
+  athlete: AthleteInfo;
+}
+
+interface ActivityMap {
+  polyline?: string;
+  summary_polyline?: string;
+}
+
+interface Activity {
+  id: number;
+  name: string;
+  start_date: string;
+  map: ActivityMap;
+}
 
 class StravaService {
   router: express.Router;
@@ -21,78 +51,76 @@ class StravaService {
     this.#clientSecret = clientSecret;
 
     this.router = express.Router();
-    this.router.get("/authorize", verifyIdToken, this.authorize.bind(this));
-    this.router.get("/authorize_callback", this.authorizeCallback.bind(this));
+    this.router.get("/authorize", verifyIdToken, this.getAuthorize.bind(this));
+    this.router.get(
+      "/authorize_callback",
+      this.getAuthorizeCallback.bind(this)
+    );
     this.router.get(
       "/load_activities",
       verifyIdToken,
-      this.loadActivities.bind(this)
+      this.getLoadActivities.bind(this)
     );
   }
 
-  swapAuthCodeForAccessToken(uid: string, authCode: string) {
-    const tokenUrl = new URL("https://www.strava.com/oauth/token");
+  async getAccessTokenFromAuthCode(authCode: string, uid: string) {
+    const tokenUrl = new URL(TOKEN_URL);
     tokenUrl.searchParams.append("client_id", this.#clientId.toString());
     tokenUrl.searchParams.append("client_secret", this.#clientSecret);
     tokenUrl.searchParams.append("code", authCode);
     tokenUrl.searchParams.append("grant_type", "authorization_code");
 
-    let tokenText: string = "";
+    const tokenRes = await got.post(tokenUrl, {
+      responseType: "json",
+    });
+    const token = tokenRes.body as AccessToken;
 
-    const tokenReq = https.request(
-      tokenUrl,
+    await User.update(
       {
-        method: "POST",
+        stravaAccessToken: token.access_token,
+        stravaRefreshToken: token.refresh_token,
+        stravaAccessTokenExpiresAt: new Date(token.expires_at * 1000),
+        stravaAthleteId: token.athlete.id,
       },
-      (tokenRes) => {
-        tokenRes
-          .on("data", (chunk) => {
-            tokenText += chunk.toString();
-          })
-          .on("end", async () => {
-            const token = JSON.parse(tokenText);
-
-            await User.update(
-              {
-                stravaAccessToken: token.access_token,
-                stravaRefreshToken: token.refresh_token,
-                stravaAccessTokenExpiresAt: token.expires_at,
-                stravaAthleteId: token.athlete.id,
-              },
-              { where: { id: uid } }
-            );
-          });
-      }
+      { where: { id: uid } }
     );
-    tokenReq.end();
   }
 
-  // TODO: You can do better than any.
-  // TODO: Passing around the user ID maybe isn't great?
-  async loadActivity(activity: any, uid: string) {
-    logger.info("Loading activity:", activity.id, activity.name);
-
+  async loadActivity(activity: Activity, uid: string) {
     if (!activity.map.polyline && !activity.map.summary_polyline) {
-      logger.info("Skipping activity without map.");
+      logger.info(
+        `Skipping activity without map: ${activity.id} (${activity.name})`
+      );
       return;
     }
+
+    logger.info(`Loading activity: ${activity.id} (${activity.name})`);
     const pathJson = geojsonPolyline.decode({
       type: "LineString",
       coordinates: activity.map.polyline || activity.map.summary_polyline,
     });
 
-    await User.findOne({ where: { id: uid } }).then(async (user) => {
-      await user.createActivity({
-        source: "strava",
-        name: activity.name,
-        date: activity.start_date,
-        path: pathJson,
-      });
+    const user = await User.findOne({ where: { id: uid } });
+    await user.createActivity({
+      source: "strava",
+      name: activity.name,
+      date: activity.start_date,
+      path: pathJson,
     });
   }
 
-  authorize(req: express.Request, res: express.Response) {
-    const authUrl = new URL("https://www.strava.com/oauth/authorize");
+  async loadActivityById(activityId: number, user: User) {
+    const getActivityUrl = new URL(ACTIVITIES_URL + "/" + activityId);
+    const listActivitiesRes = await got(getActivityUrl, {
+      headers: { Authorization: "Bearer " + user.stravaAccessToken },
+      responseType: "json",
+    });
+    const activity = listActivitiesRes.body as Activity;
+    await this.loadActivity(activity, user.id);
+  }
+
+  getAuthorize(req: express.Request, res: express.Response) {
+    const authUrl = new URL(AUTH_URL);
     authUrl.searchParams.append("client_id", this.#clientId.toString());
     // TODO: Shouldn't be hardcoded like this.
     authUrl.searchParams.append(
@@ -101,64 +129,53 @@ class StravaService {
     );
     authUrl.searchParams.append("response_type", "code");
     authUrl.searchParams.append("scope", "activity:read,activity:read_all");
-    // TODO: Consider whether exposing user UIDs is a bad idea.
     authUrl.searchParams.append("state", req.uid as string);
     res.redirect(authUrl.toString());
   }
 
-  authorizeCallback(req: express.Request, res: express.Response) {
+  getAuthorizeCallback(req: express.Request, res: express.Response) {
     // TODO: Verify we got the scope we wanted (and probably other stuff).
-
     const uid = req.query.state as string;
     const authCode = req.query.code as string;
-    this.swapAuthCodeForAccessToken(uid, authCode);
 
-    res.status(200);
-    res.send("Got it!");
+    try {
+      this.getAccessTokenFromAuthCode(authCode, uid);
+    } catch (error) {
+      logger.error("getAccessTokenFromAuthCode:", error);
+      res.sendStatus(500);
+    }
+
+    res.sendStatus(200);
   }
 
-  async loadActivities(req: express.Request, res: express.Response) {
+  async getLoadActivities(req: express.Request, res: express.Response) {
     const user = await User.findOne({ where: { id: req.uid } });
 
     if (req.query.activity_id != null) {
       const activityId = parseInt(req.query.activity_id as string, 10);
-
-      const getActivityUrl = new URL(
-        "https://www.strava.com/api/v3/activities/" + activityId.toString()
-      );
       try {
-        const listActivitiesRes = await got(getActivityUrl, {
-          headers: { Authorization: "Bearer " + user.stravaAccessToken },
-          responseType: "json",
-        });
-        const activity = listActivitiesRes.body;
-        await this.loadActivity(activity, req.uid);
+        await this.loadActivityById(activityId, user);
       } catch (error) {
-        logger.error(error);
+        res.status(400).send(error.toString());
+        return;
       }
-
-      res.status(200);
-      res.send("Done.");
+      res.sendStatus(200);
       return;
     }
 
-    const listActivitiesUrl = new URL(
-      "https://www.strava.com/api/v3/athlete/activities"
-    );
-
+    const listActivitiesUrl = new URL(ACTIVITIES_URL);
     for (let page = 1; ; page++) {
       listActivitiesUrl.searchParams.append("page", page.toString());
 
-      // TODO: Do better.
-      let activities: any;
+      let activities: Activity[];
       try {
         const listActivitiesRes = await got(listActivitiesUrl, {
           headers: { Authorization: "Bearer " + user.stravaAccessToken },
           responseType: "json",
         });
-        activities = listActivitiesRes.body;
+        activities = listActivitiesRes.body as Activity[];
       } catch (error) {
-        logger.error(error.response.body);
+        res.status(400).send(error.toString());
       }
 
       if (activities.length === 0) {
@@ -166,12 +183,15 @@ class StravaService {
       }
 
       for (const activity of activities) {
-        await this.loadActivity(activity, req.uid);
+        try {
+          await this.loadActivity(activity, req.uid);
+        } catch (error) {
+          res.status(400).send(error.toString());
+        }
       }
     }
 
-    res.status(200);
-    res.send("Done!");
+    res.sendStatus(200);
   }
 }
 
