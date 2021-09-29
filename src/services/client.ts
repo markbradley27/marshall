@@ -5,10 +5,6 @@ import admin from "firebase-admin";
 import express from "express";
 import togeojson from "togeojson";
 
-import { Logger } from "tslog";
-
-const logger = new Logger();
-
 class ClientService {
   router: express.Router;
 
@@ -20,7 +16,6 @@ class ClientService {
 
   // Registers a user with firebase and in the local db.
   async postUser(req: express.Request, res: express.Response) {
-    logger.info("Query:", req.query);
     const email = req.query.email as string;
     const password = req.query.password as string;
     const name = req.query.name as string;
