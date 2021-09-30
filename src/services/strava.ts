@@ -4,6 +4,7 @@ import { User } from "../model";
 import { verifyIdToken } from "../middleware/auth";
 import { checkValidation } from "../middleware/validation";
 
+import crypto from "crypto";
 import express from "express";
 import { oneOf, query } from "express-validator";
 import geojsonPolyline from "geojson-polyline";
@@ -15,6 +16,7 @@ const logger: Logger = new Logger();
 
 const ACTIVITIES_URL = "https://www.strava.com/api/v3/activities";
 const AUTH_URL = "https://www.strava.com/oauth/authorize";
+const SUBSCRIPTION_URL = "https://www.strava.com/api/v3/push_subscriptions";
 const TOKEN_URL = "https://www.strava.com/oauth/token";
 
 interface AthleteInfo {
@@ -40,11 +42,28 @@ interface Activity {
   map: ActivityMap;
 }
 
+interface SubscriptionCreationResponse {
+  id: number;
+}
+
+interface SubscriptionEvent {
+  object_type: string;
+  object_id: number;
+  aspect_type: string;
+  updates: string;
+  owner_id: number;
+  subscription_id: number;
+  event_time: number;
+}
+
 class StravaService {
   router: express.Router;
 
   #clientId: number;
   #clientSecret: string;
+  #subscriptionVerifyToken = "";
+  // This will be undefined if the service is not currently subscribed.
+  #subscriptionId: number;
 
   constructor(clientId: number, clientSecret: string) {
     this.#clientId = clientId;
@@ -71,6 +90,18 @@ class StravaService {
       verifyIdToken,
       this.getLoadActivities.bind(this)
     );
+    this.router.get(
+      "/subscription_callback",
+      query("hub.mode").equals("subscribe"),
+      query("hub.challenge").isString(),
+      query("hub.verify_token").isString(),
+      checkValidation,
+      this.getSubscriptionCallback.bind(this)
+    );
+    this.router.post(
+      "/subscription_callback",
+      this.postSubscriptionCallback.bind(this)
+    );
   }
 
   async getAccessTokenFromAuthCode(authCode: string, uid: string) {
@@ -85,6 +116,7 @@ class StravaService {
     });
     const token = tokenRes.body as AccessToken;
 
+    logger.info(`Got token for athlete ${token.athlete.id}, uid ${uid}`);
     await User.update(
       {
         stravaAccessToken: token.access_token,
@@ -129,13 +161,51 @@ class StravaService {
     await this.loadActivity(activity, user.id);
   }
 
+  // Subscribes to strava webhook.
+  async subscribe() {
+    if (this.#subscriptionId) {
+      throw new Error("Strava service already subscribed");
+    }
+    logger.info("Strava service establishing subscription.");
+
+    this.#subscriptionVerifyToken = crypto.randomBytes(32).toString();
+
+    const subscribeUrl = new URL(SUBSCRIPTION_URL);
+    subscribeUrl.searchParams.append("client_id", this.#clientId.toString());
+    subscribeUrl.searchParams.append(
+      "client_secret",
+      this.#clientSecret.toString()
+    );
+    subscribeUrl.searchParams.append(
+      "callback_url",
+      `http://${process.env.HOST}:${process.env.PORT}/api/strava/subscription_callback`
+    );
+    subscribeUrl.searchParams.append(
+      "verify_token",
+      this.#subscriptionVerifyToken
+    );
+
+    try {
+      const subscribeRes = await got.post(subscribeUrl, {
+        responseType: "json",
+      });
+      const subscribeResObj = subscribeRes.body as SubscriptionCreationResponse;
+      this.#subscriptionId = subscribeResObj.id;
+      logger.info(
+        `Subscribed to strava webhook (id: ${this.#subscriptionId}).`
+      );
+    } catch (error) {
+      logger.error(`subscribe post error: ${error}`);
+    }
+  }
+
   getAuthorize(req: express.Request, res: express.Response) {
     const authUrl = new URL(AUTH_URL);
     authUrl.searchParams.append("client_id", this.#clientId.toString());
     // TODO: Shouldn't be hardcoded like this.
     authUrl.searchParams.append(
       "redirect_uri",
-      "http://localhost:3003/api/strava/authorize_callback"
+      `http://${process.env.HOST}:${process.env.PORT}/api/strava/authorize_callback`
     );
     authUrl.searchParams.append("response_type", "code");
     authUrl.searchParams.append("scope", "activity:read,activity:read_all");
@@ -202,6 +272,36 @@ class StravaService {
     }
 
     res.sendStatus(200);
+  }
+
+  async getSubscriptionCallback(req: express.Request, res: express.Response) {
+    if (req.query["hub.verify_token"] !== this.#subscriptionVerifyToken) {
+      res.status(400).send("verify token missmatch");
+      return;
+    }
+
+    res.status(200);
+    res.json({
+      "hub.challenge": req.query["hub.challenge"],
+    });
+  }
+
+  // TODO: Think about validation.
+  async postSubscriptionCallback(req: express.Request, res: express.Response) {
+    const event = req.body as SubscriptionEvent;
+
+    if (event.object_type !== "activity") {
+      // Nothing to do.
+      res.sendStatus(200);
+      return;
+    }
+
+    if (event.aspect_type === "create") {
+      const user = await User.findOne({
+        where: { stravaAthleteId: event.owner_id },
+      });
+      await this.loadActivityById(event.object_id, user);
+    }
   }
 }
 
