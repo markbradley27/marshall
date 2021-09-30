@@ -39,9 +39,14 @@ const sequelize = new Sequelize({
   logging: (msg) => logger.info(msg),
 });
 
+enum ActivitySource {
+  strava = "strava",
+  gpx = "gpx",
+}
+
 interface ActivityAttributes {
   id: number;
-  source: string;
+  source: ActivitySource;
   sourceId: string;
   name: string;
   date: Date;
@@ -57,7 +62,7 @@ class Activity
   implements ActivityAttributes
 {
   id!: number;
-  source!: string;
+  source!: ActivitySource;
   sourceId!: string;
   name!: string;
   date!: Date;
@@ -98,10 +103,8 @@ Activity.init(
       autoIncrement: true,
       primaryKey: true,
     },
-    // TODO: Think about how to encode this a bit more, string is a lazy
-    // choice.
     source: {
-      type: DataTypes.STRING,
+      type: DataTypes.ENUM("strava", "gpx"),
       allowNull: false,
     },
     sourceId: DataTypes.STRING,
@@ -373,4 +376,4 @@ User.hasMany(Ascent, { onDelete: "CASCADE" });
 sequelize.query("CREATE EXTENSION IF NOT EXISTS postgis", { raw: true });
 sequelize.sync();
 
-export { sequelize, Activity, Ascent, Mountain, User };
+export { sequelize, Activity, ActivitySource, Ascent, Mountain, User };

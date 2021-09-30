@@ -1,6 +1,6 @@
 // TODO: Gracefully handle duplicate activities.
 
-import { Activity, User } from "../model";
+import { Activity, ActivitySource, User } from "../model";
 import { verifyIdToken } from "../middleware/auth";
 import { checkValidation } from "../middleware/validation";
 
@@ -152,7 +152,7 @@ class StravaService {
     });
 
     await user.createActivity({
-      source: "strava",
+      source: ActivitySource.strava,
       sourceId: activity.id,
       name: activity.name,
       date: activity.start_date,
@@ -294,7 +294,7 @@ class StravaService {
       if (req.query.activity_id) {
         const activity = await Activity.findOne({
           where: {
-            source: "strava",
+            source: ActivitySource.strava,
             sourceId: req.query.activity_id.toString(),
           },
           include: User,
@@ -355,7 +355,10 @@ class StravaService {
       } else if (event.aspect_type === "delete") {
         logger.info(`Deleting activity; id: ${event.object_id}`);
         Activity.destroy({
-          where: { source: "strava", sourceId: event.object_id.toString() },
+          where: {
+            source: ActivitySource.strava,
+            sourceId: event.object_id.toString(),
+          },
         });
       }
     } catch (error) {

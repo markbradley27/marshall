@@ -1,6 +1,6 @@
 // TODO: Some of these methods should ABSOLUTELY NOT be deployed to prod!
 
-import { User } from "../model";
+import { ActivitySource, User } from "../model";
 import { verifyIdToken } from "../middleware/auth";
 import { checkValidation } from "../middleware/validation";
 
@@ -8,6 +8,10 @@ import admin from "firebase-admin";
 import express from "express";
 import { query } from "express-validator";
 import togeojson from "togeojson";
+
+import { Logger } from "tslog";
+
+const logger = new Logger();
 
 class ClientService {
   router: express.Router;
@@ -98,7 +102,7 @@ class ClientService {
     });
 
     await user.createActivity({
-      source: "gpx_file",
+      source: ActivitySource.gpx,
       name: geoJson.features[0].properties.name,
       date: geoJson.features[0].properties.time,
       path: geoJson.features[0].geometry,
