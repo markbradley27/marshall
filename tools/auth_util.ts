@@ -1,3 +1,5 @@
+import config from "../firebase-auth-util-config.json";
+
 import { Command } from "commander";
 import { initializeApp } from "firebase/app";
 import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
@@ -8,17 +10,8 @@ import { Logger } from "tslog";
 
 const logger: Logger = new Logger();
 
-function initApp() {
-  const firebaseConfig = {
-    apiKey: "AIzaSyCmQSNBUY-ErdWnJmZ8e-EiGgYSrtD5Uj0",
-    authDomain: "marshall-d574a.firebaseapp.com",
-    projectId: "marshall-d574a",
-    storageBucket: "marshall-d574a.appspot.com",
-    messagingSenderId: "441621754616",
-    appId: "1:441621754616:web:a5286491e0bbec689f810d",
-    measurementId: "G-7NMJSQVN06",
-  };
-  initializeApp(firebaseConfig);
+async function initApp() {
+  initializeApp(config);
 }
 
 async function getToken(email: string, password: string) {
@@ -48,7 +41,7 @@ async function main() {
     .parse(process.argv);
   const options = program.opts();
 
-  initApp();
+  await initApp();
 
   if (options.log_token) {
     return await logToken(options.email, options.password);

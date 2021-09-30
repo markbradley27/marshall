@@ -3,6 +3,7 @@ node_modules/
 venv/
 
 .env
+firebase-auth-util-config.json
 firebase-private-key.json
 **/*.id_token
 
