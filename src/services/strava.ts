@@ -297,13 +297,13 @@ class StravaService {
             source: "strava",
             sourceId: req.query.activity_id.toString(),
           },
+          include: User,
         });
         if (!activity) {
           res.sendStatus(404);
           return;
         }
-        const user = await activity.getUser();
-        if (user.id !== req.uid) {
+        if (activity.user.id !== req.uid) {
           res.sendStatus(403);
           return;
         }

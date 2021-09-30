@@ -83,9 +83,11 @@ class Activity
   createUser!: BelongsToCreateAssociationMixin<User>;
 
   readonly ascents?: Ascent[];
+  readonly user?: User;
 
   static associations: {
-    ascents: Association<User, Ascent>;
+    ascents: Association<Activity, Ascent>;
+    user: Association<Activity, User>;
   };
 }
 
@@ -180,6 +182,14 @@ class Ascent
   getUser!: BelongsToGetAssociationMixin<User>;
   setUser!: BelongsToSetAssociationMixin<User, number>;
   createUser!: BelongsToCreateAssociationMixin<User>;
+
+  readonly mountain?: Mountain;
+  readonly user?: User;
+
+  static associations: {
+    mountain: Association<Ascent, Mountain>;
+    user: Association<Ascent, User>;
+  };
 }
 
 Ascent.init(
@@ -235,7 +245,7 @@ class Mountain
   readonly ascents?: Ascent[];
 
   static associations: {
-    ascents: Association<User, Ascent>;
+    ascents: Association<Mountain, Ascent>;
   };
 }
 
