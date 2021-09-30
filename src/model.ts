@@ -210,23 +210,29 @@ Ascent.init(
   { sequelize }
 );
 
+enum MountainSource {
+  dbpedia = "dbpedia",
+}
+
 interface MountainAttributes {
   id: number;
-  source: string;
+  source: MountainSource;
+  sourceId: string;
   name: string;
   location: any;
   description: string;
 }
 
 interface MountainCreationAttributes
-  extends Optional<MountainAttributes, "id" | "description"> {}
+  extends Optional<MountainAttributes, "id" | "sourceId" | "description"> {}
 
 class Mountain
   extends Model<MountainAttributes, MountainCreationAttributes>
   implements MountainAttributes
 {
   id!: number;
-  source!: string;
+  source!: MountainSource;
+  sourceId!: string;
   name!: string;
   location!: any;
   description!: string;
@@ -260,9 +266,10 @@ Mountain.init(
       primaryKey: true,
     },
     source: {
-      type: DataTypes.STRING,
+      type: DataTypes.ENUM("dbpedia"),
       allowNull: false,
     },
+    sourceId: DataTypes.STRING,
     name: {
       type: DataTypes.STRING,
       allowNull: false,
@@ -376,4 +383,12 @@ User.hasMany(Ascent, { onDelete: "CASCADE" });
 sequelize.query("CREATE EXTENSION IF NOT EXISTS postgis", { raw: true });
 sequelize.sync();
 
-export { sequelize, Activity, ActivitySource, Ascent, Mountain, User };
+export {
+  sequelize,
+  Activity,
+  ActivitySource,
+  Ascent,
+  Mountain,
+  MountainSource,
+  User,
+};

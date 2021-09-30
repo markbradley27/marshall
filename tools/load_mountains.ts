@@ -7,8 +7,7 @@ dotenv.config();
 import * as asyncMutex from "async-mutex";
 import * as readline from "readline";
 
-import { sequelize, Mountain } from "../src/model";
-import { DataTypes, GeographyDataType } from "sequelize";
+import { sequelize, Mountain, MountainSource } from "../src/model";
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -34,7 +33,8 @@ rl.on("line", async (line) => {
   };
 
   await Mountain.create({
-    source: mountain.uri,
+    source: MountainSource.dbpedia,
+    sourceId: mountain.uri,
     name: mountain.name,
     location: location_geojson,
   });
