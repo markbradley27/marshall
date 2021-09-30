@@ -1,3 +1,5 @@
+// TODO: Some of these methods should ABSOLUTELY NOT be deployed to prod!
+
 import { User } from "../model";
 import { verifyIdToken } from "../middleware/auth";
 import { checkValidation } from "../middleware/validation";
@@ -20,6 +22,12 @@ class ClientService {
       checkValidation,
       this.postUser.bind(this)
     );
+    this.router.delete(
+      "/user",
+      query("uid").isString(),
+      checkValidation,
+      this.deleteUser.bind(this)
+    );
     this.router.post("/gpx", verifyIdToken, this.postGpx.bind(this));
   }
 
@@ -29,22 +37,34 @@ class ClientService {
     const password = req.query.password as string;
     const name = req.query.name as string;
 
-    let uid: string;
     try {
       const userRecord = await admin.auth().createUser({
         email,
         password,
         displayName: name,
       });
-      uid = userRecord.uid;
+      const uid = userRecord.uid;
+
+      // TODO: Clean up firebase user if this fails?
+      await User.create({ id: uid, name });
     } catch (error) {
       res.status(400).send(error);
       return;
     }
 
-    // TODO: Clean up firebase user if this fails?
+    res.sendStatus(200);
+  }
+
+  // Deletes a user from both firebase and the local db.
+  async deleteUser(req: express.Request, res: express.Response) {
+    const uid = req.query.uid as string;
+
     try {
-      await User.create({ id: uid, name });
+      const user = await User.findOne({
+        where: { id: uid },
+      });
+      await admin.auth().deleteUser(uid);
+      await user.destroy();
     } catch (error) {
       res.status(400).send(error);
       return;
