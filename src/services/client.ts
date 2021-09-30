@@ -84,6 +84,14 @@ class ClientService {
       res.status(400).send("Multi-track GPX files not supported");
       return;
     }
+    if (geoJson.features[0].geometry.coordinates[0].length > 2) {
+      logger.info("Trimming elevation data off of gpx upload.");
+      for (const coords of geoJson.features[0].geometry.coordinates) {
+        while (coords.length > 2) {
+          coords.pop();
+        }
+      }
+    }
 
     const user = await User.findOne({
       where: { id: req.uid },
