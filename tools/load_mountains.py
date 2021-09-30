@@ -8,6 +8,7 @@ import bs4
 import datetime
 import inquirer
 import json
+import pprint
 import psycopg2
 import re
 import requests
@@ -101,6 +102,14 @@ class LogDB(DBInterface):
     logging.info(json.dumps(mountain))
 
 
+def sparql_query(query: Text) -> Dict[Text, Any]:
+  logging.info("Querying: {}".format(query))
+  sparql = SPARQLWrapper.SPARQLWrapper(_DBPEDIA_SPARQL_ENDPOINT)
+  sparql.setQuery(query)
+  sparql.setReturnFormat(SPARQLWrapper.JSON)
+  return sparql.query().convert()
+
+
 # Takes the big awful s/p/o format spat out by sparql and turns it in to a key:
 # val dictionary.
 def parse_sparql_mountain(sparql_json: Dict[Text, Any]) -> Dict[Text, Any]:
@@ -118,9 +127,60 @@ def parse_sparql_mountain(sparql_json: Dict[Text, Any]) -> Dict[Text, Any]:
   return parsed
 
 
-def scrape_location_from_wikipedia(
-    parsed: Dict[Text, Any]) -> Tuple[float, float, float]:
-  # TODO: Beautiful soup parsing could probably be more elegant.
+def merge_locations(dest: Dict[Text, float], source: Dict[Text, float]) -> bool:
+  did_something = False
+  if "long" not in dest and "long" in source:
+    dest["long"] = source["long"]
+    did_something = True
+  if "lat" not in dest and "lat" in source:
+    dest["lat"] = source["lat"]
+    did_something = True
+  if "elevation" not in dest and "elevation" in source:
+    dest["elevation"] = source["elevation"]
+    did_something = True
+  return did_something
+
+
+def scrape_coords_from_infobox(infobox) -> Dict[Text, float]:
+
+  def is_coordinates_tr(tag):
+    return (tag.name == "tr" and tag.th is not None and tag.th.a is not None and
+            tag.th.a.contents[0] == "Coordinates")
+
+  coordinates_tags = infobox.find_all(is_coordinates_tr)
+  if len(coordinates_tags) == 0:
+    return {}
+  if len(coordinates_tags) > 1:
+    raise ValueError("Found more than one coordinates row in the infobox.")
+  coordinates = coordinates_tags[0]
+
+  coordinates_text = coordinates.find(**{"class": "geo"}).contents[0]
+  lat_text, long_text = coordinates_text.split("; ")
+  return {"long": float(long_text), "lat": float(lat_text)}
+
+
+def scrape_elevation_from_inbox(infobox) -> Dict[Text, float]:
+
+  def is_elevation_tr(tag):
+    return (tag.name == "tr" and tag.th is not None and tag.th.a is not None and
+            tag.th.a.contents[0] == "Elevation")
+
+  elevation_tags = infobox.find_all(is_elevation_tr)
+  if len(elevation_tags) == 0:
+    return {}
+  if len(elevation_tags) > 1:
+    raise ValueError("Found more than one elevation row in the infobox.")
+  elevation_tag = elevation_tags[0]
+  elevation_text = elevation_tag.find(**{"class": "infobox-data"}).get_text()
+  elevation_match = re.search(r"\(([\d,]+)[\+]?\s+m\)", elevation_text)
+  if not elevation_match:
+    return {}
+  elevation = float(elevation_match.group(1).replace(',', ''))
+  return {"elevation": elevation}
+
+
+def scrape_location_from_wikipedia(parsed: Dict[Text, Any],
+                                   location: Dict[Text, float]):
   wiki_page_link = parsed["http://xmlns.com/foaf/0.1/isPrimaryTopicOf"]
   wiki_page_req = requests.get(wiki_page_link)
   wiki_page = bs4.BeautifulSoup(wiki_page_req.text, "html.parser")
@@ -129,73 +189,61 @@ def scrape_location_from_wikipedia(
     return tag.name == "table" and "infobox" in tag.get_attribute_list("class")
 
   infobox_table_tags = wiki_page.find_all(is_infobox_table)
-  if len(infobox_table_tags) > 1:
-    raise ValueError(
-        "Found more than one infobox table for {}".format(wiki_page_link))
-  infobox_table = infobox_table_tags[0]
+  for infobox in infobox_table_tags:
+    if "long" not in location or "lat" not in location:
+      infobox_location = scrape_coords_from_infobox(infobox)
+      if merge_locations(
+          location,
+          infobox_location) and "long" in location and "lat" in location:
+        break
 
-  def is_coordinates_tr(tag):
-    return (tag.name == "tr" and tag.th is not None and tag.th.a is not None and
-            tag.th.a.contents[0] == "Coordinates")
+  for infobox in infobox_table_tags:
+    if "elevation" not in location:
+      infobox_location = scrape_elevation_from_inbox(infobox)
+      if merge_locations(location,
+                         infobox_location) and "elevation" in location:
+        break
 
-  coordinates_tags = infobox_table.find_all(is_coordinates_tr)
-  if len(coordinates_tags) > 1:
-    raise ValueError(
-        "Found more than one coordinates row in the infobox for {}".format(
-            wiki_page_link))
-  coordinates = coordinates_tags[0]
-
-  coordinates_text = coordinates.find(**{"class": "geo"}).contents[0]
-  lat_text, long_text = coordinates_text.split("; ")
-
-  def is_elevation_tr(tag):
-    return (tag.name == "tr" and tag.th is not None and tag.th.a is not None and
-            tag.th.a.contents[0] == "Elevation")
-
-  elevation_tags = infobox_table.find_all(is_elevation_tr)
-  if len(elevation_tags) > 1:
-    raise ValueError(
-        "Found more than one elevation row in the infobox for {}".format(
-            wiki_page_link))
-  elevation_tag = elevation_tags[0]
-  elevation_text = elevation_tag.find(**{"class": "infobox-data"}).get_text()
-  elevation_match = re.search(r"\(([\d,]+)[\+]?\s+m\)", elevation_text)
-  elevation = float(elevation_match.group(1).replace(',', ''))
-
-  return (float(long_text), float(lat_text), elevation)
+  return location
 
 
-# Given parsed sparql info about a mountain, returns the (long, lat, elevation)
-# for that mountain, either sourced directly from the sparql data or the
-# scraped wikipedia page.
-def get_location(parsed: Dict[Text, Any]) -> Tuple[float, float, float]:
-  if ("http://www.w3.org/2003/01/geo/wgs84_pos#long" in parsed and
-      "http://www.w3.org/2003/01/geo/wgs84_pos#lat" in parsed and
-      "http://dbpedia.org/ontology/elevation" in parsed):
-    return (parsed["http://www.w3.org/2003/01/geo/wgs84_pos#long"],
-            parsed["http://www.w3.org/2003/01/geo/wgs84_pos#lat"],
-            parsed["http://dbpedia.org/ontology/elevation"])
+# Given parsed sparql info about a mountain, returns the long, lat, and
+# elevation for that mountain, either sourced directly from the sparql data or
+# the scraped wikipedia page.
+def get_location(parsed: Dict[Text, Any]) -> Dict[Text, float]:
+  location = {}
+  if ("http://www.w3.org/2003/01/geo/wgs84_pos#long" in parsed):
+    location["long"] = parsed["http://www.w3.org/2003/01/geo/wgs84_pos#long"]
 
-  return scrape_location_from_wikipedia(parsed)
+  if ("http://www.w3.org/2003/01/geo/wgs84_pos#lat" in parsed):
+    location["lat"] = parsed["http://www.w3.org/2003/01/geo/wgs84_pos#lat"]
+
+  if ("http://dbpedia.org/ontology/elevation" in parsed):
+    location["elevation"] = parsed["http://dbpedia.org/ontology/elevation"]
+  elif ("http://dbpedia.org/ontology/elevationM" in parsed):
+    location["elevation"] = parsed["http://dbpedia.org/ontology/elevationM"]
+
+  logging.info("Location from just DBPedia: {}".format(location))
+
+  if "long" not in location or "lat" not in location or "elevation" not in location:
+    scrape_location_from_wikipedia(parsed, location)
+
+  return location
 
 
 # Given a URI, retrieves mountain data from DBPedia and elsewhere.
 # Returns it in a nice-ish dictionary.
 def get_mountain(uri: Text) -> Dict[Text, Any]:
-  sparql = SPARQLWrapper.SPARQLWrapper(_DBPEDIA_SPARQL_ENDPOINT)
-  sparql.setQuery("describe <{}>".format(uri))
-  sparql.setReturnFormat(SPARQLWrapper.JSON)
-  result = sparql.query().convert()
+  result = sparql_query("describe <{}>".format(uri))
   parsed = parse_sparql_mountain(result)
   location = get_location(parsed)
+  if "long" not in location or "lat" not in location or "elevation" not in location:
+    logging.warn("Could find full location for {}: {}".format(uri, location))
+    merge_locations(location, {"long": 0, "lat": 0, "elevation": 0})
   return {
       "uri": uri,
       "name": parsed["http://xmlns.com/foaf/0.1/name"],
-      "location": {
-          "long": location[0],
-          "lat": location[1],
-          "elevation": location[2],
-      },
+      "location": location,
       "raw_parsed": parsed
   }
 
@@ -208,25 +256,20 @@ def get_mountains(n: int) -> Generator[Dict[Text, Any], None, None]:
     if n >= 0:
       limit = min(limit, n - offset)
     query = "{} LIMIT {} OFFSET {}".format(base_query, limit, offset)
-    logging.info("Querying: %s", query)
-
-    sparql = SPARQLWrapper.SPARQLWrapper(_DBPEDIA_SPARQL_ENDPOINT)
-    sparql.setQuery(query)
-    sparql.setReturnFormat(SPARQLWrapper.JSON)
-    results = sparql.query().convert()
+    results = sparql_query(query)
 
     bindings = results["results"]["bindings"]
     if len(bindings) == 0:
       return
     for result in bindings:
       uri = result["mountain"]["value"]
+      logging.info("Getting: {}".format(uri))
       yield get_mountain(uri)
 
     offset += FLAGS.sparql_page_size
 
 
 def search_by_name(name: Text) -> Text:
-  sparql = SPARQLWrapper.SPARQLWrapper(_DBPEDIA_SPARQL_ENDPOINT)
   query = """
         select * {{
             ?mountain a dbo:Mountain .
@@ -234,9 +277,7 @@ def search_by_name(name: Text) -> Text:
             filter contains(str(?name), "{}")
         }}
     """.format(name)
-  sparql.setQuery(query)
-  sparql.setReturnFormat(SPARQLWrapper.JSON)
-  result = sparql.query().convert()
+  result = sparql_query(query)
 
   uris = [
       binding["mountain"]["value"] for binding in result["results"]["bindings"]
@@ -251,12 +292,13 @@ def search_by_name(name: Text) -> Text:
 
 
 def main(argv):
+  del argv
+
+  db = LogDB(FLAGS.log_raw_parsed)
   if FLAGS.db == 'postgres':
     db = PostgresDB(FLAGS.postgres_db, FLAGS.postgres_username)
   elif FLAGS.db == 'sequelize':
     db = SequelizeDB()
-  elif FLAGS.db == 'log':
-    db = LogDB(FLAGS.log_raw_parsed)
 
   if FLAGS.name:
     uri = search_by_name(FLAGS.name)
