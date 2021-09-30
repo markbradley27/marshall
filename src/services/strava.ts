@@ -1,6 +1,6 @@
 // TODO: Gracefully handle duplicate activities.
 
-import { User } from "../model";
+import { Activity, User } from "../model";
 import { verifyIdToken } from "../middleware/auth";
 import { checkValidation } from "../middleware/validation";
 
@@ -19,27 +19,28 @@ const AUTH_URL = "https://www.strava.com/oauth/authorize";
 const SUBSCRIPTION_URL = "https://www.strava.com/api/v3/push_subscriptions";
 const TOKEN_URL = "https://www.strava.com/oauth/token";
 
-interface AthleteInfo {
+interface StravaAthlete {
   id: number;
 }
 
-interface AccessToken {
+interface StravaAccessToken {
   access_token: string;
   refresh_token: string;
   expires_at: number;
-  athlete: AthleteInfo;
+  athlete: StravaAthlete;
 }
 
-interface ActivityMap {
+interface StravaActivityMap {
   polyline?: string;
   summary_polyline?: string;
 }
 
-interface Activity {
+interface StravaActivity {
   id: number;
   name: string;
+  athlete: StravaAthlete;
   start_date: string;
-  map: ActivityMap;
+  map: StravaActivityMap;
 }
 
 interface SubscriptionCreationResponse {
@@ -83,12 +84,19 @@ class StravaService {
       checkValidation,
       this.getAuthorizeCallback.bind(this)
     );
-    this.router.get(
-      "/load_activities",
+    this.router.post(
+      "/activity",
       query("activity_id").optional().isInt(),
       checkValidation,
       verifyIdToken,
-      this.getLoadActivities.bind(this)
+      this.postActivity.bind(this)
+    );
+    this.router.delete(
+      "/activity",
+      query("activity_id").optional().isInt(),
+      checkValidation,
+      verifyIdToken,
+      this.deleteActivity.bind(this)
     );
     this.router.get(
       "/subscription_callback",
@@ -104,7 +112,8 @@ class StravaService {
     );
   }
 
-  async getAccessTokenFromAuthCode(authCode: string, uid: string) {
+  async swapAuthCodeForTokens(authCode: string, uid: string) {
+    logger.info(`Getting tokens via auth code; uid: ${uid}`);
     const tokenUrl = new URL(TOKEN_URL);
     tokenUrl.searchParams.append("client_id", this.#clientId.toString());
     tokenUrl.searchParams.append("client_secret", this.#clientSecret);
@@ -114,9 +123,8 @@ class StravaService {
     const tokenRes = await got.post(tokenUrl, {
       responseType: "json",
     });
-    const token = tokenRes.body as AccessToken;
+    const token = tokenRes.body as StravaAccessToken;
 
-    logger.info(`Got token for athlete ${token.athlete.id}, uid ${uid}`);
     await User.update(
       {
         stravaAccessToken: token.access_token,
@@ -126,25 +134,26 @@ class StravaService {
       },
       { where: { id: uid } }
     );
+    logger.info(`Saved tokens; uid: ${uid}; athlete id: ${token.athlete.id}`);
   }
 
-  async loadActivity(activity: Activity, uid: string) {
+  async loadActivity(activity: StravaActivity, user: User) {
     if (!activity.map.polyline && !activity.map.summary_polyline) {
       logger.info(
-        `Skipping activity without map: ${activity.id} (${activity.name})`
+        `Not saving activity without map; id: ${activity.id}; name: ${activity.name}; athlete id: ${activity.athlete.id}`
       );
       return;
     }
 
-    logger.info(`Loading activity: ${activity.id} (${activity.name})`);
+    logger.info(`Saving activity; id: ${activity.id}; name: ${activity.name}`);
     const pathJson = geojsonPolyline.decode({
       type: "LineString",
       coordinates: activity.map.polyline || activity.map.summary_polyline,
     });
 
-    const user = await User.findOne({ where: { id: uid } });
     await user.createActivity({
       source: "strava",
+      sourceId: activity.id,
       name: activity.name,
       date: activity.start_date,
       path: pathJson,
@@ -157,14 +166,14 @@ class StravaService {
       headers: { Authorization: "Bearer " + user.stravaAccessToken },
       responseType: "json",
     });
-    const activity = listActivitiesRes.body as Activity;
-    await this.loadActivity(activity, user.id);
+    const activity = listActivitiesRes.body as StravaActivity;
+    await this.loadActivity(activity, user);
   }
 
   // Subscribes to strava webhook.
   async subscribe() {
     if (this.#subscriptionId) {
-      throw new Error("Strava service already subscribed");
+      throw new Error("strava service already subscribed");
     }
     logger.info("Strava service establishing subscription.");
 
@@ -191,9 +200,7 @@ class StravaService {
       });
       const subscribeResObj = subscribeRes.body as SubscriptionCreationResponse;
       this.#subscriptionId = subscribeResObj.id;
-      logger.info(
-        `Subscribed to strava webhook (id: ${this.#subscriptionId}).`
-      );
+      logger.info(`Subscribed to strava webhook; id: ${this.#subscriptionId}`);
     } catch (error) {
       logger.error(`subscribe post error: ${error}`);
     }
@@ -202,7 +209,6 @@ class StravaService {
   getAuthorize(req: express.Request, res: express.Response) {
     const authUrl = new URL(AUTH_URL);
     authUrl.searchParams.append("client_id", this.#clientId.toString());
-    // TODO: Shouldn't be hardcoded like this.
     authUrl.searchParams.append(
       "redirect_uri",
       `http://${process.env.HOST}:${process.env.PORT}/api/strava/authorize_callback`
@@ -218,7 +224,7 @@ class StravaService {
     const uid = req.query.state as string;
 
     try {
-      this.getAccessTokenFromAuthCode(authCode, uid);
+      this.swapAuthCodeForTokens(authCode, uid);
     } catch (error) {
       logger.error("getAccessTokenFromAuthCode:", error);
       res.sendStatus(500);
@@ -228,10 +234,13 @@ class StravaService {
     res.sendStatus(200);
   }
 
-  async getLoadActivities(req: express.Request, res: express.Response) {
+  async postActivity(req: express.Request, res: express.Response) {
+    logger.info(
+      `Got load activities request; uid: ${req.uid}; activity_id: ${req.query.activity_id}`
+    );
     const user = await User.findOne({ where: { id: req.uid } });
 
-    if (req.query.activity_id != null) {
+    if (req.query.activity_id) {
       const activityId = parseInt(req.query.activity_id as string, 10);
       try {
         await this.loadActivityById(activityId, user);
@@ -247,15 +256,16 @@ class StravaService {
     for (let page = 1; ; page++) {
       listActivitiesUrl.searchParams.append("page", page.toString());
 
-      let activities: Activity[];
+      let activities: StravaActivity[];
       try {
         const listActivitiesRes = await got(listActivitiesUrl, {
           headers: { Authorization: "Bearer " + user.stravaAccessToken },
           responseType: "json",
         });
-        activities = listActivitiesRes.body as Activity[];
+        activities = listActivitiesRes.body as StravaActivity[];
       } catch (error) {
         res.status(400).send(error.toString());
+        return;
       }
 
       if (activities.length === 0) {
@@ -264,9 +274,10 @@ class StravaService {
 
       for (const activity of activities) {
         try {
-          await this.loadActivity(activity, req.uid);
+          await this.loadActivity(activity, user);
         } catch (error) {
           res.status(400).send(error.toString());
+          return;
         }
       }
     }
@@ -274,7 +285,40 @@ class StravaService {
     res.sendStatus(200);
   }
 
+  async deleteActivity(req: express.Request, res: express.Response) {
+    logger.info(
+      `Got delete activities request; uid: ${req.uid}; activity_id: ${req.query.activity_id}`
+    );
+
+    try {
+      if (req.query.activity_id) {
+        const activity = await Activity.findOne({
+          where: {
+            source: "strava",
+            sourceId: req.query.activity_id,
+          },
+        });
+        if (!activity) {
+          res.sendStatus(404);
+          return;
+        }
+        const user = await activity.getUser();
+        if (user.id !== req.uid) {
+          res.sendStatus(403);
+          return;
+        }
+        await activity.destroy();
+      }
+    } catch (error) {
+      res.status(500).send(error.toString);
+      return;
+    }
+
+    res.sendStatus(200);
+  }
+
   async getSubscriptionCallback(req: express.Request, res: express.Response) {
+    logger.info("Got subscription callback probe.");
     if (req.query["hub.verify_token"] !== this.#subscriptionVerifyToken) {
       res.status(400).send("verify token missmatch");
       return;
@@ -289,6 +333,9 @@ class StravaService {
   // TODO: Think about validation.
   async postSubscriptionCallback(req: express.Request, res: express.Response) {
     const event = req.body as SubscriptionEvent;
+    logger.info(
+      `Got subscription callback post; type: ${event.object_type}; aspect_type: ${event.aspect_type}; object_id: ${event.object_id}`
+    );
 
     if (event.object_type !== "activity") {
       // Nothing to do.
@@ -296,12 +343,28 @@ class StravaService {
       return;
     }
 
-    if (event.aspect_type === "create") {
-      const user = await User.findOne({
-        where: { stravaAthleteId: event.owner_id },
-      });
-      await this.loadActivityById(event.object_id, user);
+    try {
+      if (event.aspect_type === "create") {
+        const user = await User.findOne({
+          where: { stravaAthleteId: event.owner_id },
+        });
+        await this.loadActivityById(event.object_id, user);
+      } else if (event.aspect_type === "update") {
+        // TODO: Support updates.
+        logger.warn("Dropping update event on the floor!");
+      } else if (event.aspect_type === "delete") {
+        logger.info(`Deleting activity; id: ${event.object_id}`);
+        Activity.destroy({
+          where: { source: "strava", sourceId: event.object_id },
+        });
+      }
+    } catch (error) {
+      logger.error(`Subscription callback post error: ${error}`);
+      res.sendStatus(500);
+      return;
     }
+
+    res.sendStatus(200);
   }
 }
 

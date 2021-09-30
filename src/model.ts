@@ -42,6 +42,7 @@ const sequelize = new Sequelize({
 interface ActivityAttributes {
   id: number;
   source: string;
+  sourceId: string;
   name: string;
   date: Date;
   path: any;
@@ -49,7 +50,7 @@ interface ActivityAttributes {
 }
 
 interface ActivityCreationAttributes
-  extends Optional<ActivityAttributes, "id" | "description"> {}
+  extends Optional<ActivityAttributes, "id" | "sourceId" | "description"> {}
 
 class Activity
   extends Model<ActivityAttributes, ActivityCreationAttributes>
@@ -57,6 +58,7 @@ class Activity
 {
   id!: number;
   source!: string;
+  sourceId!: string;
   name!: string;
   date!: Date;
   path!: any;
@@ -100,6 +102,7 @@ Activity.init(
       type: DataTypes.STRING,
       allowNull: false,
     },
+    sourceId: DataTypes.STRING,
     name: {
       type: DataTypes.STRING,
       allowNull: false,
