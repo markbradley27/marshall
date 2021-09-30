@@ -295,7 +295,7 @@ class StravaService {
         const activity = await Activity.findOne({
           where: {
             source: "strava",
-            sourceId: req.query.activity_id,
+            sourceId: req.query.activity_id.toString(),
           },
         });
         if (!activity) {
@@ -355,7 +355,7 @@ class StravaService {
       } else if (event.aspect_type === "delete") {
         logger.info(`Deleting activity; id: ${event.object_id}`);
         Activity.destroy({
-          where: { source: "strava", sourceId: event.object_id },
+          where: { source: "strava", sourceId: event.object_id.toString() },
         });
       }
     } catch (error) {
