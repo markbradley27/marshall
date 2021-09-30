@@ -342,18 +342,21 @@ User.init(
   { sequelize }
 );
 
-Activity.hasMany(Ascent);
+// Associations
+Activity.hasMany(Ascent, { onDelete: "CASCADE" });
 Ascent.belongsTo(Activity);
 
 Activity.belongsTo(User);
-User.hasMany(Activity);
+User.hasMany(Activity, { onDelete: "CASCADE" });
 
 Ascent.belongsTo(Mountain);
-Mountain.hasMany(Ascent);
+Mountain.hasMany(Ascent, { onDelete: "CASCADE" });
 
 Ascent.belongsTo(User);
-User.hasMany(Ascent);
+User.hasMany(Ascent, { onDelete: "CASCADE" });
 
+// DB Initialization
+// TODO: Eventually, I probably shouldn't call this every single time.
 sequelize.query("CREATE EXTENSION IF NOT EXISTS postgis", { raw: true });
 sequelize.sync();
 
