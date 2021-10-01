@@ -37,6 +37,8 @@ rl.on("line", async (line) => {
     sourceId: mountain.uri,
     name: mountain.name,
     location: location_geojson,
+    wikipediaLink: mountain.wikipedia_link,
+    abstract: mountain.abstract,
   });
 
   release();

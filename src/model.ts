@@ -220,11 +220,15 @@ interface MountainAttributes {
   sourceId: string;
   name: string;
   location: any;
-  description: string;
+  wikipediaLink: string;
+  abstract: string;
 }
 
 interface MountainCreationAttributes
-  extends Optional<MountainAttributes, "id" | "sourceId" | "description"> {}
+  extends Optional<
+    MountainAttributes,
+    "id" | "sourceId" | "wikipediaLink" | "abstract"
+  > {}
 
 class Mountain
   extends Model<MountainAttributes, MountainCreationAttributes>
@@ -235,7 +239,8 @@ class Mountain
   sourceId!: string;
   name!: string;
   location!: any;
-  description!: string;
+  wikipediaLink!: string;
+  abstract!: string;
 
   createdAt!: Date;
   updatedAt!: Date;
@@ -278,7 +283,8 @@ Mountain.init(
       type: DataTypes.GEOGRAPHY("POINTZ"),
       allowNull: false,
     },
-    description: DataTypes.STRING,
+    wikipediaLink: DataTypes.STRING,
+    abstract: DataTypes.TEXT,
   },
   { sequelize }
 );

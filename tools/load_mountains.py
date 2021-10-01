@@ -14,7 +14,7 @@ import re
 import requests
 import SPARQLWrapper
 import subprocess
-from typing import Any, Dict, Generator, List, Text
+from typing import Any, Dict, Generator, List, Optional, Text
 
 FLAGS = flags.FLAGS
 
@@ -112,13 +112,18 @@ def sparql_query(query: Text) -> Dict[Text, Any]:
   return sparql.query().convert()
 
 
-def get_name(properties):
+def get_wikipedia_link(properties: Dict[Text, List[Any]]) -> Optional[Text]:
+  if "http://xmlns.com/foaf/0.1/isPrimaryTopicOf" in properties:
+    return properties["http://xmlns.com/foaf/0.1/isPrimaryTopicOf"][0]
+
+
+def get_name(properties: Dict[Text, List[Any]]) -> Text:
   if "http://xmlns.com/foaf/0.1/name" in properties:
     return ", ".join(properties["http://xmlns.com/foaf/0.1/name"])
 
-  if "http://xmlns.com/foaf/0.1/isPrimaryTopicOf" in properties:
-    return properties["http://xmlns.com/foaf/0.1/isPrimaryTopicOf"][0].rsplit(
-        "/", 1)[-1].replace("_", " ")
+  wikipedia_link = get_wikipedia_link(properties)
+  if wikipedia_link:
+    return wikipedia_link.rsplit("/", 1)[-1].replace("_", " ")
 
   raise ValueError("Couldn't get name!")
 
@@ -192,8 +197,8 @@ def scrape_elevation_from_inbox(infobox) -> Dict[Text, float]:
 
 
 def scrape_location_from_wikipedia(
-    wiki_page_link: Text, location: Dict[Text, float]) -> Dict[Text, float]:
-  wiki_page_req = requests.get(wiki_page_link)
+    wikipedia_link: Text, location: Dict[Text, float]) -> Dict[Text, float]:
+  wiki_page_req = requests.get(wikipedia_link)
   wiki_page = bs4.BeautifulSoup(wiki_page_req.text, "html.parser")
 
   def is_infobox_table(tag):
@@ -239,10 +244,16 @@ def get_location(properties: Dict[Text, List[Any]]) -> Dict[Text, float]:
   logging.info("Location from just DBPedia: {}".format(location))
 
   if "long" not in location or "lat" not in location or "elevation" not in location:
-    wiki_page_link = properties["http://xmlns.com/foaf/0.1/isPrimaryTopicOf"][0]
-    scrape_location_from_wikipedia(wiki_page_link, location)
+    wikipedia_link = get_wikipedia_link(properties)
+    if wikipedia_link:
+      scrape_location_from_wikipedia(wikipedia_link, location)
 
   return location
+
+
+def get_abstract(properties: Dict[Text, List[Any]]) -> Optional[Text]:
+  if "http://dbpedia.org/ontology/abstract" in properties:
+    return properties["http://dbpedia.org/ontology/abstract"][0]
 
 
 # Given a URI, retrieves mountain data from DBPedia and elsewhere.
@@ -258,7 +269,22 @@ def get_mountain(uri: Text) -> Dict[Text, Any]:
     logging.warn("Could find full location for {}: {}".format(uri, location))
     merge_locations(location, {"long": 0, "lat": 0, "elevation": 0})
 
-  return {"uri": uri, "name": name, "location": location, "raw_parsed": parsed}
+  wikipedia_link = get_wikipedia_link(parsed[uri])
+
+  abstract = get_abstract(parsed[uri])
+
+  mountain = {
+      "uri": uri,
+      "name": name,
+      "location": location,
+      "raw_parsed": parsed
+  }
+  if wikipedia_link:
+    mountain["wikipedia_link"] = wikipedia_link
+  if abstract:
+    mountain["abstract"] = abstract
+
+  return mountain
 
 
 def get_mountains(n: int) -> Generator[Dict[Text, Any], None, None]:
