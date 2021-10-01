@@ -30,7 +30,7 @@ flags.DEFINE_integer(
 flags.DEFINE_string(
     'start_with', '',
     "If n provided, doesn't start inserting mountains until it sees this uri.")
-flags.DEFINE_integer('sparql_page_size', 100,
+flags.DEFINE_integer('sparql_page_size', 25,
                      'Max number of mountain URIs to retrieve at once.')
 
 flags.DEFINE_enum(
@@ -267,28 +267,25 @@ def get_abstract(properties: Dict[Text, List[Any]]) -> Optional[Text]:
 
 # Given a URI, retrieves mountain data from DBPedia and elsewhere.
 # Returns it in a nice-ish dictionary.
-def get_mountain(uri: Text) -> Dict[Text, Any]:
-  logging.info("Getting: {}".format(uri))
+def parse_mountain_properties(
+    uri: Text, properties: Dict[Text, List[Any]]) -> Dict[Text, Any]:
+  logging.info("Parsing: {}".format(uri))
 
-  result = sparql_query("describe <{}>".format(uri))
-  parsed = parse_sparql_spo(result)
+  name = get_name(uri, properties)
 
-  name = get_name(uri, parsed[uri])
-
-  location = get_location(parsed[uri])
+  location = get_location(properties)
   if "long" not in location or "lat" not in location or "elevation" not in location:
-    logging.warn("Could find full location for {}: {}".format(uri, location))
+    logging.warn("Couldn't find full location for {}: {}".format(uri, location))
     merge_locations(location, {"long": 0, "lat": 0, "elevation": 0})
 
-  wikipedia_link = get_wikipedia_link(parsed[uri])
+  wikipedia_link = get_wikipedia_link(properties)
 
-  abstract = get_abstract(parsed[uri])
+  abstract = get_abstract(properties)
 
   mountain = {
       "uri": uri,
       "name": name,
       "location": location,
-      "raw_parsed": parsed
   }
   if wikipedia_link:
     mountain["wikipedia_link"] = wikipedia_link
@@ -298,37 +295,48 @@ def get_mountain(uri: Text) -> Dict[Text, Any]:
   return mountain
 
 
-# TODO: See if we can describe mountains in pages too, to reduce the number of
-# queries made to dbpedia (not tryna' get rate-limited).
+def get_mountain(uri):
+  result = sparql_query("describe <{}>".format(uri))
+  parsed = parse_sparql_spo(result)
+  return parse_mountain_properties(uri, parsed[uri])
+
+
 def get_mountains(n: int, sparql_page_size: int,
                   start_with: Text) -> Generator[Dict[Text, Any], None, None]:
-  base_query = "select * {?mountain a dbo:Mountain}"
+  query_template = "select * {{?mountain a dbo:Mountain}} order by(?mountain) limit {} offset {}"
   offset = 0
-  got = 0
+  need = n
   still_looking = bool(start_with)
-  while got < n or n < 0:
-    query = "{} LIMIT {} OFFSET {}".format(base_query, sparql_page_size, offset)
+  while need != 0:
+    limit = sparql_page_size if still_looking or need < 0 else min(
+        sparql_page_size, need)
+    query = query_template.format(limit, offset)
     results = sparql_query(query)
 
     bindings = results["results"]["bindings"]
     if len(bindings) == 0:
       return
-    for result in bindings:
-      uri = result["mountain"]["value"]
 
-      if still_looking:
-        if uri != start_with:
-          logging.info("Skipping: {}".format(uri))
-          continue
-        else:
+    uris = [result["mountain"]["value"] for result in bindings]
+    if still_looking:
+      for i, uri in enumerate(uris):
+        if uri == start_with:
           still_looking = False
+          uris = uris[i:][:need]
+          break
+        else:
+          logging.info("Skipping: {}".format(uri))
+      if still_looking:
+        continue
 
-      yield get_mountain(uri)
-      got += 1
-      if n >= 0 and got == n:
-        return
+    result = sparql_query("describe <{}>".format("> <".join(uris)))
+    parsed = parse_sparql_spo(result)
+    for uri in uris:
+      yield parse_mountain_properties(uri, parsed[uri])
+      if need > 0:
+        need -= 1
 
-    offset += FLAGS.sparql_page_size
+    offset += sparql_page_size
 
 
 def search_by_name(name: Text) -> Text:
