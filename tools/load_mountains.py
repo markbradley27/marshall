@@ -11,6 +11,7 @@ import json
 import pprint
 import psycopg2
 import re
+import retry
 import requests
 import SPARQLWrapper
 import subprocess
@@ -110,6 +111,7 @@ class LogDB(DBInterface):
     logging.info(json.dumps(mountain))
 
 
+@retry.retry(tries=1, delay=1, backoff=2)
 def sparql_query(query: Text) -> Dict[Text, Any]:
   logging.info("Querying: {}".format(query))
   sparql = SPARQLWrapper.SPARQLWrapper(_DBPEDIA_SPARQL_ENDPOINT)
@@ -296,6 +298,8 @@ def get_mountain(uri: Text) -> Dict[Text, Any]:
   return mountain
 
 
+# TODO: See if we can describe mountains in pages too, to reduce the number of
+# queries made to dbpedia (not tryna' get rate-limited).
 def get_mountains(n: int, sparql_page_size: int,
                   start_with: Text) -> Generator[Dict[Text, Any], None, None]:
   base_query = "select * {?mountain a dbo:Mountain}"
