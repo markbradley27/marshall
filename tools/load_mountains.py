@@ -14,7 +14,7 @@ import re
 import requests
 import SPARQLWrapper
 import subprocess
-from typing import Any, Dict, Generator, Text, Tuple
+from typing import Any, Dict, Generator, List, Text
 
 FLAGS = flags.FLAGS
 
@@ -76,19 +76,21 @@ class PostgresDB(DBInterface):
 class SequelizeDB(DBInterface):
 
   def __init__(self):
-    self.ts_load_mountains = subprocess.Popen(
+    self.load_mountains_ts = subprocess.Popen(
         ["npx", "ts-node", "tools/load_mountains.ts"],
         stdin=subprocess.PIPE,
         encoding="utf-8")
 
   def __del__(self):
-    self.ts_load_mountains.stdin.flush()
-    self.ts_load_mountains.stdin.close()
-    self.ts_load_mountains.wait()
+    self.load_mountains_ts.stdin.flush()
+    self.load_mountains_ts.stdin.close()
+    self.load_mountains_ts.wait()
 
   def insert_mountain(self, mountain: Dict[Text, Any]) -> None:
+    if self.load_mountains_ts.poll():
+      raise Exception("load_mountains.ts has died!")
     logging.info("Inserting via Sequelize: %s", mountain["uri"])
-    self.ts_load_mountains.stdin.write("{}\r\n".format(json.dumps(mountain)))
+    self.load_mountains_ts.stdin.write("{}\r\n".format(json.dumps(mountain)))
 
 
 class LogDB(DBInterface):
@@ -110,20 +112,30 @@ def sparql_query(query: Text) -> Dict[Text, Any]:
   return sparql.query().convert()
 
 
-# Takes the big awful s/p/o format spat out by sparql and turns it in to a key:
-# val dictionary.
-def parse_sparql_mountain(sparql_json: Dict[Text, Any]) -> Dict[Text, Any]:
+def get_name(properties):
+  if "http://xmlns.com/foaf/0.1/name" in properties:
+    return ", ".join(properties["http://xmlns.com/foaf/0.1/name"])
+
+  if "http://xmlns.com/foaf/0.1/isPrimaryTopicOf" in properties:
+    return properties["http://xmlns.com/foaf/0.1/isPrimaryTopicOf"][0].rsplit(
+        "/", 1)[-1].replace("_", " ")
+
+  raise ValueError("Couldn't get name!")
+
+
+# Takes the big awful s/p/o format spat out by sparql and turns it in to a
+# { subject: { predicate: [object] }} dictionary.
+def parse_sparql_spo(
+    sparql_json: Dict[Text, Any]) -> Dict[Text, Dict[Text, List[Any]]]:
   parsed = {}
   for spo in sparql_json["results"]["bindings"]:
+    subject = spo["s"]["value"]
     predicate = spo["p"]["value"]
-    obj = spo["o"]["value"]
-    if predicate not in parsed:
-      parsed[predicate] = obj
-    else:
-      if isinstance(parsed[predicate], list):
-        parsed[predicate].append(obj)
-      else:
-        parsed[predicate] = [parsed[predicate], obj]
+    object = spo["o"]["value"]
+
+    sDict = parsed.setdefault(subject, {})
+    pList = sDict.setdefault(predicate, [])
+    pList.append(object)
   return parsed
 
 
@@ -179,9 +191,8 @@ def scrape_elevation_from_inbox(infobox) -> Dict[Text, float]:
   return {"elevation": elevation}
 
 
-def scrape_location_from_wikipedia(parsed: Dict[Text, Any],
-                                   location: Dict[Text, float]):
-  wiki_page_link = parsed["http://xmlns.com/foaf/0.1/isPrimaryTopicOf"]
+def scrape_location_from_wikipedia(
+    wiki_page_link: Text, location: Dict[Text, float]) -> Dict[Text, float]:
   wiki_page_req = requests.get(wiki_page_link)
   wiki_page = bs4.BeautifulSoup(wiki_page_req.text, "html.parser")
 
@@ -210,23 +221,26 @@ def scrape_location_from_wikipedia(parsed: Dict[Text, Any],
 # Given parsed sparql info about a mountain, returns the long, lat, and
 # elevation for that mountain, either sourced directly from the sparql data or
 # the scraped wikipedia page.
-def get_location(parsed: Dict[Text, Any]) -> Dict[Text, float]:
+def get_location(properties: Dict[Text, List[Any]]) -> Dict[Text, float]:
   location = {}
-  if ("http://www.w3.org/2003/01/geo/wgs84_pos#long" in parsed):
-    location["long"] = parsed["http://www.w3.org/2003/01/geo/wgs84_pos#long"]
-
-  if ("http://www.w3.org/2003/01/geo/wgs84_pos#lat" in parsed):
-    location["lat"] = parsed["http://www.w3.org/2003/01/geo/wgs84_pos#lat"]
-
-  if ("http://dbpedia.org/ontology/elevation" in parsed):
-    location["elevation"] = parsed["http://dbpedia.org/ontology/elevation"]
-  elif ("http://dbpedia.org/ontology/elevationM" in parsed):
-    location["elevation"] = parsed["http://dbpedia.org/ontology/elevationM"]
+  if ("http://www.w3.org/2003/01/geo/wgs84_pos#long" in properties):
+    location["long"] = properties[
+        "http://www.w3.org/2003/01/geo/wgs84_pos#long"][0]
+  if ("http://www.w3.org/2003/01/geo/wgs84_pos#lat" in properties):
+    location["lat"] = properties["http://www.w3.org/2003/01/geo/wgs84_pos#lat"][
+        0]
+  if ("http://dbpedia.org/ontology/elevation" in properties):
+    location["elevation"] = properties["http://dbpedia.org/ontology/elevation"][
+        0]
+  elif ("http://dbpedia.org/ontology/elevationM" in properties):
+    location["elevation"] = properties[
+        "http://dbpedia.org/ontology/elevationM"][0]
 
   logging.info("Location from just DBPedia: {}".format(location))
 
   if "long" not in location or "lat" not in location or "elevation" not in location:
-    scrape_location_from_wikipedia(parsed, location)
+    wiki_page_link = properties["http://xmlns.com/foaf/0.1/isPrimaryTopicOf"][0]
+    scrape_location_from_wikipedia(wiki_page_link, location)
 
   return location
 
@@ -235,17 +249,16 @@ def get_location(parsed: Dict[Text, Any]) -> Dict[Text, float]:
 # Returns it in a nice-ish dictionary.
 def get_mountain(uri: Text) -> Dict[Text, Any]:
   result = sparql_query("describe <{}>".format(uri))
-  parsed = parse_sparql_mountain(result)
-  location = get_location(parsed)
+  parsed = parse_sparql_spo(result)
+
+  name = get_name(parsed[uri])
+
+  location = get_location(parsed[uri])
   if "long" not in location or "lat" not in location or "elevation" not in location:
     logging.warn("Could find full location for {}: {}".format(uri, location))
     merge_locations(location, {"long": 0, "lat": 0, "elevation": 0})
-  return {
-      "uri": uri,
-      "name": parsed["http://xmlns.com/foaf/0.1/name"],
-      "location": location,
-      "raw_parsed": parsed
-  }
+
+  return {"uri": uri, "name": name, "location": location, "raw_parsed": parsed}
 
 
 def get_mountains(n: int) -> Generator[Dict[Text, Any], None, None]:
