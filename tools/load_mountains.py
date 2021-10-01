@@ -159,6 +159,7 @@ def merge_locations(dest: Dict[Text, float], source: Dict[Text, float]) -> bool:
   return did_something
 
 
+# TODO: Doesn't handle all formats (Arayit_Mountain for example).
 def scrape_coords_from_infobox(infobox) -> Dict[Text, float]:
 
   def is_coordinates_tr(tag):
@@ -166,15 +167,17 @@ def scrape_coords_from_infobox(infobox) -> Dict[Text, float]:
             tag.th.a.contents[0] == "Coordinates")
 
   coordinates_tags = infobox.find_all(is_coordinates_tr)
-  if len(coordinates_tags) == 0:
-    return {}
-  if len(coordinates_tags) > 1:
-    raise ValueError("Found more than one coordinates row in the infobox.")
-  coordinates = coordinates_tags[0]
 
-  coordinates_text = coordinates.find(**{"class": "geo"}).contents[0]
-  lat_text, long_text = coordinates_text.split("; ")
-  return {"long": float(long_text), "lat": float(lat_text)}
+  for coordinates_tag in coordinates_tags:
+    geo_tag = coordinates_tag.find(**{"class": "geo"})
+    if geo_tag:
+      contents = geo_tag.contents
+      if contents:
+        coordinates_text = contents[0]
+        lat_text, long_text = coordinates_text.split("; ")
+        return {"long": float(long_text), "lat": float(lat_text)}
+
+  return {}
 
 
 def scrape_elevation_from_inbox(infobox) -> Dict[Text, float]:
@@ -184,17 +187,16 @@ def scrape_elevation_from_inbox(infobox) -> Dict[Text, float]:
             tag.th.a.contents[0] == "Elevation")
 
   elevation_tags = infobox.find_all(is_elevation_tr)
-  if len(elevation_tags) == 0:
-    return {}
-  if len(elevation_tags) > 1:
-    raise ValueError("Found more than one elevation row in the infobox.")
-  elevation_tag = elevation_tags[0]
-  elevation_text = elevation_tag.find(**{"class": "infobox-data"}).get_text()
-  elevation_match = re.search(r"\(([\d,]+)[\+]?\s+m\)", elevation_text)
-  if not elevation_match:
-    return {}
-  elevation = float(elevation_match.group(1).replace(',', ''))
-  return {"elevation": elevation}
+  for elevation_tag in elevation_tags:
+    infobox_data = elevation_tag.find(**{"class": "infobox-data"})
+    if infobox_data:
+      elevation_text = infobox_data.get_text()
+      elevation_match = re.search(r"\(([\d,]+)[\+]?\s+m\)", elevation_text)
+      if elevation_match:
+        elevation = float(elevation_match.group(1).replace(',', ''))
+        return {"elevation": elevation}
+
+  return {}
 
 
 def scrape_location_from_wikipedia(
@@ -214,7 +216,6 @@ def scrape_location_from_wikipedia(
           infobox_location) and "long" in location and "lat" in location:
         break
 
-  for infobox in infobox_table_tags:
     if "elevation" not in location:
       infobox_location = scrape_elevation_from_inbox(infobox)
       if merge_locations(location,
