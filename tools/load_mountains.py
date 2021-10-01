@@ -87,6 +87,7 @@ class SequelizeDB(DBInterface):
     self.load_mountains_ts.wait()
 
   def insert_mountain(self, mountain: Dict[Text, Any]) -> None:
+    # TODO: I don't think this is working...
     if self.load_mountains_ts.poll():
       raise Exception("load_mountains.ts has died!")
     logging.info("Inserting via Sequelize: %s", mountain["uri"])
@@ -117,7 +118,7 @@ def get_wikipedia_link(properties: Dict[Text, List[Any]]) -> Optional[Text]:
     return properties["http://xmlns.com/foaf/0.1/isPrimaryTopicOf"][0]
 
 
-def get_name(properties: Dict[Text, List[Any]]) -> Text:
+def get_name(uri: Text, properties: Dict[Text, List[Any]]) -> Text:
   if "http://xmlns.com/foaf/0.1/name" in properties:
     return ", ".join(properties["http://xmlns.com/foaf/0.1/name"])
 
@@ -125,7 +126,7 @@ def get_name(properties: Dict[Text, List[Any]]) -> Text:
   if wikipedia_link:
     return wikipedia_link.rsplit("/", 1)[-1].replace("_", " ")
 
-  raise ValueError("Couldn't get name!")
+  return uri.rsplit("/", 1)[-1].replace("_", " ")
 
 
 # Takes the big awful s/p/o format spat out by sparql and turns it in to a
@@ -262,7 +263,7 @@ def get_mountain(uri: Text) -> Dict[Text, Any]:
   result = sparql_query("describe <{}>".format(uri))
   parsed = parse_sparql_spo(result)
 
-  name = get_name(parsed[uri])
+  name = get_name(uri, parsed[uri])
 
   location = get_location(parsed[uri])
   if "long" not in location or "lat" not in location or "elevation" not in location:
