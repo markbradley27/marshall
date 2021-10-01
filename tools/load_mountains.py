@@ -19,20 +19,25 @@ from typing import Any, Dict, Generator, List, Optional, Text
 FLAGS = flags.FLAGS
 
 flags.DEFINE_string('name', '', 'Name of mountain to search for and insert.')
-flags.DEFINE_string(
-    'uri', '',
-    'URI of mountain to insert (-n is ignored if this is specified).')
+flags.DEFINE_string('uri', '', 'URI of mountain to insert.')
+
 flags.DEFINE_integer(
     'n', 1,
-    'Number of mountains to retrieve (anything less than 0 retrieves all).')
+    'Number of mountains to retrieve (anything less than 0 retrieves all, ignored if name or uri is provided).'
+)
+# TODO: Technically the list query should be sorted for this to be reliable.
+flags.DEFINE_string(
+    'start_with', '',
+    "If n provided, doesn't start inserting mountains until it sees this uri.")
 flags.DEFINE_integer('sparql_page_size', 100,
                      'Max number of mountain URIs to retrieve at once.')
 
-flags.DEFINE_enum('db', 'sequelize', ['postgres', 'sequelize', 'log'],
-                  'DB type to connect to.')
+flags.DEFINE_enum(
+    'db', 'sequelize', ['postgres', 'sequelize', 'log'],
+    'DB type to connect to (postgres is real broke, prolly should not use it).')
 
 flags.DEFINE_string('postgres_db', 'marshall', 'DB name to populate.')
-flags.DEFINE_string('postgres_username', '', 'PostgreSQL username.')
+flags.DEFINE_string('postgres_username', 'dev', 'PostgreSQL username.')
 
 flags.DEFINE_bool(
     'log_raw_parsed', False,
@@ -261,6 +266,8 @@ def get_abstract(properties: Dict[Text, List[Any]]) -> Optional[Text]:
 # Given a URI, retrieves mountain data from DBPedia and elsewhere.
 # Returns it in a nice-ish dictionary.
 def get_mountain(uri: Text) -> Dict[Text, Any]:
+  logging.info("Getting: {}".format(uri))
+
   result = sparql_query("describe <{}>".format(uri))
   parsed = parse_sparql_spo(result)
 
@@ -289,14 +296,14 @@ def get_mountain(uri: Text) -> Dict[Text, Any]:
   return mountain
 
 
-def get_mountains(n: int) -> Generator[Dict[Text, Any], None, None]:
-  offset = 0
+def get_mountains(n: int, sparql_page_size: int,
+                  start_with: Text) -> Generator[Dict[Text, Any], None, None]:
   base_query = "select * {?mountain a dbo:Mountain}"
-  while offset < n or n < 0:
-    limit = FLAGS.sparql_page_size
-    if n >= 0:
-      limit = min(limit, n - offset)
-    query = "{} LIMIT {} OFFSET {}".format(base_query, limit, offset)
+  offset = 0
+  got = 0
+  still_looking = bool(start_with)
+  while got < n or n < 0:
+    query = "{} LIMIT {} OFFSET {}".format(base_query, sparql_page_size, offset)
     results = sparql_query(query)
 
     bindings = results["results"]["bindings"]
@@ -304,8 +311,18 @@ def get_mountains(n: int) -> Generator[Dict[Text, Any], None, None]:
       return
     for result in bindings:
       uri = result["mountain"]["value"]
-      logging.info("Getting: {}".format(uri))
+
+      if still_looking:
+        if uri != start_with:
+          logging.info("Skipping: {}".format(uri))
+          continue
+        else:
+          still_looking = False
+
       yield get_mountain(uri)
+      got += 1
+      if n >= 0 and got == n:
+        return
 
     offset += FLAGS.sparql_page_size
 
@@ -350,7 +367,8 @@ def main(argv):
     db.insert_mountain(get_mountain(FLAGS.uri))
     return
 
-  for mountain in get_mountains(FLAGS.n):
+  for mountain in get_mountains(FLAGS.n, FLAGS.sparql_page_size,
+                                FLAGS.start_with):
     db.insert_mountain(mountain)
 
 
