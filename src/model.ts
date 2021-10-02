@@ -139,7 +139,10 @@ Activity.init(
                 ),
                 "geography"
               ),
-              25
+              // TODO: This is pretty generous, consider narrowing it down a bit.
+              //       Look at my Marshall hike and try to figure out why it
+              //       thinks I was 46m away.
+              50
             ),
             "true"
           ),
