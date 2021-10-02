@@ -117,8 +117,8 @@ class StravaService {
     const tokenUrl = new URL(TOKEN_URL);
     tokenUrl.searchParams.append("client_id", this.#clientId.toString());
     tokenUrl.searchParams.append("client_secret", this.#clientSecret);
-    tokenUrl.searchParams.append("code", authCode);
     tokenUrl.searchParams.append("grant_type", "authorization_code");
+    tokenUrl.searchParams.append("code", authCode);
 
     const tokenRes = await got.post(tokenUrl, {
       responseType: "json",
@@ -135,6 +135,40 @@ class StravaService {
       { where: { id: uid } }
     );
     logger.info(`Saved tokens; uid: ${uid}; athlete id: ${token.athlete.id}`);
+  }
+
+  async swapRefreshTokenForTokens(user: User) {
+    logger.info(`Getting tokens via refresh code; uid: ${user.id}`);
+    const tokenUrl = new URL(TOKEN_URL);
+    tokenUrl.searchParams.append("client_id", this.#clientId.toString());
+    tokenUrl.searchParams.append("client_secret", this.#clientSecret);
+    tokenUrl.searchParams.append("grant_type", "refresh_token");
+    tokenUrl.searchParams.append("refresh_token", user.stravaRefreshToken);
+
+    const tokenRes = await got.post(tokenUrl, {
+      responseType: "json",
+    });
+    const token = tokenRes.body as StravaAccessToken;
+
+    await user.update({
+      stravaAccessToken: token.access_token,
+      stravaRefreshToken: token.refresh_token,
+      stravaAccessTokenExpiresAt: new Date(token.expires_at * 1000),
+    });
+    logger.info(`Saved tokens; uid: ${user.id}`);
+  }
+
+  async queryStravaApi(url: URL, user: User) {
+    const expireCutoff = new Date();
+    expireCutoff.setMinutes(expireCutoff.getMinutes() + 30);
+    if (user.stravaAccessTokenExpiresAt < expireCutoff) {
+      this.swapRefreshTokenForTokens(user);
+    }
+
+    return await got(url, {
+      headers: { Authorization: "Bearer " + user.stravaAccessToken },
+      responseType: "json",
+    });
   }
 
   async loadActivity(activity: StravaActivity, user: User) {
@@ -162,10 +196,7 @@ class StravaService {
 
   async loadActivityById(activityId: number, user: User) {
     const getActivityUrl = new URL(ACTIVITIES_URL + "/" + activityId);
-    const listActivitiesRes = await got(getActivityUrl, {
-      headers: { Authorization: "Bearer " + user.stravaAccessToken },
-      responseType: "json",
-    });
+    const listActivitiesRes = await this.queryStravaApi(getActivityUrl, user);
     const activity = listActivitiesRes.body as StravaActivity;
     await this.loadActivity(activity, user);
   }
@@ -258,10 +289,10 @@ class StravaService {
 
       let activities: StravaActivity[];
       try {
-        const listActivitiesRes = await got(listActivitiesUrl, {
-          headers: { Authorization: "Bearer " + user.stravaAccessToken },
-          responseType: "json",
-        });
+        const listActivitiesRes = await this.queryStravaApi(
+          listActivitiesUrl,
+          user
+        );
         activities = listActivitiesRes.body as StravaActivity[];
       } catch (error) {
         res.status(400).send(error.toString());
