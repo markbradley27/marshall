@@ -401,11 +401,6 @@ Mountain.hasMany(Ascent, { onDelete: "CASCADE" });
 Ascent.belongsTo(User);
 User.hasMany(Ascent, { onDelete: "CASCADE" });
 
-// DB Initialization
-// TODO: Eventually, I probably shouldn't call this every single time.
-sequelize.query("CREATE EXTENSION IF NOT EXISTS postgis", { raw: true });
-sequelize.sync();
-
 export {
   sequelize,
   Activity,
