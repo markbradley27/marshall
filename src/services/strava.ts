@@ -150,11 +150,10 @@ class StravaService {
     });
     const token = tokenRes.body as StravaAccessToken;
 
-    await user.update({
-      stravaAccessToken: token.access_token,
-      stravaRefreshToken: token.refresh_token,
-      stravaAccessTokenExpiresAt: new Date(token.expires_at * 1000),
-    });
+    user.stravaAccessToken = token.access_token;
+    user.stravaRefreshToken = token.refresh_token;
+    user.stravaAccessTokenExpiresAt = new Date(token.expires_at * 1000);
+    await user.save();
     logger.info(`Saved tokens; uid: ${user.id}`);
   }
 
