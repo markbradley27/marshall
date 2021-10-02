@@ -195,8 +195,8 @@ class StravaService {
 
   async loadActivityById(activityId: number, user: User) {
     const getActivityUrl = new URL(ACTIVITIES_URL + "/" + activityId);
-    const listActivitiesRes = await this.queryStravaApi(getActivityUrl, user);
-    const activity = listActivitiesRes.body as StravaActivity;
+    const getActivityRes = await this.queryStravaApi(getActivityUrl, user);
+    const activity = getActivityRes.body as StravaActivity;
     await this.loadActivity(activity, user);
   }
 
@@ -306,6 +306,13 @@ class StravaService {
         try {
           await this.loadActivity(activity, user);
         } catch (error) {
+          // TODO: I really hope there's a better way to do this...
+          if (error.toString().includes("SequelizeUniqueConstraintError")) {
+            logger.info(
+              `Skipping already loaded activity; id: ${activity.id}; name: ${activity.name}`
+            );
+            continue;
+          }
           res.status(400).send(error.toString());
           return;
         }

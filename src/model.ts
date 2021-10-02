@@ -160,6 +160,12 @@ Activity.init(
         );
       },
     },
+    indexes: [
+      {
+        type: "UNIQUE",
+        fields: ["source", "sourceId"],
+      },
+    ],
     sequelize,
   }
 );
@@ -289,7 +295,15 @@ Mountain.init(
     wikipediaLink: DataTypes.STRING,
     abstract: DataTypes.TEXT,
   },
-  { sequelize }
+  {
+    indexes: [
+      {
+        type: "UNIQUE",
+        fields: ["source", "sourceId"],
+      },
+    ],
+    sequelize,
+  }
 );
 
 interface UserAttributes {
