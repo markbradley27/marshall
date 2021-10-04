@@ -83,11 +83,13 @@ class Activity
   removeAscents!: HasManyRemoveAssociationsMixin<Ascent, number>;
   setAscents!: HasManySetAssociationsMixin<Ascent, number>;
 
+  readonly ascents?: Ascent[];
+
   getUser!: BelongsToGetAssociationMixin<User>;
   setUser!: BelongsToSetAssociationMixin<User, number>;
   createUser!: BelongsToCreateAssociationMixin<User>;
 
-  readonly ascents?: Ascent[];
+  UserId!: string;
   readonly user?: User;
 
   static associations: {
@@ -191,11 +193,14 @@ class Ascent
   setMountain!: BelongsToSetAssociationMixin<Mountain, number>;
   createMountain!: BelongsToCreateAssociationMixin<Mountain>;
 
+  MountainId!: number;
+  readonly mountain?: Mountain;
+
   getUser!: BelongsToGetAssociationMixin<User>;
   setUser!: BelongsToSetAssociationMixin<User, number>;
   createUser!: BelongsToCreateAssociationMixin<User>;
 
-  readonly mountain?: Mountain;
+  UserId!: string;
   readonly user?: User;
 
   static associations: {
@@ -350,6 +355,8 @@ class User
   removeActivities!: HasManyRemoveAssociationsMixin<Activity, number>;
   setActivities!: HasManySetAssociationsMixin<Activity, number>;
 
+  readonly activities?: Activity[];
+
   addAscent!: HasManyAddAssociationMixin<Ascent, number>;
   addAscents!: HasManyAddAssociationsMixin<Ascent, number>;
   countAscents!: HasManyCountAssociationsMixin;
@@ -361,7 +368,6 @@ class User
   removeAscents!: HasManyRemoveAssociationsMixin<Ascent, number>;
   setAscents!: HasManySetAssociationsMixin<Ascent, number>;
 
-  readonly activities?: Activity[];
   readonly ascents?: Ascent[];
 
   static associations: {
