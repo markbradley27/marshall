@@ -5,13 +5,15 @@
   "main": "dist/app.js",
   "scripts": {
     "clean": "rimraf dist/*",
+    "client": "npm start --prefix app",
     "format": "prettier --write src",
     "format:check": "prettier --check src",
     "lint": "tslint -c tslint.json -p tsconfig.json --fix",
     "tsc": "tsc",
     "build": "npm-run-all clean format:check lint tsc",
+    "dev": "concurrently \"npm run dev:watch\" \"npm run client\"",
     "dev:start": "npm-run-all build start",
-    "dev": "nodemon --watch src -e ts --exec npm run dev:start",
+    "dev:watch": "nodemon --watch src -e ts --exec npm run dev:start",
     "start": "node ."
   },
   "repository": {
@@ -29,6 +31,7 @@
     "@types/xmldom": "^0.1.31",
     "async-mutex": "^0.3.2",
     "commander": "^8.2.0",
+    "concurrently": "^6.3.0",
     "firebase": "^9.1.0",
     "nodemon": "^2.0.12",
     "npm-run-all": "^4.1.5",
