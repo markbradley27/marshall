@@ -1,6 +1,6 @@
 // TODO: Some of these methods should ABSOLUTELY NOT be deployed to prod!
 
-import { ActivitySource, User } from "../model";
+import { Activity, ActivitySource, Ascent, Mountain, User } from "../model";
 import { verifyIdToken } from "../middleware/auth";
 import { checkValidation } from "../middleware/validation";
 
@@ -18,6 +18,14 @@ class ClientService {
 
   constructor() {
     this.router = express.Router();
+    this.router.get(
+      "/activity",
+      query("activity_id").isNumeric(),
+      query("include_ascents").default("false").isBoolean(),
+      checkValidation,
+      verifyIdToken,
+      this.getActivity.bind(this)
+    );
     this.router.post(
       "/user",
       query("email").isEmail(),
@@ -33,6 +41,29 @@ class ClientService {
       this.deleteUser.bind(this)
     );
     this.router.post("/gpx", verifyIdToken, this.postGpx.bind(this));
+  }
+
+  async getActivity(req: express.Request, res: express.Response) {
+    const activity = await Activity.findOne({
+      where: { id: req.query.activity_id },
+      include:
+        req.query.include_ascents === "true"
+          ? {
+              model: Ascent,
+              include: [{ model: Mountain }],
+            }
+          : undefined,
+    });
+
+    if (activity == null) {
+      res.sendStatus(404);
+    }
+    if (activity.UserId !== req.uid) {
+      res.sendStatus(403);
+    }
+
+    // TODO: Don't return all fields by default.
+    res.json(activity.toJSON());
   }
 
   // Registers a user with firebase and in the local db.
