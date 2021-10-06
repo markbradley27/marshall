@@ -12,6 +12,38 @@ import { Activity, ActivitySource, Ascent, Mountain, User } from "../model";
 
 const logger = new Logger();
 
+function activityModelToApi(activity: Activity) {
+  return {
+    id: activity.id,
+    source: activity.source,
+    sourceId: activity.sourceId,
+    name: activity.name,
+    date: activity.date,
+    path: activity.path,
+    description: activity.description,
+    ascents: activity.Ascents?.map(ascentModelToApi),
+  };
+}
+
+function ascentModelToApi(ascent: Ascent) {
+  return {
+    id: ascent.id,
+    date: ascent.date,
+    mountain:
+      ascent.Mountain != null ? mountainModelToApi(ascent.Mountain) : undefined,
+  };
+}
+
+function mountainModelToApi(mountain: Mountain) {
+  return {
+    id: mountain.id,
+    name: mountain.name,
+    location: mountain.location,
+    wikipediaLink: mountain.wikipediaLink,
+    abstract: mountain.abstract,
+  };
+}
+
 class ClientService {
   router: express.Router;
 
@@ -61,8 +93,7 @@ class ClientService {
       res.sendStatus(403);
     }
 
-    // TODO: Don't return all fields by default.
-    res.json(activity.toJSON());
+    res.json(activityModelToApi(activity));
   }
 
   // Registers a user with firebase and in the local db.

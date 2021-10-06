@@ -1,10 +1,12 @@
-import ListGroupItem from "react-bootstrap/ListGroupItem";
+import ListGroup from "react-bootstrap/ListGroup";
+
+import { AscentInfo } from "./activity_types";
 
 interface AscentListItemProps {
-  ascent: any;
+  ascent: AscentInfo;
 }
 function AscentListItem(props: AscentListItemProps) {
-  return <ListGroupItem>{props.ascent.name}</ListGroupItem>;
+  return <ListGroup.Item>{props.ascent.mountainName}</ListGroup.Item>;
 }
 
 export default AscentListItem;

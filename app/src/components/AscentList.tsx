@@ -2,9 +2,10 @@ import Container from "react-bootstrap/Container";
 import ListGroup from "react-bootstrap/ListGroup";
 
 import AscentListItem from "./AscentListItem";
+import { AscentInfo } from "./activity_types";
 
 interface AscentListProps {
-  ascents: any;
+  ascents: AscentInfo[];
 }
 function AscentList(props: AscentListProps) {
   return (
@@ -12,9 +13,8 @@ function AscentList(props: AscentListProps) {
       <h3>Ascents</h3>
       <ListGroup>
         {props.ascents.map((ascent: any) => {
-          return <AscentListItem ascent={ascent} />;
+          return <AscentListItem key={ascent.id} ascent={ascent} />;
         })}
-        ;
       </ListGroup>
     </Container>
   );

@@ -4,9 +4,11 @@ import Col from "react-bootstrap/Col";
 import Container from "react-bootstrap/Container";
 import Ratio from "react-bootstrap/Ratio";
 import Row from "react-bootstrap/Row";
+import { useJsApiLoader } from "@react-google-maps/api";
 import { RouteComponentProps, withRouter } from "react-router-dom";
 
-import ActivityMap from "./ActivityMap";
+import { ActivityInfo } from "./activity_types";
+import { ActivityMap } from "./ActivityMap";
 import AscentList from "./AscentList";
 import { useAuth } from "../contexts/auth";
 
@@ -14,13 +16,14 @@ type ActivityProps = RouteComponentProps<{
   activityId: string;
 }>;
 function Activity(props: ActivityProps) {
-  // TODO: Figure out google maps types.
-  const [name, setName] = useState("");
-  const [path, setPath] = useState<any>(null);
-  const [mountains, setMountains] = useState<any>(null);
-  const [bounds, setBounds] = useState<any>(null);
+  const [activity, setActivity] = useState<ActivityInfo | null>(null);
 
   const auth = useAuth();
+
+  const { isLoaded } = useJsApiLoader({
+    id: "google-map-script",
+    googleMapsApiKey: process.env.REACT_APP_GOOGLE_MAPS_API_KEY as string,
+  });
 
   useEffect(() => {
     async function fetchActivity() {
@@ -34,50 +37,56 @@ function Activity(props: ActivityProps) {
           },
         }
       );
-      const activity = await activityResp.json();
+      const activityJson = await activityResp.json();
 
-      const path = activity.path.coordinates.map((coords: any) => {
+      const path = activityJson.path.coordinates.map((coords: any) => {
         return { lat: coords[1], lng: coords[0] };
       });
 
-      const mountains = activity.Ascents.map((ascent: any) => {
-        const coords = ascent.Mountain.location.coordinates;
+      const ascents = activityJson.ascents.map((ascent: any) => {
+        const coords = ascent.mountain.location.coordinates;
         return {
-          id: ascent.Mountain.id,
-          name: ascent.Mountain.name,
-          coords: { lat: coords[1], lng: coords[0] },
+          id: ascent.id,
+          mountainId: ascent.mountain.id,
+          mountainName: ascent.mountain.name,
+          mountainCoords: { lat: coords[1], lng: coords[0] },
         };
       });
 
-      const boundingBox = toBBox(activity.path);
-      const bounds = {
-        north: boundingBox[3],
-        south: boundingBox[1],
-        west: boundingBox[0],
-        east: boundingBox[2],
-      };
+      const boundingBox = toBBox(activityJson.path);
+      const bounds = new google.maps.LatLngBounds(
+        { lat: boundingBox[1], lng: boundingBox[0] },
+        { lat: boundingBox[3], lng: boundingBox[2] }
+      );
 
-      setPath(path);
-      setMountains(mountains);
-      setBounds(bounds);
-      setName(activity.name);
+      setActivity({
+        name: activityJson.name,
+        date: activityJson.date,
+        path: path,
+        bounds: bounds,
+        ascents: ascents,
+      });
     }
 
-    if (path == null && auth.user != null) {
+    if (activity == null && auth.user != null) {
       fetchActivity();
     }
   });
 
-  return name ? (
+  return isLoaded && activity ? (
     <Container>
       <Row>
         <Col xs={7}>
-          <h2>{name}</h2>
-          <AscentList ascents={mountains} />
+          <h2>{activity.name}</h2>
+          <AscentList ascents={activity.ascents} />
         </Col>
         <Col xs={5}>
           <Ratio aspectRatio="4x3">
-            <ActivityMap path={path} mountains={mountains} bounds={bounds} />
+            <ActivityMap
+              path={activity.path}
+              ascents={activity.ascents}
+              bounds={activity.bounds}
+            />
           </Ratio>
         </Col>
       </Row>

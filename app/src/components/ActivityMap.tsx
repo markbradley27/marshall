@@ -1,29 +1,20 @@
 import { useCallback, useState } from "react";
-import {
-  GoogleMap,
-  Marker,
-  Polyline,
-  useJsApiLoader,
-} from "@react-google-maps/api";
+import { GoogleMap, Marker, Polyline } from "@react-google-maps/api";
+
+import { AscentInfo } from "./activity_types";
 
 const MAP_CONTAINER_STYLE = {
   width: "100%",
   height: "100%",
 };
 
-// TODO: Figure out google maps types.
 interface ActivityMapProps {
-  path: any;
-  mountains: any;
-  bounds: any;
+  path: google.maps.LatLng[];
+  ascents: AscentInfo[];
+  bounds: google.maps.LatLngBounds;
 }
 function ActivityMap(props: ActivityMapProps) {
-  const [, setMap] = useState<any>(null);
-
-  const { isLoaded } = useJsApiLoader({
-    id: "google-map-script",
-    googleMapsApiKey: process.env.REACT_APP_GOOGLE_MAPS_API_KEY as string,
-  });
+  const [, setMap] = useState<google.maps.Map | null>(null);
 
   const onLoad = useCallback(
     (map) => {
@@ -37,16 +28,16 @@ function ActivityMap(props: ActivityMapProps) {
     setMap(null);
   }, []);
 
-  return isLoaded ? (
+  return props.path ? (
     <GoogleMap
       mapContainerStyle={MAP_CONTAINER_STYLE}
-      options={{ mapTypeId: "terrain" }}
+      options={{ mapTypeId: google.maps.MapTypeId.TERRAIN }}
       onLoad={onLoad}
       onUnmount={onUnmount}
     >
       <Polyline path={props.path} />
-      {props.mountains.map((mountain: any) => {
-        return <Marker key={mountain.id} position={mountain.coords} />;
+      {props.ascents.map((ascent: any) => {
+        return <Marker key={ascent.id} position={ascent.mountainCoords} />;
       })}
     </GoogleMap>
   ) : (
@@ -54,4 +45,4 @@ function ActivityMap(props: ActivityMapProps) {
   );
 }
 
-export default ActivityMap;
+export { ActivityMap };
