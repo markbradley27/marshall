@@ -333,13 +333,15 @@ class StravaService {
             source: ActivitySource.strava,
             sourceId: req.query.activity_id.toString(),
           },
+          // TODO: Probably don't need the whole user here, just the UserId we
+          // already get for free.
           include: User,
         });
         if (!activity) {
           res.sendStatus(404);
           return;
         }
-        if (activity.user.id !== req.uid) {
+        if (activity.User.id !== req.uid) {
           res.sendStatus(403);
           return;
         }
