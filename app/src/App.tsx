@@ -2,6 +2,7 @@ import "./App.scss";
 import Activity from "./components/Activity";
 import Login from "./components/Login";
 import Logout from "./components/Logout";
+import Navbar from "./components/Navbar";
 import { AuthProvider } from "./contexts/auth";
 
 import { BrowserRouter, Route, Switch } from "react-router-dom";
@@ -11,7 +12,7 @@ function App() {
   return (
     <AuthProvider>
       <Container>
-        <h1>Marshall</h1>
+        <Navbar />
         <BrowserRouter>
           <Switch>
             <Route path="/login">

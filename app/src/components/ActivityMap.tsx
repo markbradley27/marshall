@@ -6,9 +6,9 @@ import {
   useJsApiLoader,
 } from "@react-google-maps/api";
 
-const mapContainerStyle = {
-  width: "1400px",
-  height: "800px",
+const MAP_CONTAINER_STYLE = {
+  width: "100%",
+  height: "100%",
 };
 
 // TODO: Figure out google maps types.
@@ -39,7 +39,7 @@ function ActivityMap(props: ActivityMapProps) {
 
   return isLoaded ? (
     <GoogleMap
-      mapContainerStyle={mapContainerStyle}
+      mapContainerStyle={MAP_CONTAINER_STYLE}
       options={{ mapTypeId: "terrain" }}
       onLoad={onLoad}
       onUnmount={onUnmount}

@@ -3,6 +3,10 @@ import { useAuth } from "../contexts/auth";
 
 import toBBox from "geojson-bounding-box";
 import { useEffect, useState } from "react";
+import Col from "react-bootstrap/Col";
+import Container from "react-bootstrap/Container";
+import Ratio from "react-bootstrap/Ratio";
+import Row from "react-bootstrap/Row";
 import { RouteComponentProps, withRouter } from "react-router-dom";
 
 type ActivityProps = RouteComponentProps<{
@@ -63,10 +67,18 @@ function Activity(props: ActivityProps) {
   });
 
   return name ? (
-    <div>
-      <h2>{name}</h2>
-      <ActivityMap path={path} mountains={mountains} bounds={bounds} />
-    </div>
+    <Container>
+      <Row>
+        <Col xs={7}>
+          <h2>{name}</h2>
+        </Col>
+        <Col xs={5}>
+          <Ratio aspectRatio="4x3">
+            <ActivityMap path={path} mountains={mountains} bounds={bounds} />
+          </Ratio>
+        </Col>
+      </Row>
+    </Container>
   ) : (
     <></>
   );
