@@ -1,7 +1,7 @@
 // TODO: Some of these methods should ABSOLUTELY NOT be deployed to prod!
 
 import express from "express";
-import { query } from "express-validator";
+import { param, query } from "express-validator";
 import admin from "firebase-admin";
 import togeojson from "togeojson";
 import { Logger } from "tslog";
@@ -57,6 +57,12 @@ class ClientService {
       verifyIdToken,
       this.getActivity.bind(this)
     );
+    this.router.get(
+      "/mountain/:mountainId",
+      param("mountainId").isNumeric(),
+      checkValidation,
+      this.getMountain.bind(this)
+    );
     this.router.post(
       "/user",
       query("email").isEmail(),
@@ -94,6 +100,15 @@ class ClientService {
     }
 
     res.json(activityModelToApi(activity));
+  }
+
+  // TODO: Support an include_nearby option.
+  async getMountain(req: express.Request, res: express.Response) {
+    const mountain = await Mountain.findOne({
+      where: { id: req.params.mountainId },
+    });
+
+    res.json(mountainModelToApi(mountain));
   }
 
   // Registers a user with firebase and in the local db.
