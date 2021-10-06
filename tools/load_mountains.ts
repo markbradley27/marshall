@@ -7,7 +7,7 @@ dotenv.config();
 import * as asyncMutex from "async-mutex";
 import * as readline from "readline";
 
-import { sequelize, Mountain, MountainSource } from "../src/model";
+import { Mountain, MountainSource } from "../src/model";
 
 const rl = readline.createInterface({
   input: process.stdin,

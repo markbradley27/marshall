@@ -3,7 +3,6 @@ dotenv.config();
 
 import { Command } from "commander";
 import got from "got";
-
 import { Logger } from "tslog";
 
 const logger: Logger = new Logger();

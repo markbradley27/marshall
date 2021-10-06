@@ -1,12 +1,11 @@
+import express from "express";
+import admin from "firebase-admin";
+import { Logger } from "tslog";
+
+import gpx from "./middleware/gpx";
 import "./model";
 import ClientService from "./services/client";
-import gpx from "./middleware/gpx";
 import StravaService from "./services/strava";
-
-import admin from "firebase-admin";
-import express from "express";
-
-import { Logger } from "tslog";
 
 const logger: Logger = new Logger();
 

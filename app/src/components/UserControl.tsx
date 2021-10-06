@@ -1,8 +1,8 @@
-import { useAuth } from "../contexts/auth";
-
 import Button from "react-bootstrap/Button";
 import Dropdown from "react-bootstrap/Dropdown";
 import DropdownButton from "react-bootstrap/DropdownButton";
+
+import { useAuth } from "../contexts/auth";
 
 function UserControl() {
   const auth = useAuth();

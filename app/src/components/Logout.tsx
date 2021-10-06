@@ -1,6 +1,6 @@
-import { useAuth } from "../contexts/auth";
-
 import { useEffect } from "react";
+
+import { useAuth } from "../contexts/auth";
 
 function Logout() {
   const auth = useAuth();

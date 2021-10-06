@@ -1,9 +1,9 @@
 import dotenv from "dotenv";
 dotenv.config();
 
-import { sequelize, Activity, Ascent, Mountain } from "../src/model";
-
 import { Command } from "commander";
+
+import { sequelize, Activity, Ascent, Mountain } from "../src/model";
 
 async function main() {
   const program = new Command();

@@ -1,8 +1,8 @@
-import { useAuth } from "../contexts/auth";
-
 import { useState } from "react";
 import Button from "react-bootstrap/Button";
 import Form from "react-bootstrap/Form";
+
+import { useAuth } from "../contexts/auth";
 
 function Login() {
   const [email, setEmail] = useState("");

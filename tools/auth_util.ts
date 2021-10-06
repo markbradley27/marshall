@@ -1,12 +1,10 @@
-import config from "../firebase-auth-util-config.json";
-
 import { Command } from "commander";
 import { initializeApp } from "firebase/app";
 import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
-
 import * as fs from "fs/promises";
-
 import { Logger } from "tslog";
+
+import config from "../firebase-auth-util-config.json";
 
 const logger: Logger = new Logger();
 

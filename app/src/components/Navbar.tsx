@@ -1,7 +1,7 @@
-import UserControl from "./UserControl";
-
 import Container from "react-bootstrap/Container";
 import BsNavbar from "react-bootstrap/Navbar";
+
+import UserControl from "./UserControl";
 
 function Navbar() {
   return (

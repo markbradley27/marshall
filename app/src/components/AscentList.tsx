@@ -1,7 +1,7 @@
-import AscentListItem from "./AscentListItem";
-
 import Container from "react-bootstrap/Container";
 import ListGroup from "react-bootstrap/ListGroup";
+
+import AscentListItem from "./AscentListItem";
 
 interface AscentListProps {
   ascents: any;

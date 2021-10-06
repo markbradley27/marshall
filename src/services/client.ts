@@ -1,15 +1,14 @@
 // TODO: Some of these methods should ABSOLUTELY NOT be deployed to prod!
 
-import { Activity, ActivitySource, Ascent, Mountain, User } from "../model";
-import { verifyIdToken } from "../middleware/auth";
-import { checkValidation } from "../middleware/validation";
-
-import admin from "firebase-admin";
 import express from "express";
 import { query } from "express-validator";
+import admin from "firebase-admin";
 import togeojson from "togeojson";
-
 import { Logger } from "tslog";
+
+import { verifyIdToken } from "../middleware/auth";
+import { checkValidation } from "../middleware/validation";
+import { Activity, ActivitySource, Ascent, Mountain, User } from "../model";
 
 const logger = new Logger();
 

@@ -1,6 +1,5 @@
-import admin from "firebase-admin";
 import express from "express";
-
+import admin from "firebase-admin";
 import { Logger } from "tslog";
 
 const logger: Logger = new Logger();

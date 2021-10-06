@@ -1,16 +1,15 @@
 // TODO: Gracefully handle duplicate activities.
 
-import { Activity, ActivitySource, User } from "../model";
-import { verifyIdToken } from "../middleware/auth";
-import { checkValidation } from "../middleware/validation";
-
 import crypto from "crypto";
 import express from "express";
 import { oneOf, query } from "express-validator";
 import geojsonPolyline from "geojson-polyline";
 import got from "got";
-
 import { Logger } from "tslog";
+
+import { verifyIdToken } from "../middleware/auth";
+import { checkValidation } from "../middleware/validation";
+import { Activity, ActivitySource, User } from "../model";
 
 const logger: Logger = new Logger();
 

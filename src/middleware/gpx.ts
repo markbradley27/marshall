@@ -1,7 +1,6 @@
 import express from "express";
 
 import { DOMParser } from "xmldom";
-import { Logger } from "tslog";
 
 export default function (
   req: express.Request,

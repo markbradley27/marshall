@@ -1,9 +1,3 @@
-import React, {
-  FunctionComponent,
-  useContext,
-  useEffect,
-  useState,
-} from "react";
 import {
   getAuth,
   onAuthStateChanged,
@@ -11,6 +5,12 @@ import {
   signOut,
   User,
 } from "firebase/auth";
+import React, {
+  FunctionComponent,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 
 interface AuthContextValue {
   user: User | null;

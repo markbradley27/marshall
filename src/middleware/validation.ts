@@ -1,6 +1,5 @@
 import express from "express";
 import { validationResult } from "express-validator";
-
 import { Logger } from "tslog";
 
 const logger: Logger = new Logger();

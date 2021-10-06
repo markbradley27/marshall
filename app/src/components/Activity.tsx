@@ -1,7 +1,3 @@
-import ActivityMap from "./ActivityMap";
-import AscentList from "./AscentList";
-import { useAuth } from "../contexts/auth";
-
 import toBBox from "geojson-bounding-box";
 import { useEffect, useState } from "react";
 import Col from "react-bootstrap/Col";
@@ -9,6 +5,10 @@ import Container from "react-bootstrap/Container";
 import Ratio from "react-bootstrap/Ratio";
 import Row from "react-bootstrap/Row";
 import { RouteComponentProps, withRouter } from "react-router-dom";
+
+import ActivityMap from "./ActivityMap";
+import AscentList from "./AscentList";
+import { useAuth } from "../contexts/auth";
 
 type ActivityProps = RouteComponentProps<{
   activityId: string;
