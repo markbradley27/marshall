@@ -68,12 +68,12 @@ function Activity(props: ActivityProps) {
       });
     }
 
-    if (activity == null && auth.user != null) {
+    if (activity == null && auth.user != null && isLoaded) {
       fetchActivity();
     }
   });
 
-  return isLoaded && activity ? (
+  return activity ? (
     <Container>
       <Row>
         <Col xs={7}>
