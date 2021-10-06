@@ -6,7 +6,13 @@ interface AscentListItemProps {
   ascent: AscentInfo;
 }
 function AscentListItem(props: AscentListItemProps) {
-  return <ListGroup.Item>{props.ascent.mountainName}</ListGroup.Item>;
+  return (
+    <ListGroup.Item>
+      <a href={"/mountain/" + props.ascent.mountainId}>
+        {props.ascent.mountainName}
+      </a>
+    </ListGroup.Item>
+  );
 }
 
 export default AscentListItem;
