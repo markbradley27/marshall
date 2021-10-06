@@ -161,7 +161,7 @@ class StravaService {
     const expireCutoff = new Date();
     expireCutoff.setMinutes(expireCutoff.getMinutes() + 30);
     if (user.stravaAccessTokenExpiresAt < expireCutoff) {
-      this.swapRefreshTokenForTokens(user);
+      await this.swapRefreshTokenForTokens(user);
     }
 
     return await got(url, {
