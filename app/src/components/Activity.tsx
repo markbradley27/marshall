@@ -1,4 +1,5 @@
 import ActivityMap from "./ActivityMap";
+import AscentList from "./AscentList";
 import { useAuth } from "../contexts/auth";
 
 import toBBox from "geojson-bounding-box";
@@ -43,6 +44,7 @@ function Activity(props: ActivityProps) {
         const coords = ascent.Mountain.location.coordinates;
         return {
           id: ascent.Mountain.id,
+          name: ascent.Mountain.name,
           coords: { lat: coords[1], lng: coords[0] },
         };
       });
@@ -55,10 +57,10 @@ function Activity(props: ActivityProps) {
         east: boundingBox[2],
       };
 
-      setName(activity.name);
       setPath(path);
       setMountains(mountains);
       setBounds(bounds);
+      setName(activity.name);
     }
 
     if (path == null && auth.user != null) {
@@ -71,6 +73,7 @@ function Activity(props: ActivityProps) {
       <Row>
         <Col xs={7}>
           <h2>{name}</h2>
+          <AscentList ascents={mountains} />
         </Col>
         <Col xs={5}>
           <Ratio aspectRatio="4x3">
