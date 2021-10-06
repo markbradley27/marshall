@@ -29,8 +29,9 @@ function Activity(props: ActivityProps) {
     async function fetchActivity() {
       const idToken = (await auth.user?.getIdToken()) as string;
       const activityResp: Response = await fetch(
-        "/api/client/activity?include_ascents=true&activity_id=" +
-          props.match.params.activityId,
+        "/api/client/activity/" +
+          props.match.params.activityId +
+          "?include_ascents=true",
         {
           headers: {
             "id-token": idToken,

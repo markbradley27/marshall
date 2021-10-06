@@ -50,8 +50,8 @@ class ClientService {
   constructor() {
     this.router = express.Router();
     this.router.get(
-      "/activity",
-      query("activity_id").isNumeric(),
+      "/activity/:activityId",
+      param("activityId").isNumeric(),
       query("include_ascents").default("false").isBoolean(),
       checkValidation,
       verifyIdToken,
@@ -82,7 +82,7 @@ class ClientService {
 
   async getActivity(req: express.Request, res: express.Response) {
     const activity = await Activity.findOne({
-      where: { id: req.query.activity_id },
+      where: { id: req.params.activityId },
       include:
         req.query.include_ascents === "true"
           ? {
