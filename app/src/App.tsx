@@ -1,15 +1,16 @@
-import "./App.css";
+import "./App.scss";
 import Activity from "./components/Activity";
 import Login from "./components/Login";
 import Logout from "./components/Logout";
 import { AuthProvider } from "./contexts/auth";
 
 import { BrowserRouter, Route, Switch } from "react-router-dom";
+import Container from "react-bootstrap/Container";
 
 function App() {
   return (
     <AuthProvider>
-      <div>
+      <Container>
         <h1>Marshall</h1>
         <BrowserRouter>
           <Switch>
@@ -24,7 +25,7 @@ function App() {
             </Route>
           </Switch>
         </BrowserRouter>
-      </div>
+      </Container>
     </AuthProvider>
   );
 }

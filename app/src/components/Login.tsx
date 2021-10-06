@@ -1,6 +1,8 @@
 import { useAuth } from "../contexts/auth";
 
 import { useState } from "react";
+import Button from "react-bootstrap/Button";
+import Form from "react-bootstrap/Form";
 
 function Login() {
   const [email, setEmail] = useState("");
@@ -17,29 +19,29 @@ function Login() {
     return <h2>Signed in as {auth.user.displayName}.</h2>;
   } else {
     return (
-      <form onSubmit={handleSubmit}>
-        <label>
-          <p>Email</p>
-          <input
-            type="text"
+      <Form onSubmit={handleSubmit}>
+        <Form.Group className="mb-3" controlId="formBasicEmail">
+          <Form.Label>Email</Form.Label>
+          <Form.Control
+            type="email"
+            placeholder="Enter email"
             onChange={(e) => {
               setEmail(e.target.value);
             }}
           />
-        </label>
-        <label>
-          <p>Password</p>
-          <input
+        </Form.Group>
+        <Form.Group className="mb-3" controlId="formBasicPassword">
+          <Form.Label>Password</Form.Label>
+          <Form.Control
             type="password"
+            placeholder="Enter password"
             onChange={(e) => {
               setPassword(e.target.value);
             }}
           />
-        </label>
-        <div>
-          <button type="submit">Submit</button>
-        </div>
-      </form>
+        </Form.Group>
+        <Button type="submit">Submit</Button>
+      </Form>
     );
   }
 }
