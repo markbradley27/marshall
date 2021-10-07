@@ -67,7 +67,9 @@ function Activity(props: ActivityProps) {
 
       setActivity({
         name: activityJson.name,
-        date: activityJson.date,
+        source: activityJson.source,
+        sourceId: activityJson.sourceId,
+        date: new Date(activityJson.date),
         path: path,
         bounds: bounds,
         ascents: ascents,
@@ -84,6 +86,14 @@ function Activity(props: ActivityProps) {
       <Row>
         <Col xs={7}>
           <h2>{activity.name}</h2>
+          <h4>{activity.date.toLocaleString()}</h4>
+          {activity.source === "strava" && (
+            <h4>
+              <a href={"http://www.strava.com/activities/" + activity.sourceId}>
+                Sourced from Strava
+              </a>
+            </h4>
+          )}
           <AscentList ascents={activity.ascents} />
         </Col>
         <Col xs={5}>
