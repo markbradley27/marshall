@@ -2,7 +2,7 @@
 
 import crypto from "crypto";
 import express from "express";
-import { oneOf, query } from "express-validator";
+import { oneOf, param, query } from "express-validator";
 import geojsonPolyline from "geojson-polyline";
 import got from "got";
 import { Logger } from "tslog";
@@ -84,15 +84,15 @@ class StravaService {
       this.getAuthorizeCallback.bind(this)
     );
     this.router.post(
-      "/activity",
-      query("activity_id").optional().isInt(),
+      "/activity/:activityId?",
+      param("activityId").optional().isInt(),
       checkValidation,
       verifyIdToken,
       this.postActivity.bind(this)
     );
     this.router.delete(
-      "/activity",
-      query("activity_id").optional().isInt(),
+      "/activity/:activityId?",
+      param("activityId").optional().isInt(),
       checkValidation,
       verifyIdToken,
       this.deleteActivity.bind(this)
@@ -265,12 +265,12 @@ class StravaService {
 
   async postActivity(req: express.Request, res: express.Response) {
     logger.info(
-      `Got load activities request; uid: ${req.uid}; activity_id: ${req.query.activity_id}`
+      `Got load activities request; uid: ${req.uid}; activityId: ${req.params.activityId}`
     );
     const user = await User.findOne({ where: { id: req.uid } });
 
-    if (req.query.activity_id) {
-      const activityId = parseInt(req.query.activity_id as string, 10);
+    if (req.params.activityId) {
+      const activityId = parseInt(req.params.activityId as string, 10);
       try {
         await this.loadActivityById(activityId, user);
       } catch (error) {
@@ -323,25 +323,22 @@ class StravaService {
 
   async deleteActivity(req: express.Request, res: express.Response) {
     logger.info(
-      `Got delete activities request; uid: ${req.uid}; activity_id: ${req.query.activity_id}`
+      `Got delete activities request; uid: ${req.uid}; activityId: ${req.params.activityId}`
     );
 
     try {
-      if (req.query.activity_id) {
+      if (req.params.activityId) {
         const activity = await Activity.findOne({
           where: {
             source: ActivitySource.strava,
-            sourceId: req.query.activity_id.toString(),
+            sourceId: req.params.activityId.toString(),
           },
-          // TODO: Probably don't need the whole user here, just the UserId we
-          // already get for free.
-          include: User,
         });
         if (!activity) {
           res.sendStatus(404);
           return;
         }
-        if (activity.User.id !== req.uid) {
+        if (activity.UserId !== req.uid) {
           res.sendStatus(403);
           return;
         }
