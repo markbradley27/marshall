@@ -1,6 +1,10 @@
+import { MountainInfo } from "./mountain_types";
+
 export interface ActivityInfo {
   name: string;
   date: Date;
+  source: string;
+  sourceId: string;
   path: google.maps.LatLng[];
   bounds: google.maps.LatLngBounds;
   ascents: AscentInfo[];
@@ -8,7 +12,6 @@ export interface ActivityInfo {
 
 export interface AscentInfo {
   id: number;
-  mountainId: number;
-  mountainName: string;
-  mountainCoords: google.maps.LatLng;
+  n: number;
+  mountain: MountainInfo;
 }

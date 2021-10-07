@@ -44,13 +44,18 @@ function Activity(props: ActivityProps) {
         return { lat: coords[1], lng: coords[0] };
       });
 
-      const ascents = activityJson.ascents.map((ascent: any) => {
+      // TODO: Come up with some way of sorting the ascents by the order in
+      // which they happend during the activity.
+      const ascents = activityJson.ascents.map((ascent: any, idx: number) => {
         const coords = ascent.mountain.location.coordinates;
         return {
           id: ascent.id,
-          mountainId: ascent.mountain.id,
-          mountainName: ascent.mountain.name,
-          mountainCoords: { lat: coords[1], lng: coords[0] },
+          n: idx + 1,
+          mountain: {
+            id: ascent.mountain.id,
+            name: ascent.mountain.name,
+            coords: { lat: coords[1], lng: coords[0] },
+          },
         };
       });
 

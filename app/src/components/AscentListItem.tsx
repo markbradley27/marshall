@@ -8,8 +8,9 @@ interface AscentListItemProps {
 function AscentListItem(props: AscentListItemProps) {
   return (
     <ListGroup.Item>
-      <a href={"/mountain/" + props.ascent.mountainId}>
-        {props.ascent.mountainName}
+      {props.ascent.n}:
+      <a href={"/mountain/" + props.ascent.mountain.id}>
+        {props.ascent.mountain.name}
       </a>
     </ListGroup.Item>
   );

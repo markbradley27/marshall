@@ -1,7 +1,8 @@
 import { useCallback, useState } from "react";
-import { GoogleMap, Marker } from "@react-google-maps/api";
+import { GoogleMap } from "@react-google-maps/api";
 
 import { MountainInfo } from "./mountain_types";
+import MountainMarker from "./MountainMarker";
 
 const MAP_CONTAINER_STYLE = {
   width: "100%",
@@ -31,7 +32,7 @@ function MountainMap(props: MountainMapProps) {
       onLoad={onLoad}
       onUnmount={onUnmount}
     >
-      return <Marker position={props.mountain.coords} />;
+      <MountainMarker coords={props.mountain.coords} />
     </GoogleMap>
   ) : (
     <></>

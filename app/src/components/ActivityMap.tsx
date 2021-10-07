@@ -1,7 +1,8 @@
 import { useCallback, useState } from "react";
-import { GoogleMap, Marker, Polyline } from "@react-google-maps/api";
+import { GoogleMap, Polyline } from "@react-google-maps/api";
 
 import { AscentInfo } from "./activity_types";
+import MountainMarker from "./MountainMarker";
 
 const MAP_CONTAINER_STYLE = {
   width: "100%",
@@ -35,9 +36,15 @@ function ActivityMap(props: ActivityMapProps) {
       onLoad={onLoad}
       onUnmount={onUnmount}
     >
-      <Polyline path={props.path} />
+      <Polyline path={props.path} options={{ strokeColor: "green" }} />
       {props.ascents.map((ascent: any) => {
-        return <Marker key={ascent.id} position={ascent.mountainCoords} />;
+        return (
+          <MountainMarker
+            key={ascent.id}
+            coords={ascent.mountain.coords}
+            label={ascent.n.toString()}
+          />
+        );
       })}
     </GoogleMap>
   ) : (
