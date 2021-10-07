@@ -52,6 +52,8 @@ interface ActivityAttributes {
   date: Date;
   path: any;
   description: string;
+
+  UserId?: string;
 }
 
 interface ActivityCreationAttributes
@@ -175,6 +177,9 @@ Activity.init(
 interface AscentAttributes {
   id: number;
   date: Date;
+
+  MountainId?: number;
+  UserId?: string;
 }
 
 interface AscentCreationAttributes extends Optional<AscentAttributes, "id"> {}
