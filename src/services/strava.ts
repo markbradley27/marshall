@@ -343,6 +343,8 @@ class StravaService {
           return;
         }
         await activity.destroy();
+      } else {
+        await Activity.destroy({ where: { UserId: req.uid } });
       }
     } catch (error) {
       res.status(500).send(error.toString);
