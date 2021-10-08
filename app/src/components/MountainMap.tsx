@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 import { GoogleMap } from "@react-google-maps/api";
 
-import { MountainInfo } from "./mountain_types";
+import { MountainInfo, MountainState } from "./mountain_types";
 import MountainMarker from "./MountainMarker";
 
 const MAP_CONTAINER_STYLE = {
@@ -11,6 +11,7 @@ const MAP_CONTAINER_STYLE = {
 
 interface MountainMapProps {
   mountain: MountainInfo;
+  nearby: MountainInfo[];
 }
 function MountainMap(props: MountainMapProps) {
   const [, setMap] = useState<google.maps.Map | null>(null);
@@ -33,6 +34,15 @@ function MountainMap(props: MountainMapProps) {
       onUnmount={onUnmount}
     >
       <MountainMarker coords={props.mountain.coords} />
+      {props.nearby.map((nearby) => {
+        return (
+          <MountainMarker
+            key={nearby.id}
+            coords={nearby.coords}
+            state={MountainState.SECONDARY}
+          />
+        );
+      })}
     </GoogleMap>
   ) : (
     <></>

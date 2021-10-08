@@ -1,14 +1,21 @@
 // TODO: Some of these methods should ABSOLUTELY NOT be deployed to prod!
 
 import express from "express";
-import { param, query } from "express-validator";
+import { oneOf, param, query } from "express-validator";
 import admin from "firebase-admin";
 import togeojson from "togeojson";
 import { Logger } from "tslog";
 
 import { verifyIdToken } from "../middleware/auth";
 import { checkValidation } from "../middleware/validation";
-import { Activity, ActivitySource, Ascent, Mountain, User } from "../model";
+import {
+  Activity,
+  ActivitySource,
+  Ascent,
+  Mountain,
+  sequelize,
+  User,
+} from "../model";
 
 const logger = new Logger();
 
@@ -34,13 +41,17 @@ function ascentModelToApi(ascent: Ascent) {
   };
 }
 
-function mountainModelToApi(mountain: Mountain) {
+interface MountainPlus extends Mountain {
+  distance?: number;
+}
+function mountainModelToApi(mountain: MountainPlus) {
   return {
     id: mountain.id,
     name: mountain.name,
     location: mountain.location,
     wikipediaLink: mountain.wikipediaLink,
     abstract: mountain.abstract,
+    distance: mountain.distance,
   };
 }
 
@@ -60,6 +71,10 @@ class ClientService {
     this.router.get(
       "/mountain/:mountainId",
       param("mountainId").isNumeric(),
+      oneOf([
+        query("include_nearby").optional().isBoolean(),
+        query("include_nearby").optional().isNumeric(),
+      ]),
       checkValidation,
       this.getMountain.bind(this)
     );
@@ -102,13 +117,46 @@ class ClientService {
     res.json(activityModelToApi(activity));
   }
 
-  // TODO: Support an include_nearby option.
   async getMountain(req: express.Request, res: express.Response) {
-    const mountain = await Mountain.findOne({
-      where: { id: req.params.mountainId },
-    });
+    const includeNearby = req.query.include_nearby;
+    let includeRadius = 0;
+    if (includeNearby === "true") {
+      includeRadius = 100000;
+    } else if (includeNearby !== "false") {
+      includeRadius = parseInt(includeNearby as string, 10);
+    }
 
-    res.json(mountainModelToApi(mountain));
+    if (!includeRadius) {
+      const mountain = await Mountain.findOne({
+        where: { id: req.params.mountainId },
+      });
+      res.json(mountainModelToApi(mountain));
+      return;
+    }
+
+    const nearby: any = await sequelize.query(
+      `
+        select
+          other.*,
+          ST_Distance(main.location, other.location) as distance
+        from "Mountains" as main cross join "Mountains" as other
+        where
+          main.id=$mountainId and
+          ST_DWithin(main.location, other.location, $includeRadius)
+        order by distance;`,
+      {
+        bind: {
+          mountainId: req.params.mountainId,
+          includeRadius,
+        },
+      }
+    );
+
+    const main = nearby[0][0];
+    delete main.distance;
+    const resJson: any = mountainModelToApi(main);
+    resJson.nearby = nearby[0].slice(1).map(mountainModelToApi);
+    res.json(resJson);
   }
 
   // Registers a user with firebase and in the local db.

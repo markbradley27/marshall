@@ -8,12 +8,12 @@ interface MountainMarkerProps {
   state?: MountainState;
 }
 export default function MountainMarker(props: MountainMarkerProps) {
-  let scale = 2;
+  let scale = 3;
   switch (props.state) {
     case MountainState.NEUTRAL:
       break;
     case MountainState.SECONDARY:
-      scale /= 1.3;
+      scale /= 1.5;
       break;
     case MountainState.HIGHLIGHTED:
       scale *= 1.3;

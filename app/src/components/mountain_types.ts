@@ -14,3 +14,16 @@ export interface MountainInfo {
 
   state?: MountainState;
 }
+
+export function apiMountainToMountainInfo(apiMountain: any) {
+  return {
+    id: apiMountain.id,
+    name: apiMountain.name,
+    coords: new google.maps.LatLng({
+      lat: apiMountain.location.coordinates[1],
+      lng: apiMountain.location.coordinates[0],
+    }),
+    wikipediaLink: apiMountain.wikipediaLink,
+    abstract: apiMountain.abstract,
+  };
+}
