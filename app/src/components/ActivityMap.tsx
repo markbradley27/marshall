@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 import { GoogleMap, Polyline } from "@react-google-maps/api";
 
-import { AscentInfo } from "./activity_types";
+import { AscentState } from "../api_shim";
 import MountainMarker from "./MountainMarker";
 
 const MAP_CONTAINER_STYLE = {
@@ -11,7 +11,7 @@ const MAP_CONTAINER_STYLE = {
 
 interface ActivityMapProps {
   path: google.maps.LatLng[];
-  ascents: AscentInfo[];
+  ascents: AscentState[];
   bounds: google.maps.LatLngBounds;
 }
 function ActivityMap(props: ActivityMapProps) {

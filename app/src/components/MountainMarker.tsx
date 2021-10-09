@@ -1,21 +1,21 @@
 import { Marker } from "@react-google-maps/api";
 
-import { MountainState } from "./mountain_types";
+import { MountainUiState } from "../api_shim";
 
 interface MountainMarkerProps {
   coords: google.maps.LatLng;
   label?: string;
-  state?: MountainState;
+  state?: MountainUiState;
 }
 export default function MountainMarker(props: MountainMarkerProps) {
   let scale = 3;
   switch (props.state) {
-    case MountainState.NEUTRAL:
+    case MountainUiState.NEUTRAL:
       break;
-    case MountainState.SECONDARY:
+    case MountainUiState.SECONDARY:
       scale /= 1.5;
       break;
-    case MountainState.HIGHLIGHTED:
+    case MountainUiState.HIGHLIGHTED:
       scale *= 1.3;
       break;
   }

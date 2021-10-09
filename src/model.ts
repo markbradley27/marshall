@@ -178,6 +178,7 @@ interface AscentAttributes {
   id: number;
   date: Date;
 
+  ActivityId?: number;
   MountainId?: number;
   UserId?: string;
 }

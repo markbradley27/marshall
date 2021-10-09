@@ -19,7 +19,7 @@ import {
 
 const logger = new Logger();
 
-function activityModelToApi(activity: Activity) {
+function activityModelToApi(activity: Activity): any {
   return {
     id: activity.id,
     source: activity.source,
@@ -28,31 +28,42 @@ function activityModelToApi(activity: Activity) {
     date: activity.date,
     path: activity.path,
     description: activity.description,
+
     ascents: activity.Ascents?.map(ascentModelToApi),
+    userId: activity.UserId,
   };
 }
 
-function ascentModelToApi(ascent: Ascent) {
+function ascentModelToApi(ascent: Ascent): any {
   return {
     id: ascent.id,
     date: ascent.date,
+    activityId: ascent.ActivityId,
+    activity:
+      ascent.Activity != null ? activityModelToApi(ascent.Activity) : undefined,
+    mountainId: ascent.MountainId,
     mountain:
       ascent.Mountain != null ? mountainModelToApi(ascent.Mountain) : undefined,
-    mountainId: ascent.Mountain != null ? undefined : ascent.MountainId,
-    activityId: ascent.ActivityId,
+    userId: ascent.UserId,
   };
 }
 
 interface MountainPlus extends Mountain {
   distance?: number;
 }
-function mountainModelToApi(mountain: MountainPlus) {
+function mountainModelToApi(mountain: MountainPlus): any {
   return {
     id: mountain.id,
+    source: mountain.source,
+    sourceId: mountain.sourceId,
     name: mountain.name,
     location: mountain.location,
     wikipediaLink: mountain.wikipediaLink,
     abstract: mountain.abstract,
+    ascents:
+      mountain.Ascents != null
+        ? mountain.Ascents.map(ascentModelToApi)
+        : undefined,
     distance: mountain.distance,
   };
 }

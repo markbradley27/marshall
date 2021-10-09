@@ -1,9 +1,9 @@
 import ListGroup from "react-bootstrap/ListGroup";
 
-import { MountainInfo } from "./mountain_types";
+import { MountainState } from "../api_shim";
 
 interface MountainListItemProps {
-  mountain: MountainInfo;
+  mountain: MountainState;
 }
 
 export default function MountainListItem(props: MountainListItemProps) {

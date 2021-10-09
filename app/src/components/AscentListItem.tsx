@@ -2,10 +2,10 @@ import Col from "react-bootstrap/Col";
 import ListGroup from "react-bootstrap/ListGroup";
 import Row from "react-bootstrap/Row";
 
-import { AscentInfo } from "./activity_types";
+import { AscentState } from "../api_shim";
 
 interface AscentListItemProps {
-  ascent: AscentInfo;
+  ascent: AscentState;
 }
 function AscentListItem(props: AscentListItemProps) {
   return (
@@ -21,7 +21,7 @@ function AscentListItem(props: AscentListItemProps) {
         )}
         <Col>
           <a href={"/activity/" + props.ascent.activityId}>
-            {props.ascent.date}
+            {props.ascent.date.toLocaleString()}
           </a>
         </Col>
       </Row>

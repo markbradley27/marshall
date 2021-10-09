@@ -6,7 +6,7 @@ import Row from "react-bootstrap/Row";
 import { useJsApiLoader } from "@react-google-maps/api";
 import { RouteComponentProps, withRouter } from "react-router-dom";
 
-import { apiMountainToMountainInfo, MountainInfo } from "./mountain_types";
+import { apiFetchMountain, MountainState } from "../api_shim";
 import MountainList from "./MountainList";
 import MountainMap from "./MountainMap";
 import AscentList from "./AscentList";
@@ -16,7 +16,7 @@ type MountainProps = RouteComponentProps<{
   mountainId: string;
 }>;
 function Mountain(props: MountainProps) {
-  const [mountain, setMountain] = useState<MountainInfo | null>(null);
+  const [mountain, setMountain] = useState<MountainState | null>(null);
 
   const auth = useAuth();
 
@@ -27,23 +27,11 @@ function Mountain(props: MountainProps) {
 
   useEffect(() => {
     async function fetchMountain() {
-      let fetchUrl =
-        "/api/client/mountains/" +
-        props.match.params.mountainId +
-        "?include_nearby=true";
-      let fetchOptions: any = {};
-      if (auth.user != null) {
-        fetchUrl += "&include_ascents=true";
-        const idToken = (await auth.user.getIdToken()) as string;
-        fetchOptions.headers = {
-          "id-token": idToken,
-        };
-      }
-      const mountainResp: Response = await fetch(fetchUrl, fetchOptions);
-      const mountainJson = await mountainResp.json();
-
-      const mountain: MountainInfo = apiMountainToMountainInfo(mountainJson);
-      mountain.nearby = mountainJson.nearby.map(apiMountainToMountainInfo);
+      const idToken = (await auth.user?.getIdToken()) as string;
+      const mountain = await apiFetchMountain(
+        parseInt(props.match.params.mountainId, 10),
+        { idToken, includeNearby: true, includeAscents: true }
+      );
       setMountain(mountain);
     }
 
@@ -60,20 +48,16 @@ function Mountain(props: MountainProps) {
             <a href={mountain.wikipediaLink}>{mountain.name}</a>
           </h2>
           {mountain.abstract && <p>{mountain.abstract}</p>}
-          <MountainList
-            title="Nearby peaks:"
-            mountains={mountain.nearby as MountainInfo[]}
-          />
+          {mountain.nearby && (
+            <MountainList title="Nearby peaks:" mountains={mountain.nearby} />
+          )}
           {mountain.ascents && (
             <AscentList title="Your ascents:" ascents={mountain.ascents} />
           )}
         </Col>
         <Col xs={5}>
           <Ratio aspectRatio="4x3">
-            <MountainMap
-              mountain={mountain}
-              nearby={mountain.nearby as MountainInfo[]}
-            />
+            <MountainMap mountain={mountain} nearby={mountain.nearby} />
           </Ratio>
         </Col>
       </Row>
