@@ -94,7 +94,7 @@ function Activity(props: ActivityProps) {
               </a>
             </h4>
           )}
-          <AscentList ascents={activity.ascents} />
+          <AscentList title="Ascents" ascents={activity.ascents} />
         </Col>
         <Col xs={5}>
           <Ratio aspectRatio="4x3">

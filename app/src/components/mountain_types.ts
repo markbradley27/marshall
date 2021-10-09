@@ -1,3 +1,5 @@
+import { AscentInfo } from "./activity_types";
+
 export enum MountainState {
   NEUTRAL,
   SECONDARY,
@@ -10,12 +12,18 @@ export interface MountainInfo {
   coords: google.maps.LatLng;
   wikipediaLink?: string;
   abstract?: string;
+
   nearby?: MountainInfo[];
+  ascents?: AscentInfo[];
 
   state?: MountainState;
 }
 
 export function apiMountainToMountainInfo(apiMountain: any) {
+  let nearby =
+    apiMountain.nearby != null
+      ? apiMountain.nearby.map(apiMountainToMountainInfo)
+      : undefined;
   return {
     id: apiMountain.id,
     name: apiMountain.name,
@@ -25,5 +33,7 @@ export function apiMountainToMountainInfo(apiMountain: any) {
     }),
     wikipediaLink: apiMountain.wikipediaLink,
     abstract: apiMountain.abstract,
+    nearby: nearby,
+    ascents: apiMountain.ascents,
   };
 }

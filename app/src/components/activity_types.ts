@@ -12,6 +12,8 @@ export interface ActivityInfo {
 
 export interface AscentInfo {
   id: number;
-  n: number;
-  mountain: MountainInfo;
+  date: Date;
+  activityId?: number;
+  n?: number;
+  mountain?: MountainInfo;
 }

@@ -9,12 +9,16 @@ import { RouteComponentProps, withRouter } from "react-router-dom";
 import { apiMountainToMountainInfo, MountainInfo } from "./mountain_types";
 import MountainList from "./MountainList";
 import MountainMap from "./MountainMap";
+import AscentList from "./AscentList";
+import { useAuth } from "../contexts/auth";
 
 type MountainProps = RouteComponentProps<{
   mountainId: string;
 }>;
 function Mountain(props: MountainProps) {
   const [mountain, setMountain] = useState<MountainInfo | null>(null);
+
+  const auth = useAuth();
 
   const { isLoaded } = useJsApiLoader({
     id: "google-map-script",
@@ -23,11 +27,19 @@ function Mountain(props: MountainProps) {
 
   useEffect(() => {
     async function fetchMountain() {
-      const mountainResp: Response = await fetch(
+      let fetchUrl =
         "/api/client/mountains/" +
-          props.match.params.mountainId +
-          "?include_nearby=true"
-      );
+        props.match.params.mountainId +
+        "?include_nearby=true";
+      let fetchOptions: any = {};
+      if (auth.user != null) {
+        fetchUrl += "&include_ascents=true";
+        const idToken = (await auth.user.getIdToken()) as string;
+        fetchOptions.headers = {
+          "id-token": idToken,
+        };
+      }
+      const mountainResp: Response = await fetch(fetchUrl, fetchOptions);
       const mountainJson = await mountainResp.json();
 
       const mountain: MountainInfo = apiMountainToMountainInfo(mountainJson);
@@ -52,6 +64,9 @@ function Mountain(props: MountainProps) {
             title="Nearby peaks:"
             mountains={mountain.nearby as MountainInfo[]}
           />
+          {mountain.ascents && (
+            <AscentList title="Your ascents:" ascents={mountain.ascents} />
+          )}
         </Col>
         <Col xs={5}>
           <Ratio aspectRatio="4x3">

@@ -6,7 +6,7 @@ import admin from "firebase-admin";
 import togeojson from "togeojson";
 import { Logger } from "tslog";
 
-import { verifyIdToken } from "../middleware/auth";
+import { maybeVerifyIdToken, verifyIdToken } from "../middleware/auth";
 import { checkValidation } from "../middleware/validation";
 import {
   Activity,
@@ -38,6 +38,8 @@ function ascentModelToApi(ascent: Ascent) {
     date: ascent.date,
     mountain:
       ascent.Mountain != null ? mountainModelToApi(ascent.Mountain) : undefined,
+    mountainId: ascent.Mountain != null ? undefined : ascent.MountainId,
+    activityId: ascent.ActivityId,
   };
 }
 
@@ -69,13 +71,22 @@ class ClientService {
       this.getActivities.bind(this)
     );
     this.router.get(
+      "/ascents/:mountainId",
+      param("mountainId").isNumeric(),
+      checkValidation,
+      verifyIdToken,
+      this.getAscents.bind(this)
+    );
+    this.router.get(
       "/mountains/:mountainId",
       param("mountainId").isNumeric(),
       oneOf([
         query("include_nearby").optional().isBoolean(),
         query("include_nearby").optional().isNumeric(),
       ]),
+      query("include_ascents").optional().isBoolean(),
       checkValidation,
+      maybeVerifyIdToken,
       this.getMountains.bind(this)
     );
     this.router.post(
@@ -117,7 +128,20 @@ class ClientService {
     res.json(activityModelToApi(activity));
   }
 
+  async getAscents(req: express.Request, res: express.Response) {
+    const mountainId = parseInt(req.params.mountainId, 10);
+    const ascents = await Ascent.findAll({
+      where: { UserId: req.uid, MountainId: mountainId },
+    });
+    res.json(ascents.map(ascentModelToApi));
+  }
+
   async getMountains(req: express.Request, res: express.Response) {
+    if (req.query.include_ascents === "true" && req.uid === undefined) {
+      res.sendStatus(403);
+      return;
+    }
+
     const includeNearby = req.query.include_nearby;
     let includeRadius = 0;
     if (includeNearby === "true") {
@@ -126,16 +150,16 @@ class ClientService {
       includeRadius = parseInt(includeNearby as string, 10);
     }
 
+    let resJson: any;
+
     if (!includeRadius) {
       const mountain = await Mountain.findOne({
         where: { id: req.params.mountainId },
       });
-      res.json(mountainModelToApi(mountain));
-      return;
-    }
-
-    const nearby: any = await sequelize.query(
-      `
+      resJson = mountainModelToApi(mountain);
+    } else {
+      const nearby: any = await sequelize.query(
+        `
         select
           other.*,
           ST_Distance(main.location, other.location) as distance
@@ -144,18 +168,27 @@ class ClientService {
           main.id=$mountainId and
           ST_DWithin(main.location, other.location, $includeRadius)
         order by distance;`,
-      {
-        bind: {
-          mountainId: req.params.mountainId,
-          includeRadius,
-        },
-      }
-    );
+        {
+          bind: {
+            mountainId: req.params.mountainId,
+            includeRadius,
+          },
+        }
+      );
 
-    const main = nearby[0][0];
-    delete main.distance;
-    const resJson: any = mountainModelToApi(main);
-    resJson.nearby = nearby[0].slice(1).map(mountainModelToApi);
+      const main = nearby[0][0];
+      delete main.distance;
+      resJson = mountainModelToApi(main);
+      resJson.nearby = nearby[0].slice(1).map(mountainModelToApi);
+    }
+
+    if (req.query.include_ascents === "true") {
+      const ascents = await Ascent.findAll({
+        where: { UserId: req.uid, MountainId: req.params.mountainId },
+      });
+      resJson.ascents = ascents.map(ascentModelToApi);
+    }
+
     res.json(resJson);
   }
 
