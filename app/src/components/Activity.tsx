@@ -38,8 +38,8 @@ function Activity(props: ActivityProps) {
 
       // TODO: Come up with some way of sorting the ascents by the order in
       // which they happend during the activity.
-      activity.ascents?.map((ascent: AscentState, idx: number) => {
-        ascent.n = idx;
+      activity.ascents?.forEach((ascent: AscentState, idx: number) => {
+        ascent.n = idx + 1;
       });
 
       setActivity(activity);
