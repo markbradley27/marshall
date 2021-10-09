@@ -194,6 +194,13 @@ class Ascent
   createdAt!: Date;
   updatedAt!: Date;
 
+  getActivity!: BelongsToGetAssociationMixin<Activity>;
+  setActivity!: BelongsToSetAssociationMixin<Activity, number>;
+  createActivity!: BelongsToCreateAssociationMixin<Activity>;
+
+  ActivityId!: number;
+  readonly Activity?: Activity;
+
   getMountain!: BelongsToGetAssociationMixin<Mountain>;
   setMountain!: BelongsToSetAssociationMixin<Mountain, number>;
   createMountain!: BelongsToCreateAssociationMixin<Mountain>;
