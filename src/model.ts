@@ -237,6 +237,57 @@ Ascent.init(
   { sequelize }
 );
 
+interface SummitListAttributes {
+  id: number;
+  name: string;
+}
+
+interface SummitListCreationAttributes
+  extends Optional<SummitListAttributes, "id"> {}
+
+class SummitList
+  extends Model<SummitListAttributes, SummitListCreationAttributes>
+  implements SummitListAttributes
+{
+  id!: number;
+  name!: string;
+
+  createdAt!: Date;
+  updatedAt!: Date;
+
+  addMountain!: HasManyAddAssociationMixin<Mountain, number>;
+  addMountains!: HasManyAddAssociationsMixin<Mountain, number>;
+  countMountains!: HasManyCountAssociationsMixin;
+  createMountain!: HasManyCreateAssociationMixin<Mountain>;
+  getMountains!: HasManyGetAssociationsMixin<Mountain>;
+  hasMountain!: HasManyHasAssociationMixin<Mountain, number>;
+  hasMountains!: HasManyHasAssociationsMixin<Mountain, number>;
+  removeMountain!: HasManyRemoveAssociationMixin<Mountain, number>;
+  removeMountains!: HasManyRemoveAssociationsMixin<Mountain, number>;
+  setMountains!: HasManySetAssociationsMixin<Mountain, number>;
+
+  readonly Mountains?: Mountain[];
+
+  static associations: {
+    mountains: Association<SummitList, Mountain>;
+  };
+}
+
+SummitList.init(
+  {
+    id: {
+      type: DataTypes.INTEGER,
+      autoIncrement: true,
+      primaryKey: true,
+    },
+    name: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+  },
+  { sequelize }
+);
+
 enum MountainSource {
   dbpedia = "dbpedia",
 }
