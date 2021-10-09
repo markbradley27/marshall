@@ -8,7 +8,7 @@ async function apiFetch(url: string, idToken?: string) {
   return (await fetch(url, { headers })).json();
 }
 
-export interface ActivityState {
+interface ActivityState {
   id: number;
   source: string;
   sourceId?: string;
@@ -58,10 +58,7 @@ interface ApiFetchActivityOptions {
   includeAscents?: boolean;
   includeBounds?: boolean;
 }
-export async function apiFetchActivity(
-  id: number,
-  options: ApiFetchActivityOptions
-) {
+async function apiFetchActivity(id: number, options: ApiFetchActivityOptions) {
   const activityJson = await apiFetch(
     "/api/client/activities/" +
       id +
@@ -74,7 +71,7 @@ export async function apiFetchActivity(
   });
 }
 
-export interface AscentState {
+interface AscentState {
   id: number;
   date: Date;
 
@@ -87,7 +84,7 @@ export interface AscentState {
   n?: number;
 }
 
-export function apiAscentToAscentState(apiAscent: any): AscentState {
+function apiAscentToAscentState(apiAscent: any): AscentState {
   return {
     id: apiAscent.id,
     date: new Date(apiAscent.date),
@@ -107,13 +104,13 @@ export function apiAscentToAscentState(apiAscent: any): AscentState {
   };
 }
 
-export enum MountainUiState {
+enum MountainUiState {
   NEUTRAL,
   SECONDARY,
   HIGHLIGHTED,
 }
 
-export interface MountainState {
+interface MountainState {
   id: number;
   source: string;
   sourceId?: string;
@@ -130,7 +127,7 @@ export interface MountainState {
   state?: MountainUiState;
 }
 
-export function apiMountainToMountainState(apiMountain: any): MountainState {
+function apiMountainToMountainState(apiMountain: any): MountainState {
   return {
     id: apiMountain.id,
     source: apiMountain.source,
@@ -153,10 +150,7 @@ interface ApiFetchMountainOptions {
   includeNearby?: boolean;
   includeAscents?: boolean;
 }
-export async function apiFetchMountain(
-  id: number,
-  options: ApiFetchMountainOptions
-) {
+async function apiFetchMountain(id: number, options: ApiFetchMountainOptions) {
   const mountainJson = await apiFetch(
     "/api/client/mountains/" +
       id +
@@ -168,3 +162,6 @@ export async function apiFetchMountain(
   );
   return apiMountainToMountainState(mountainJson);
 }
+
+export type { ActivityState, AscentState, MountainState };
+export { apiFetchActivity, apiFetchMountain, MountainUiState };
