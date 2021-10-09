@@ -131,9 +131,11 @@ class ClientService {
 
     if (activity == null) {
       res.sendStatus(404);
+      return;
     }
     if (activity.UserId !== req.uid) {
       res.sendStatus(403);
+      return;
     }
 
     res.json(activityModelToApi(activity));
