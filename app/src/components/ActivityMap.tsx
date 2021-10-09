@@ -32,7 +32,10 @@ function ActivityMap(props: ActivityMapProps) {
   return props.path ? (
     <GoogleMap
       mapContainerStyle={MAP_CONTAINER_STYLE}
-      options={{ mapTypeId: google.maps.MapTypeId.TERRAIN }}
+      options={{
+        streetViewControl: false,
+        mapTypeId: google.maps.MapTypeId.TERRAIN,
+      }}
       onLoad={onLoad}
       onUnmount={onUnmount}
     >

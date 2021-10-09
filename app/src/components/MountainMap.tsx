@@ -27,7 +27,10 @@ function MountainMap(props: MountainMapProps) {
   return props.mountain ? (
     <GoogleMap
       mapContainerStyle={MAP_CONTAINER_STYLE}
-      options={{ mapTypeId: google.maps.MapTypeId.TERRAIN }}
+      options={{
+        streetViewControl: false,
+        mapTypeId: google.maps.MapTypeId.TERRAIN,
+      }}
       center={props.mountain.coords}
       zoom={12}
       onLoad={onLoad}
