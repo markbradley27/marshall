@@ -12,7 +12,7 @@ function UserControl() {
   } else {
     return (
       <DropdownButton title={auth.user.displayName} id="user-dropdown">
-        <Dropdown.Item href="/logout">Logout</Dropdown.Item>
+        <Dropdown.Item onClick={auth.logout}>Logout</Dropdown.Item>
       </DropdownButton>
     );
   }
