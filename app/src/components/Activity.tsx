@@ -29,7 +29,7 @@ function Activity(props: ActivityProps) {
     async function fetchActivity() {
       const idToken = (await auth.user?.getIdToken()) as string;
       const activityResp: Response = await fetch(
-        "/api/client/activity/" +
+        "/api/client/activities/" +
           props.match.params.activityId +
           "?include_ascents=true",
         {

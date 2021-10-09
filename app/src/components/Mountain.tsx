@@ -24,7 +24,7 @@ function Mountain(props: MountainProps) {
   useEffect(() => {
     async function fetchMountain() {
       const mountainResp: Response = await fetch(
-        "/api/client/mountain/" +
+        "/api/client/mountains/" +
           props.match.params.mountainId +
           "?include_nearby=true"
       );

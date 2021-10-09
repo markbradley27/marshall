@@ -61,22 +61,22 @@ class ClientService {
   constructor() {
     this.router = express.Router();
     this.router.get(
-      "/activity/:activityId",
+      "/activities/:activityId",
       param("activityId").isNumeric(),
       query("include_ascents").default("false").isBoolean(),
       checkValidation,
       verifyIdToken,
-      this.getActivity.bind(this)
+      this.getActivities.bind(this)
     );
     this.router.get(
-      "/mountain/:mountainId",
+      "/mountains/:mountainId",
       param("mountainId").isNumeric(),
       oneOf([
         query("include_nearby").optional().isBoolean(),
         query("include_nearby").optional().isNumeric(),
       ]),
       checkValidation,
-      this.getMountain.bind(this)
+      this.getMountains.bind(this)
     );
     this.router.post(
       "/user",
@@ -95,7 +95,7 @@ class ClientService {
     this.router.post("/gpx", verifyIdToken, this.postGpx.bind(this));
   }
 
-  async getActivity(req: express.Request, res: express.Response) {
+  async getActivities(req: express.Request, res: express.Response) {
     const activity = await Activity.findOne({
       where: { id: req.params.activityId },
       include:
@@ -117,7 +117,7 @@ class ClientService {
     res.json(activityModelToApi(activity));
   }
 
-  async getMountain(req: express.Request, res: express.Response) {
+  async getMountains(req: express.Request, res: express.Response) {
     const includeNearby = req.query.include_nearby;
     let includeRadius = 0;
     if (includeNearby === "true") {
