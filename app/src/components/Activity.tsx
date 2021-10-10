@@ -3,13 +3,13 @@ import Col from "react-bootstrap/Col";
 import Container from "react-bootstrap/Container";
 import Ratio from "react-bootstrap/Ratio";
 import Row from "react-bootstrap/Row";
-import { useJsApiLoader } from "@react-google-maps/api";
 import { RouteComponentProps, withRouter } from "react-router-dom";
 
 import { apiFetchActivity, ActivityState, AscentState } from "../api_shim";
 import { ActivityMap } from "./ActivityMap";
 import AscentList from "./AscentList";
 import { useAuth } from "../contexts/auth";
+import useGoogleMaps from "../hooks/loadGoogleMaps";
 
 type ActivityProps = RouteComponentProps<{
   activityId: string;
@@ -19,10 +19,7 @@ function Activity(props: ActivityProps) {
 
   const auth = useAuth();
 
-  const { isLoaded } = useJsApiLoader({
-    id: "google-map-script",
-    googleMapsApiKey: process.env.REACT_APP_GOOGLE_MAPS_API_KEY as string,
-  });
+  const googleMapsLoaded = useGoogleMaps();
 
   useEffect(() => {
     async function fetchActivity() {
@@ -45,7 +42,7 @@ function Activity(props: ActivityProps) {
       setActivity(activity);
     }
 
-    if (activity == null && auth.user != null && isLoaded) {
+    if (activity == null && auth.user != null && googleMapsLoaded) {
       fetchActivity();
     }
   });

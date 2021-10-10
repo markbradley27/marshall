@@ -3,7 +3,6 @@ import Col from "react-bootstrap/Col";
 import Container from "react-bootstrap/Container";
 import Ratio from "react-bootstrap/Ratio";
 import Row from "react-bootstrap/Row";
-import { useJsApiLoader } from "@react-google-maps/api";
 import { RouteComponentProps, withRouter } from "react-router-dom";
 
 import { apiFetchMountain, MountainState } from "../api_shim";
@@ -11,6 +10,7 @@ import MountainList from "./MountainList";
 import MountainMap from "./MountainMap";
 import AscentList from "./AscentList";
 import { useAuth } from "../contexts/auth";
+import useGoogleMaps from "../hooks/loadGoogleMaps";
 
 type MountainProps = RouteComponentProps<{
   mountainId: string;
@@ -19,11 +19,7 @@ function Mountain(props: MountainProps) {
   const [mountain, setMountain] = useState<MountainState | null>(null);
 
   const auth = useAuth();
-
-  const { isLoaded } = useJsApiLoader({
-    id: "google-map-script",
-    googleMapsApiKey: process.env.REACT_APP_GOOGLE_MAPS_API_KEY as string,
-  });
+  const googleMapsLoaded = useGoogleMaps();
 
   useEffect(() => {
     async function fetchMountain() {
@@ -35,7 +31,7 @@ function Mountain(props: MountainProps) {
       setMountain(mountain);
     }
 
-    if (mountain == null && isLoaded) {
+    if (mountain == null && googleMapsLoaded) {
       fetchMountain();
     }
   });

@@ -1,19 +1,16 @@
 import { useEffect, useState } from "react";
 import Container from "react-bootstrap/Container";
-import { useJsApiLoader } from "@react-google-maps/api";
 
 import { useAuth } from "../contexts/auth";
 import AscentList from "./AscentList";
 import { apiFetchAscents, AscentState } from "../api_shim";
+import useGoogleMaps from "../hooks/loadGoogleMaps";
 
 export default function Dashboard() {
   const [ascents, setAscents] = useState<AscentState[] | null>(null);
-  const auth = useAuth();
 
-  const { isLoaded } = useJsApiLoader({
-    id: "google-map-script",
-    googleMapsApiKey: process.env.REACT_APP_GOOGLE_MAPS_API_KEY as string,
-  });
+  const auth = useAuth();
+  const googleMapsLoaded = useGoogleMaps();
 
   useEffect(() => {
     async function fetchAscents() {
@@ -25,7 +22,7 @@ export default function Dashboard() {
       setAscents(ascents);
     }
 
-    if (ascents == null && isLoaded) {
+    if (ascents == null && googleMapsLoaded) {
       fetchAscents();
     }
   });
