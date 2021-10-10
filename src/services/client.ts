@@ -3,6 +3,7 @@
 import express from "express";
 import { oneOf, param, query } from "express-validator";
 import admin from "firebase-admin";
+import { FindOptions } from "sequelize";
 import togeojson from "togeojson";
 import { Logger } from "tslog";
 
@@ -79,6 +80,7 @@ class ClientService {
       "/activities/:activityId?",
       param("activityId").optional().isNumeric(),
       query("include_ascents").default("false").isBoolean(),
+      query("only_with_ascents").default(false).isBoolean(),
       query("page").default(0).isNumeric(),
       checkValidation,
       verifyIdToken,
@@ -123,26 +125,31 @@ class ClientService {
   }
 
   async getActivities(req: express.Request, res: express.Response) {
-    const where: any = { UserId: req.uid };
-    if (req.params.activityId != null) {
-      where.id = parseInt(req.params.activityId, 10);
-    }
-
-    let include: any;
-    if (req.query.include_ascents === "true") {
-      include = {
-        model: Ascent,
-        include: [{ model: Mountain }],
-      };
-    }
-
-    const activities = await Activity.findAll({
-      where,
-      include,
+    const findOptions: any = {
+      where: { UserId: req.uid },
       order: [["date", "DESC"]],
       limit: PAGE_SIZE,
       offset: PAGE_SIZE * parseInt(req.query.page as string, 10),
-    });
+    };
+    if (req.params.activityId != null) {
+      findOptions.where.id = parseInt(req.params.activityId, 10);
+    }
+    if (req.query.only_with_ascents) {
+      if (findOptions.include == null) {
+        findOptions.include = {};
+      }
+      findOptions.include.model = Ascent;
+      findOptions.include.required = true;
+    }
+    if (req.query.include_ascents === "true") {
+      if (findOptions.include == null) {
+        findOptions.include = {};
+      }
+      findOptions.include.model = Ascent;
+      findOptions.include.include = [{ model: Mountain }];
+    }
+
+    const activities = await Activity.findAll(findOptions);
 
     if (!activities) {
       res.sendStatus(404);

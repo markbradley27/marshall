@@ -57,6 +57,7 @@ interface FetchActivitiesOptions {
   idToken: string;
   activityId?: number;
   includeAscents?: boolean;
+  onlyWithAscents?: boolean;
   includeBounds?: boolean;
 }
 async function fetchActivities(options: FetchActivitiesOptions) {
@@ -64,9 +65,23 @@ async function fetchActivities(options: FetchActivitiesOptions) {
   if (options.activityId != null) {
     url += "/" + options.activityId.toString();
   }
+  const query: any = {};
   if (options.includeAscents) {
-    url += "?include_ascents=true";
+    query.include_ascents = true;
   }
+  if (options.onlyWithAscents) {
+    query.only_with_ascents = true;
+  }
+  if (Object.keys(query).length) {
+    url +=
+      "?" +
+      Object.entries(query)
+        .map((entry: any) => {
+          return entry.join("=");
+        })
+        .join("&");
+  }
+
   const activitiesJson = await apiFetch(url, options.idToken);
 
   if (options.activityId != null) {
