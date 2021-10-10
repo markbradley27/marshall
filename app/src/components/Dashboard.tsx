@@ -2,12 +2,19 @@ import { useEffect, useState } from "react";
 import Container from "react-bootstrap/Container";
 
 import { useAuth } from "../contexts/auth";
+import ActivityList from "./ActivityList";
 import AscentList from "./AscentList";
-import { fetchAscents, AscentState } from "../api_shim";
+import {
+  fetchActivities,
+  fetchAscents,
+  ActivityState,
+  AscentState,
+} from "../api_shim";
 import useGoogleMaps from "../hooks/loadGoogleMaps";
 
 export default function Dashboard() {
   const [ascents, setAscents] = useState<AscentState[] | null>(null);
+  const [activities, setActivities] = useState<ActivityState[] | null>(null);
 
   const auth = useAuth();
   const googleMapsLoaded = useGoogleMaps();
@@ -20,6 +27,11 @@ export default function Dashboard() {
         includeMountains: true,
       });
       setAscents(ascents);
+
+      const activities = await fetchActivities({
+        idToken,
+      });
+      setActivities(activities);
     }
 
     if (ascents == null && googleMapsLoaded) {
@@ -28,10 +40,12 @@ export default function Dashboard() {
   });
 
   return (
-    ascents && (
+    ascents &&
+    activities && (
       <Container>
         <h3> Welcome {auth.user?.displayName}</h3>
         <AscentList title="Your ascents:" ascents={ascents} />
+        <ActivityList title="Your activities:" activities={activities} />
       </Container>
     )
   );

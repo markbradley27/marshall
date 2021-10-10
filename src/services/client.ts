@@ -19,6 +19,8 @@ import {
 
 const logger = new Logger();
 
+const PAGE_SIZE = 20;
+
 function activityModelToApi(activity: Activity): any {
   return {
     id: activity.id,
@@ -74,9 +76,10 @@ class ClientService {
   constructor() {
     this.router = express.Router();
     this.router.get(
-      "/activities/:activityId",
-      param("activityId").isNumeric(),
+      "/activities/:activityId?",
+      param("activityId").optional().isNumeric(),
       query("include_ascents").default("false").isBoolean(),
+      query("page").default(0).isNumeric(),
       checkValidation,
       verifyIdToken,
       this.getActivities.bind(this)
@@ -119,27 +122,37 @@ class ClientService {
   }
 
   async getActivities(req: express.Request, res: express.Response) {
-    const activity = await Activity.findOne({
-      where: { id: req.params.activityId },
-      include:
-        req.query.include_ascents === "true"
-          ? {
-              model: Ascent,
-              include: [{ model: Mountain }],
-            }
-          : undefined,
+    const where: any = { UserId: req.uid };
+    if (req.params.activityId != null) {
+      where.id = parseInt(req.params.activityId, 10);
+    }
+
+    let include: any;
+    if (req.query.include_ascents === "true") {
+      include = {
+        model: Ascent,
+        include: [{ model: Mountain }],
+      };
+    }
+
+    const activities = await Activity.findAll({
+      where,
+      include,
+      order: [["date", "DESC"]],
+      limit: PAGE_SIZE,
+      offset: PAGE_SIZE * parseInt(req.query.page as string, 10),
     });
 
-    if (activity == null) {
+    if (!activities) {
       res.sendStatus(404);
       return;
     }
-    if (activity.UserId !== req.uid) {
-      res.sendStatus(403);
+
+    if (activities.length === 1) {
+      res.json(activityModelToApi(activities[0]));
       return;
     }
-
-    res.json(activityModelToApi(activity));
+    res.json(activities.map(activityModelToApi));
   }
 
   async getAscents(req: express.Request, res: express.Response) {

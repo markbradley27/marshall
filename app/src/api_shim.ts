@@ -53,22 +53,43 @@ function apiActivityToActivityState(
   return res;
 }
 
+interface FetchActivitiesOptions {
+  idToken: string;
+  activityId?: number;
+  includeAscents?: boolean;
+  includeBounds?: boolean;
+}
+async function fetchActivities(options: FetchActivitiesOptions) {
+  let url = "/api/client/activities";
+  if (options.activityId != null) {
+    url += "/" + options.activityId.toString();
+  }
+  if (options.includeAscents) {
+    url += "?include_ascents=true";
+  }
+  const activitiesJson = await apiFetch(url, options.idToken);
+
+  if (options.activityId != null) {
+    return apiActivityToActivityState(activitiesJson, {
+      includeBounds: options.includeBounds || false,
+    });
+  }
+  return activitiesJson.map((activityJson: any) => {
+    return apiActivityToActivityState(activityJson, {
+      includeBounds: options.includeBounds || false,
+    });
+  });
+}
+
 interface FetchActivityOptions {
   idToken: string;
   includeAscents?: boolean;
   includeBounds?: boolean;
 }
 async function fetchActivity(id: number, options: FetchActivityOptions) {
-  const activityJson = await apiFetch(
-    "/api/client/activities/" +
-      id +
-      "?include_ascents=" +
-      options.includeAscents || "false",
-    options.idToken
-  );
-  return apiActivityToActivityState(activityJson, {
-    includeBounds: options.includeBounds || false,
-  });
+  const pluralOptions = options as FetchActivitiesOptions;
+  pluralOptions.activityId = id;
+  return fetchActivities(pluralOptions);
 }
 
 interface AscentState {
@@ -181,4 +202,10 @@ async function fetchMountain(id: number, options: FetchMountainOptions) {
 }
 
 export type { ActivityState, AscentState, MountainState };
-export { fetchActivity, fetchAscents, fetchMountain, MountainUiState };
+export {
+  fetchActivities,
+  fetchActivity,
+  fetchAscents,
+  fetchMountain,
+  MountainUiState,
+};
