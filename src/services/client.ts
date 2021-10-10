@@ -88,6 +88,7 @@ class ClientService {
       "/ascents/:mountainId?",
       param("mountainId").optional().isNumeric(),
       query("include_mountains").optional().isBoolean(),
+      query("page").default(0).isNumeric(),
       checkValidation,
       verifyIdToken,
       this.getAscents.bind(this)
@@ -166,6 +167,9 @@ class ClientService {
         req.query.include_mountains === "true"
           ? { model: Mountain }
           : undefined,
+      order: [["date", "DESC"]],
+      limit: PAGE_SIZE,
+      offset: PAGE_SIZE * parseInt(req.query.page as string, 10),
     });
     res.json(ascents.map(ascentModelToApi));
   }
