@@ -5,7 +5,7 @@ import Ratio from "react-bootstrap/Ratio";
 import Row from "react-bootstrap/Row";
 import { RouteComponentProps, withRouter } from "react-router-dom";
 
-import { apiFetchActivity, ActivityState, AscentState } from "../api_shim";
+import { fetchActivity, ActivityState, AscentState } from "../api_shim";
 import { ActivityMap } from "./ActivityMap";
 import AscentList from "./AscentList";
 import { useAuth } from "../contexts/auth";
@@ -22,9 +22,9 @@ function Activity(props: ActivityProps) {
   const googleMapsLoaded = useGoogleMaps();
 
   useEffect(() => {
-    async function fetchActivity() {
+    async function fetchData() {
       const idToken = (await auth.user?.getIdToken()) as string;
-      const activity = await apiFetchActivity(
+      const activity = await fetchActivity(
         parseInt(props.match.params.activityId, 10),
         {
           idToken,
@@ -43,7 +43,7 @@ function Activity(props: ActivityProps) {
     }
 
     if (activity == null && auth.user != null && googleMapsLoaded) {
-      fetchActivity();
+      fetchData();
     }
   });
 

@@ -3,7 +3,7 @@ import Container from "react-bootstrap/Container";
 
 import { useAuth } from "../contexts/auth";
 import AscentList from "./AscentList";
-import { apiFetchAscents, AscentState } from "../api_shim";
+import { fetchAscents, AscentState } from "../api_shim";
 import useGoogleMaps from "../hooks/loadGoogleMaps";
 
 export default function Dashboard() {
@@ -13,9 +13,9 @@ export default function Dashboard() {
   const googleMapsLoaded = useGoogleMaps();
 
   useEffect(() => {
-    async function fetchAscents() {
+    async function fetchData() {
       const idToken = (await auth.user?.getIdToken()) as string;
-      const ascents = await apiFetchAscents({
+      const ascents = await fetchAscents({
         idToken,
         includeMountains: true,
       });
@@ -23,7 +23,7 @@ export default function Dashboard() {
     }
 
     if (ascents == null && googleMapsLoaded) {
-      fetchAscents();
+      fetchData();
     }
   });
 

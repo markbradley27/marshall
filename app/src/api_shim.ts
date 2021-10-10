@@ -53,12 +53,12 @@ function apiActivityToActivityState(
   return res;
 }
 
-interface ApiFetchActivityOptions {
+interface FetchActivityOptions {
   idToken: string;
   includeAscents?: boolean;
   includeBounds?: boolean;
 }
-async function apiFetchActivity(id: number, options: ApiFetchActivityOptions) {
+async function fetchActivity(id: number, options: FetchActivityOptions) {
   const activityJson = await apiFetch(
     "/api/client/activities/" +
       id +
@@ -104,12 +104,12 @@ function apiAscentToAscentState(apiAscent: any): AscentState {
   };
 }
 
-interface ApiFetchAscentsOptions {
+interface FetchAscentsOptions {
   idToken: string;
   mountainId?: number;
   includeMountains?: boolean;
 }
-async function apiFetchAscents(options: ApiFetchAscentsOptions) {
+async function fetchAscents(options: FetchAscentsOptions) {
   let url = "/api/client/ascents";
   if (options.mountainId != null) {
     url += "/" + options.mountainId.toString();
@@ -162,12 +162,12 @@ function apiMountainToMountainState(apiMountain: any): MountainState {
   };
 }
 
-interface ApiFetchMountainOptions {
+interface FetchMountainOptions {
   idToken?: string;
   includeNearby?: boolean;
   includeAscents?: boolean;
 }
-async function apiFetchMountain(id: number, options: ApiFetchMountainOptions) {
+async function fetchMountain(id: number, options: FetchMountainOptions) {
   const mountainJson = await apiFetch(
     "/api/client/mountains/" +
       id +
@@ -181,4 +181,4 @@ async function apiFetchMountain(id: number, options: ApiFetchMountainOptions) {
 }
 
 export type { ActivityState, AscentState, MountainState };
-export { apiFetchActivity, apiFetchAscents, apiFetchMountain, MountainUiState };
+export { fetchActivity, fetchAscents, fetchMountain, MountainUiState };

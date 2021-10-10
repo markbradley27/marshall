@@ -5,7 +5,7 @@ import Ratio from "react-bootstrap/Ratio";
 import Row from "react-bootstrap/Row";
 import { RouteComponentProps, withRouter } from "react-router-dom";
 
-import { apiFetchMountain, MountainState } from "../api_shim";
+import { fetchMountain, MountainState } from "../api_shim";
 import MountainList from "./MountainList";
 import MountainMap from "./MountainMap";
 import AscentList from "./AscentList";
@@ -22,9 +22,9 @@ function Mountain(props: MountainProps) {
   const googleMapsLoaded = useGoogleMaps();
 
   useEffect(() => {
-    async function fetchMountain() {
+    async function fetchData() {
       const idToken = (await auth.user?.getIdToken()) as string;
-      const mountain = await apiFetchMountain(
+      const mountain = await fetchMountain(
         parseInt(props.match.params.mountainId, 10),
         { idToken, includeNearby: true, includeAscents: true }
       );
@@ -32,7 +32,7 @@ function Mountain(props: MountainProps) {
     }
 
     if (mountain == null && googleMapsLoaded) {
-      fetchMountain();
+      fetchData();
     }
   });
 
