@@ -82,8 +82,9 @@ class ClientService {
       this.getActivities.bind(this)
     );
     this.router.get(
-      "/ascents/:mountainId",
-      param("mountainId").isNumeric(),
+      "/ascents/:mountainId?",
+      param("mountainId").optional().isNumeric(),
+      query("include_mountains").optional().isBoolean(),
       checkValidation,
       verifyIdToken,
       this.getAscents.bind(this)
@@ -142,9 +143,16 @@ class ClientService {
   }
 
   async getAscents(req: express.Request, res: express.Response) {
-    const mountainId = parseInt(req.params.mountainId, 10);
+    const whereClause: any = { UserId: req.uid };
+    if (req.params.mountainId != null) {
+      whereClause.mountainId = parseInt(req.params.mountainId, 10);
+    }
     const ascents = await Ascent.findAll({
-      where: { UserId: req.uid, MountainId: mountainId },
+      where: whereClause,
+      include:
+        req.query.include_mountains === "true"
+          ? { model: Mountain }
+          : undefined,
     });
     res.json(ascents.map(ascentModelToApi));
   }

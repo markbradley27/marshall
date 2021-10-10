@@ -104,6 +104,23 @@ function apiAscentToAscentState(apiAscent: any): AscentState {
   };
 }
 
+interface ApiFetchAscentsOptions {
+  idToken: string;
+  mountainId?: number;
+  includeMountains?: boolean;
+}
+async function apiFetchAscents(options: ApiFetchAscentsOptions) {
+  let url = "/api/client/ascents";
+  if (options.mountainId != null) {
+    url += "/" + options.mountainId.toString();
+  }
+  if (options.includeMountains) {
+    url += "?include_mountains=true";
+  }
+  const ascentsJson = await apiFetch(url, options.idToken);
+  return ascentsJson.map(apiAscentToAscentState);
+}
+
 enum MountainUiState {
   NEUTRAL,
   SECONDARY,
@@ -164,4 +181,4 @@ async function apiFetchMountain(id: number, options: ApiFetchMountainOptions) {
 }
 
 export type { ActivityState, AscentState, MountainState };
-export { apiFetchActivity, apiFetchMountain, MountainUiState };
+export { apiFetchActivity, apiFetchAscents, apiFetchMountain, MountainUiState };
