@@ -7,7 +7,7 @@ function Navbar() {
   return (
     <BsNavbar>
       <Container>
-        <BsNavbar.Brand>Marshall</BsNavbar.Brand>
+        <BsNavbar.Brand href="/">Marshall</BsNavbar.Brand>
         <UserControl />
       </Container>
     </BsNavbar>
