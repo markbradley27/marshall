@@ -216,11 +216,32 @@ async function fetchMountain(id: number, options: FetchMountainOptions) {
   return apiMountainToMountainState(mountainJson);
 }
 
-export type { ActivityState, AscentState, MountainState };
+interface UserState {
+  id: string;
+  name: string;
+  activityCount?: number;
+  ascentCount?: number;
+}
+function apiUserToUserState(apiUser: any): UserState {
+  return {
+    id: apiUser.id,
+    name: apiUser.name,
+    activityCount: apiUser.activityCount,
+    ascentCount: apiUser.ascentCount,
+  };
+}
+
+async function fetchUser(id: string, idToken: string) {
+  const userJson = await apiFetch("/api/client/user/" + id, idToken);
+  return apiUserToUserState(userJson);
+}
+
+export type { ActivityState, AscentState, MountainState, UserState };
 export {
   fetchActivities,
   fetchActivity,
   fetchAscents,
   fetchMountain,
+  fetchUser,
   MountainUiState,
 };

@@ -331,6 +331,9 @@ interface UserAttributes {
   stravaRefreshToken: string;
   stravaAccessTokenExpiresAt: Date;
   stravaAthleteId: number;
+
+  activityCount?: number;
+  ascentCount?: number;
 }
 
 interface UserCreationAttributes

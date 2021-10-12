@@ -7,12 +7,16 @@ import AscentList from "./AscentList";
 import {
   fetchActivities,
   fetchAscents,
+  fetchUser,
   ActivityState,
   AscentState,
+  UserState,
 } from "../api_shim";
 import useGoogleMaps from "../hooks/loadGoogleMaps";
+import UserStats from "./UserStats";
 
 export default function Dashboard() {
+  const [user, setUser] = useState<UserState | null>(null);
   const [ascents, setAscents] = useState<AscentState[] | null>(null);
   const [onlyActivitiesWithAscents, setOnlyActivitiesWithAscents] =
     useState(true);
@@ -20,6 +24,11 @@ export default function Dashboard() {
 
   const auth = useAuth();
   const googleMapsLoaded = useGoogleMaps();
+
+  const refreshUser = useCallback(async (uid: string, idToken: string) => {
+    const user = await fetchUser(uid, idToken);
+    setUser(user);
+  }, []);
 
   const refreshAscents = useCallback(async (idToken: string) => {
     const ascents = await fetchAscents({
@@ -43,6 +52,7 @@ export default function Dashboard() {
   useEffect(() => {
     async function fetchData() {
       const idToken = (await auth.user?.getIdToken()) as string;
+      await refreshUser(auth.user?.uid as string, idToken);
       await refreshAscents(idToken);
       await refreshActivities(idToken, onlyActivitiesWithAscents);
     }
@@ -66,9 +76,11 @@ export default function Dashboard() {
 
   return (
     ascents &&
-    activities && (
+    activities &&
+    user && (
       <Container>
         <h3> Welcome {auth.user?.displayName}</h3>
+        <UserStats user={user} />
         <AscentList title="Your ascents:" ascents={ascents} />
         <ActivityList
           title="Your activities:"

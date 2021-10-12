@@ -3,7 +3,7 @@
 import express from "express";
 import { oneOf, param, query } from "express-validator";
 import admin from "firebase-admin";
-import { FindOptions } from "sequelize";
+import Sequelize from "sequelize";
 import togeojson from "togeojson";
 import { Logger } from "tslog";
 
@@ -71,6 +71,15 @@ function mountainModelToApi(mountain: MountainPlus): any {
   };
 }
 
+function userModelToApi(user: User): any {
+  return {
+    id: user.id,
+    name: user.name,
+    activityCount: user.getDataValue("activityCount"),
+    ascentCount: user.getDataValue("ascentCount"),
+  };
+}
+
 class ClientService {
   router: express.Router;
 
@@ -106,6 +115,13 @@ class ClientService {
       checkValidation,
       maybeVerifyIdToken,
       this.getMountains.bind(this)
+    );
+    this.router.get(
+      "/user/:userId",
+      param("userId").isString(),
+      checkValidation,
+      verifyIdToken,
+      this.getUser.bind(this)
     );
     this.router.post(
       "/user",
@@ -235,6 +251,36 @@ class ClientService {
     }
 
     res.json(resJson);
+  }
+
+  async getUser(req: express.Request, res: express.Response) {
+    const user = await User.findOne({
+      where: { id: req.uid },
+      attributes: {
+        include: [
+          [
+            Sequelize.fn(
+              "COUNT",
+              Sequelize.fn("DISTINCT", Sequelize.col("Activities.id"))
+            ),
+            "activityCount",
+          ],
+          [
+            Sequelize.fn(
+              "COUNT",
+              Sequelize.fn("DISTINCT", Sequelize.col("Ascents.id"))
+            ),
+            "ascentCount",
+          ],
+        ],
+      },
+      include: [
+        { model: Activity, attributes: [] },
+        { model: Ascent, attributes: [] },
+      ],
+      group: ["User.id"],
+    });
+    res.json(userModelToApi(user));
   }
 
   // Registers a user with firebase and in the local db.
