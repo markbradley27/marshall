@@ -21,12 +21,12 @@ FLAGS = flags.FLAGS
 
 flags.DEFINE_string('name', '', 'Name of mountain to search for and insert.')
 flags.DEFINE_string('uri', '', 'URI of mountain to insert.')
+flags.DEFINE_boolean('adk46', False, 'Load the ADK 46 high peaks.')
 
 flags.DEFINE_integer(
     'n', 1,
     'Number of mountains to retrieve (anything less than 0 retrieves all, ignored if name or uri is provided).'
 )
-# TODO: Technically the list query should be sorted for this to be reliable.
 flags.DEFINE_string(
     'start_with', '',
     "If n provided, doesn't start inserting mountains until it sees this uri.")
@@ -44,6 +44,53 @@ flags.DEFINE_bool(
     'log_raw_parsed', False,
     'If logging output, controls whether the raw_parsed object is logged.')
 
+_ADK_46_URIS = (
+    "http://dbpedia.org/resource/Mount_Marcy",
+    "http://dbpedia.org/resource/Algonquin_Peak",
+    "http://dbpedia.org/resource/Mount_Haystack",
+    "http://dbpedia.org/resource/Mount_Skylight",
+    "http://dbpedia.org/resource/Whiteface_Mountain",
+    "http://dbpedia.org/resource/Dix_Mountain",
+    "http://dbpedia.org/resource/Gray_Peak_(New_York)",
+    "http://dbpedia.org/resource/Iroquois_Peak",
+    "http://dbpedia.org/resource/Basin_Mountain_(New_York)",
+    "http://dbpedia.org/resource/Gothics",
+    "http://dbpedia.org/resource/Mount_Colden",
+    "http://dbpedia.org/resource/Giant_Mountain",
+    "http://dbpedia.org/resource/Nippletop",
+    "http://dbpedia.org/resource/Santanoni_Peak",
+    "http://dbpedia.org/resource/Mount_Redfield",
+    "http://dbpedia.org/resource/Wright_Peak",
+    "http://dbpedia.org/resource/Saddleback_Mountain_(Keene,_New_York)",
+    "http://dbpedia.org/resource/Panther_Peak",
+    "http://dbpedia.org/resource/Table_Top_Mountain_(New_York)",
+    "http://dbpedia.org/resource/Rocky_Peak_Ridge",
+    "http://dbpedia.org/resource/Macomb_Mountain",
+    "http://dbpedia.org/resource/Armstrong_Mountain_(Keene_Valley,_New_York)",
+    "http://dbpedia.org/resource/Hough_Peak",
+    "http://dbpedia.org/resource/Seward_Mountain_(New_York)",
+    "http://dbpedia.org/resource/Mount_Marshall_(New_York)",
+    "http://dbpedia.org/resource/Allen_Mountain_(New_York)",
+    "http://dbpedia.org/resource/Big_Slide_Mountain_(New_York)",
+    "http://dbpedia.org/resource/Esther_Mountain",
+    "http://dbpedia.org/resource/Upper_Wolfjaw_Mountain",
+    "http://dbpedia.org/resource/Lower_Wolfjaw_Mountain",
+    "http://dbpedia.org/resource/Street_Mountain_(New_York)",
+    "http://dbpedia.org/resource/Phelps_Mountain_(New_York)",
+    "http://dbpedia.org/resource/Donaldson_Mountain",
+    "http://dbpedia.org/resource/Seymour_Mountain_(Franklin_County,_New_York)",
+    "http://dbpedia.org/resource/Sawteeth_(New_York)",
+    "http://dbpedia.org/resource/Cascade_Mountain_(New_York)",
+    "http://dbpedia.org/resource/South_Dix",
+    "http://dbpedia.org/resource/Porter_Mountain",
+    "http://dbpedia.org/resource/Mount_Colvin",
+    "http://dbpedia.org/resource/Mount_Emmons_(New_York)",
+    "http://dbpedia.org/resource/Dial_Mountain",
+    "http://dbpedia.org/resource/Grace_Peak",
+    "http://dbpedia.org/resource/Blake_Peak",
+    "http://dbpedia.org/resource/Cliff_Mountain_(New_York)",
+    "http://dbpedia.org/resource/Nye_Mountain",
+    "http://dbpedia.org/resource/Couchsachraga_Peak")
 _DBPEDIA_SPARQL_ENDPOINT = "http://dbpedia.org/sparql"
 
 
@@ -377,6 +424,11 @@ def main(argv):
 
   if FLAGS.uri:
     db.insert_mountain(get_mountain(FLAGS.uri))
+    return
+
+  if FLAGS.adk46:
+    for uri in _ADK_46_URIS:
+      db.insert_mountain(get_mountain(uri))
     return
 
   for mountain in get_mountains(FLAGS.n, FLAGS.sparql_page_size,
