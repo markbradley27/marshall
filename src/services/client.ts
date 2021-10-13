@@ -13,6 +13,7 @@ import {
   Activity,
   ActivitySource,
   Ascent,
+  List,
   Mountain,
   sequelize,
   User,
@@ -34,6 +35,16 @@ function activityModelToApi(activity: Activity): any {
 
     ascents: activity.Ascents?.map(ascentModelToApi),
     userId: activity.UserId,
+  };
+}
+
+function listModelToApi(list: List): any {
+  return {
+    id: list.id,
+    name: list.name,
+    ownerId: list.OwnerId,
+    private: list.private,
+    mountains: list.Mountains?.map(mountainModelToApi),
   };
 }
 
@@ -80,6 +91,12 @@ function userModelToApi(user: User): any {
   };
 }
 
+interface NewList {
+  name: string;
+  private: boolean;
+  mountains: number[];
+}
+
 class ClientService {
   router: express.Router;
 
@@ -103,6 +120,21 @@ class ClientService {
       checkValidation,
       verifyIdToken,
       this.getAscents.bind(this)
+    );
+    this.router.get(
+      "/list/:listId",
+      param("listId").isNumeric(),
+      checkValidation,
+      maybeVerifyIdToken,
+      this.getList.bind(this)
+    );
+    // TODO: Validate json body too.
+    this.router.post(
+      "/list/:listId?",
+      param("listId").optional().isNumeric(),
+      checkValidation,
+      verifyIdToken,
+      this.postList.bind(this)
     );
     this.router.get(
       "/mountains/:mountainId",
@@ -195,6 +227,50 @@ class ClientService {
       offset: PAGE_SIZE * parseInt(req.query.page as string, 10),
     });
     res.json(ascents.map(ascentModelToApi));
+  }
+
+  async getList(req: express.Request, res: express.Response) {
+    const list = await List.findOne({
+      where: { id: req.params.listId },
+      include: Mountain,
+    });
+
+    if (list == null) {
+      res.sendStatus(404);
+      return;
+    }
+    if (list.private && (req.uid == null || req.uid !== list.OwnerId)) {
+      res.sendStatus(403);
+      return;
+    }
+
+    return res.json(listModelToApi(list));
+  }
+
+  // TODO: Suggest user use identical (or similar?) public list instead.
+  // TODO: Some way to update lists, not just create.
+  async postList(req: express.Request, res: express.Response) {
+    const listJson = req.body as NewList;
+    logger.info("listJson:", listJson);
+    const newList = await List.create({
+      name: listJson.name,
+      private: listJson.private,
+      OwnerId: req.uid,
+    });
+    // TODO: There might be a better way to handle this, rather than creating
+    // the list and destroying it on error.
+    // TODO: Ensure mountains exist first.
+    try {
+      for (const mountainId of listJson.mountains) {
+        newList.addMountain(mountainId);
+      }
+    } catch (error) {
+      newList.destroy();
+    }
+
+    await newList.save();
+
+    res.sendStatus(200);
   }
 
   async getMountains(req: express.Request, res: express.Response) {

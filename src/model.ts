@@ -9,6 +9,16 @@ import {
   Association,
   BelongsToCreateAssociationMixin,
   BelongsToGetAssociationMixin,
+  BelongsToManyAddAssociationMixin,
+  BelongsToManyAddAssociationsMixin,
+  BelongsToManyCountAssociationsMixin,
+  BelongsToManyCreateAssociationMixin,
+  BelongsToManyGetAssociationsMixin,
+  BelongsToManyHasAssociationMixin,
+  BelongsToManyHasAssociationsMixin,
+  BelongsToManyRemoveAssociationMixin,
+  BelongsToManyRemoveAssociationsMixin,
+  BelongsToManySetAssociationsMixin,
   BelongsToSetAssociationMixin,
   DataTypes,
   HasManyAddAssociationMixin,
@@ -237,43 +247,54 @@ Ascent.init(
   { sequelize }
 );
 
-interface SummitListAttributes {
+interface ListAttributes {
   id: number;
   name: string;
+  private: boolean;
+
+  OwnerId?: string;
 }
 
-interface SummitListCreationAttributes
-  extends Optional<SummitListAttributes, "id"> {}
+interface ListCreationAttributes extends Optional<ListAttributes, "id"> {}
 
-class SummitList
-  extends Model<SummitListAttributes, SummitListCreationAttributes>
-  implements SummitListAttributes
+class List
+  extends Model<ListAttributes, ListCreationAttributes>
+  implements ListAttributes
 {
   id!: number;
   name!: string;
+  private!: boolean;
 
   createdAt!: Date;
   updatedAt!: Date;
 
-  addMountain!: HasManyAddAssociationMixin<Mountain, number>;
-  addMountains!: HasManyAddAssociationsMixin<Mountain, number>;
-  countMountains!: HasManyCountAssociationsMixin;
-  createMountain!: HasManyCreateAssociationMixin<Mountain>;
-  getMountains!: HasManyGetAssociationsMixin<Mountain>;
-  hasMountain!: HasManyHasAssociationMixin<Mountain, number>;
-  hasMountains!: HasManyHasAssociationsMixin<Mountain, number>;
-  removeMountain!: HasManyRemoveAssociationMixin<Mountain, number>;
-  removeMountains!: HasManyRemoveAssociationsMixin<Mountain, number>;
-  setMountains!: HasManySetAssociationsMixin<Mountain, number>;
+  addMountain!: BelongsToManyAddAssociationMixin<Mountain, number>;
+  addMountains!: BelongsToManyAddAssociationsMixin<Mountain, number>;
+  countMountains!: BelongsToManyCountAssociationsMixin;
+  createMountain!: BelongsToManyCreateAssociationMixin<Mountain>;
+  getMountains!: BelongsToManyGetAssociationsMixin<Mountain>;
+  hasMountain!: BelongsToManyHasAssociationMixin<Mountain, number>;
+  hasMountains!: BelongsToManyHasAssociationsMixin<Mountain, number>;
+  removeMountain!: BelongsToManyRemoveAssociationMixin<Mountain, number>;
+  removeMountains!: BelongsToManyRemoveAssociationsMixin<Mountain, number>;
+  setMountains!: BelongsToManySetAssociationsMixin<Mountain, number>;
 
   readonly Mountains?: Mountain[];
 
+  getOwner!: BelongsToGetAssociationMixin<User>;
+  setOwner!: BelongsToSetAssociationMixin<User, number>;
+  createOwner!: BelongsToCreateAssociationMixin<User>;
+
+  OwnerId!: string;
+  readonly Owner?: User;
+
   static associations: {
-    mountains: Association<SummitList, Mountain>;
+    mountains: Association<List, Mountain>;
+    owner: Association<List, User>;
   };
 }
 
-SummitList.init(
+List.init(
   {
     id: {
       type: DataTypes.INTEGER,
@@ -283,6 +304,10 @@ SummitList.init(
     name: {
       type: DataTypes.STRING,
       allowNull: false,
+    },
+    private: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
     },
   },
   { sequelize }
@@ -336,8 +361,22 @@ class Mountain
 
   readonly Ascents?: Ascent[];
 
+  addList!: BelongsToManyAddAssociationMixin<List, number>;
+  addLists!: BelongsToManyAddAssociationsMixin<List, number>;
+  countLists!: BelongsToManyCountAssociationsMixin;
+  createList!: BelongsToManyCreateAssociationMixin<List>;
+  getLists!: BelongsToManyGetAssociationsMixin<List>;
+  hasList!: BelongsToManyHasAssociationMixin<List, number>;
+  hasLists!: BelongsToManyHasAssociationsMixin<List, number>;
+  removeList!: BelongsToManyRemoveAssociationMixin<List, number>;
+  removeLists!: BelongsToManyRemoveAssociationsMixin<List, number>;
+  setLists!: BelongsToManySetAssociationsMixin<List, number>;
+
+  readonly Lists?: List[];
+
   static associations: {
     ascents: Association<Mountain, Ascent>;
+    lists: Association<Mountain, List>;
   };
 }
 
@@ -462,6 +501,7 @@ User.init(
 );
 
 // Associations
+// TODO: Give more thought to onDelete/onUpdate behavior.
 Activity.hasMany(Ascent, { onDelete: "CASCADE" });
 Ascent.belongsTo(Activity);
 
@@ -474,11 +514,18 @@ Mountain.hasMany(Ascent, { onDelete: "CASCADE" });
 Ascent.belongsTo(User);
 User.hasMany(Ascent, { onDelete: "CASCADE" });
 
+List.belongsToMany(Mountain, { through: "ListMountains" });
+Mountain.belongsToMany(List, { through: "ListMountains" });
+
+User.hasMany(List, { as: "Owners", foreignKey: "OwnerId" });
+List.belongsTo(User, { as: "Owner" });
+
 export {
   sequelize,
   Activity,
   ActivitySource,
   Ascent,
+  List,
   Mountain,
   MountainSource,
   User,

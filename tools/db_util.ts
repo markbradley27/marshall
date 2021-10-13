@@ -3,7 +3,7 @@ dotenv.config();
 
 import { Command } from "commander";
 
-import { sequelize, Activity, Ascent, Mountain } from "../src/model";
+import { sequelize, Activity, Ascent, List, Mountain } from "../src/model";
 
 async function main() {
   const program = new Command();
@@ -20,6 +20,7 @@ async function main() {
   if (options.drop_all_but_users) {
     await Activity.drop({ cascade: true });
     await Ascent.drop({ cascade: true });
+    await List.drop({ cascade: true });
     await Mountain.drop({ cascade: true });
   }
   if (options.sync) {
