@@ -5,7 +5,7 @@ import UserControl from "./UserControl";
 
 function Navbar() {
   return (
-    <BsNavbar>
+    <BsNavbar className="pb-4">
       <Container>
         <BsNavbar.Brand href="/">Marshall</BsNavbar.Brand>
         <UserControl />
