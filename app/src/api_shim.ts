@@ -236,6 +236,12 @@ async function fetchUser(id: string, idToken: string) {
   return apiUserToUserState(userJson);
 }
 
+async function postUser(id: string, name: string) {
+  await fetch("/api/client/user?id=" + id + "&name=" + name, {
+    method: "POST",
+  });
+}
+
 export type { ActivityState, AscentState, MountainState, UserState };
 export {
   fetchActivities,
@@ -244,4 +250,5 @@ export {
   fetchMountain,
   fetchUser,
   MountainUiState,
+  postUser,
 };

@@ -157,9 +157,8 @@ class ClientService {
     );
     this.router.post(
       "/user",
-      query("email").isEmail(),
-      query("password").isString(),
       query("name").isString(),
+      query("id").isString(),
       checkValidation,
       this.postUser.bind(this)
     );
@@ -359,23 +358,15 @@ class ClientService {
     res.json(userModelToApi(user));
   }
 
-  // Registers a user with firebase and in the local db.
   async postUser(req: express.Request, res: express.Response) {
-    const email = req.query.email as string;
-    const password = req.query.password as string;
     const name = req.query.name as string;
+    const id = req.query.id as string;
 
+    // TODO: Verify the uid exists with Firebase.
     try {
-      const userRecord = await admin.auth().createUser({
-        email,
-        password,
-        displayName: name,
-      });
-      const uid = userRecord.uid;
-
-      // TODO: Clean up firebase user if this fails?
-      await User.create({ id: uid, name });
+      await User.create({ id, name });
     } catch (error) {
+      logger.error("User.create error:", error);
       res.status(400).send(error);
       return;
     }

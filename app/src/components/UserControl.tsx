@@ -8,7 +8,12 @@ function UserControl() {
   const auth = useAuth();
 
   if (auth.user == null) {
-    return <Button href="/login">Login</Button>;
+    return (
+      <div>
+        <Button href="/login">Login</Button> or{" "}
+        <Button href="/signup">Sign Up</Button>
+      </div>
+    );
   } else {
     return (
       <DropdownButton title={auth.user.displayName} id="user-dropdown">

@@ -8,6 +8,7 @@ import Homepage from "./components/Homepage";
 import Login from "./components/Login";
 import Mountain from "./components/Mountain";
 import Navbar from "./components/Navbar";
+import SignUp from "./components/SignUp";
 import { useAuth } from "./contexts/auth";
 
 function App() {
@@ -15,14 +16,17 @@ function App() {
 
   return (
     <Container>
-      <Navbar />
       <BrowserRouter>
+        <Navbar />
         <Switch>
           <Route exact path="/">
             {auth.user != null ? <Redirect to="/dashboard" /> : <Homepage />}
           </Route>
           <Route path="/login">
             {auth.user != null ? <Redirect to="/dashboard" /> : <Login />}
+          </Route>
+          <Route path="/signup">
+            {auth.user != null ? <Redirect to="/dashboard" /> : <SignUp />}
           </Route>
           <Route path="/dashboard">
             {auth.user != null ? <Dashboard /> : <Redirect to="/" />}
