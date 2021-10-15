@@ -3,9 +3,10 @@ import Nav from "react-bootstrap/Nav";
 import BsNavbar from "react-bootstrap/Navbar";
 import { useLocation } from "react-router-dom";
 
+import { useAuth } from "../contexts/auth";
+
 import AddSomethingDropdown from "./AddSomethingDropdown";
 import UserControl from "./UserControl";
-import { useAuth } from "../contexts/auth";
 
 function Navbar() {
   const auth = useAuth();

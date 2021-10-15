@@ -6,11 +6,12 @@ import Row from "react-bootstrap/Row";
 import { RouteComponentProps, withRouter } from "react-router-dom";
 
 import { fetchMountain, MountainState } from "../api_shim";
-import MountainList from "./MountainList";
-import MountainMap from "./MountainMap";
-import AscentList from "./AscentList";
 import { useAuth } from "../contexts/auth";
 import useGoogleMaps from "../hooks/loadGoogleMaps";
+
+import AscentList from "./AscentList";
+import MountainList from "./MountainList";
+import MountainMap from "./MountainMap";
 
 type MountainProps = RouteComponentProps<{
   mountainId: string;

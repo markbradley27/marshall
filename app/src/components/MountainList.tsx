@@ -1,8 +1,9 @@
 import Container from "react-bootstrap/Container";
 import ListGroup from "react-bootstrap/ListGroup";
 
-import MountainListItem from "./MountainListItem";
 import { MountainState } from "../api_shim";
+
+import MountainListItem from "./MountainListItem";
 
 interface MountainListProps {
   title: string;

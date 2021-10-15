@@ -7,8 +7,8 @@ import Homepage from "./components/Homepage";
 import Login from "./components/Login";
 import Mountain from "./components/Mountain";
 import Navbar from "./components/Navbar";
-import SignUp from "./components/SignUp";
 import Settings from "./components/Settings";
+import SignUp from "./components/SignUp";
 import { useAuth } from "./contexts/auth";
 
 function App() {

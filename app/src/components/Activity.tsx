@@ -6,10 +6,11 @@ import Row from "react-bootstrap/Row";
 import { RouteComponentProps, withRouter } from "react-router-dom";
 
 import { fetchActivity, ActivityState, AscentState } from "../api_shim";
-import { ActivityMap } from "./ActivityMap";
-import AscentList from "./AscentList";
 import { useAuth } from "../contexts/auth";
 import useGoogleMaps from "../hooks/loadGoogleMaps";
+
+import { ActivityMap } from "./ActivityMap";
+import AscentList from "./AscentList";
 
 type ActivityProps = RouteComponentProps<{
   activityId: string;

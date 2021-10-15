@@ -37,7 +37,19 @@
     "extends": [
       "react-app",
       "react-app/jest"
-    ]
+    ],
+    "rules": {
+      "import/order": [
+        "error",
+        {
+          "newlines-between": "always",
+          "alphabetize": {
+            "order": "asc"
+          },
+          "warnOnUnassignedImports": true
+        }
+      ]
+    }
   },
   "browserslist": {
     "production": [

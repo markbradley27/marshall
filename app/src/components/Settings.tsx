@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
-
-import { useAuth } from "../contexts/auth";
-import { apiFetch, UserState, fetchUser } from "../api_shim";
 import { Button, Col, Container, Row } from "react-bootstrap";
+
+import { apiFetch, UserState, fetchUser } from "../api_shim";
+import { useAuth } from "../contexts/auth";
 
 export default function Settings() {
   const [user, setUser] = useState<UserState | null>(null);

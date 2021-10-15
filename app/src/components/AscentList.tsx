@@ -1,8 +1,9 @@
 import Container from "react-bootstrap/Container";
 import ListGroup from "react-bootstrap/ListGroup";
 
-import AscentListItem from "./AscentListItem";
 import { AscentState } from "../api_shim";
+
+import AscentListItem from "./AscentListItem";
 
 interface AscentListProps {
   title: string;

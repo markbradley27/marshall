@@ -4,9 +4,6 @@ import Container from "react-bootstrap/Container";
 import Row from "react-bootstrap/Row";
 import { useLocation } from "react-router-dom";
 
-import { useAuth } from "../contexts/auth";
-import ActivityList from "./ActivityList";
-import AscentList from "./AscentList";
 import {
   fetchActivities,
   fetchAscents,
@@ -15,8 +12,12 @@ import {
   AscentState,
   UserState,
 } from "../api_shim";
-import Sidebar from "./Sidebar";
+import { useAuth } from "../contexts/auth";
 import useGoogleMaps from "../hooks/loadGoogleMaps";
+
+import ActivityList from "./ActivityList";
+import AscentList from "./AscentList";
+import Sidebar from "./Sidebar";
 import UserStats from "./UserStats";
 
 export default function Dashboard() {

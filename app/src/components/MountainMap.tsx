@@ -1,7 +1,8 @@
-import { useCallback, useState } from "react";
 import { GoogleMap } from "@react-google-maps/api";
+import { useCallback, useState } from "react";
 
 import { MountainState, MountainUiState } from "../api_shim";
+
 import MountainMarker from "./MountainMarker";
 
 const MAP_CONTAINER_STYLE = {

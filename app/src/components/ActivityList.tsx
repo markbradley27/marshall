@@ -1,11 +1,12 @@
 import Col from "react-bootstrap/Col";
 import Container from "react-bootstrap/Container";
-import ListGroup from "react-bootstrap/ListGroup";
 import Form from "react-bootstrap/Form";
 import InputGroup from "react-bootstrap/InputGroup";
+import ListGroup from "react-bootstrap/ListGroup";
+
+import { ActivityState } from "../api_shim";
 
 import ActivityListItem from "./ActivityListItem";
-import { ActivityState } from "../api_shim";
 
 interface ActivityListProps {
   title: string;
