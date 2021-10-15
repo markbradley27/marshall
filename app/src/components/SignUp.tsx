@@ -60,7 +60,7 @@ export default function SignUp() {
               />
             </Form.Group>
             <Button
-              className={"mb-2 w-100" + (signingUp ? "disabled" : "")}
+              className={"mb-2 w-100" + (signingUp ? " disabled" : "")}
               type="submit"
             >
               Sign Up
