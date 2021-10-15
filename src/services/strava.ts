@@ -15,6 +15,7 @@ const logger: Logger = new Logger();
 
 const ACTIVITIES_URL = "https://www.strava.com/api/v3/activities";
 const AUTH_URL = "https://www.strava.com/oauth/authorize";
+const DEAUTH_URL = "https://www.strava.com/oauth/deauthorize";
 const SUBSCRIPTION_URL = "https://www.strava.com/api/v3/push_subscriptions";
 const TOKEN_URL = "https://www.strava.com/oauth/token";
 
@@ -82,6 +83,11 @@ class StravaService {
       query("state").isString(),
       checkValidation,
       this.getAuthorizeCallback.bind(this)
+    );
+    this.router.get(
+      "/deauthorize",
+      verifyIdToken,
+      this.getDeauthorize.bind(this)
     );
     this.router.post(
       "/activity/:activityId?",
@@ -156,12 +162,16 @@ class StravaService {
     logger.info(`Saved tokens; uid: ${user.id}`);
   }
 
-  async queryStravaApi(url: URL, user: User) {
+  async ensureCurrentAccessToken(user: User) {
     const expireCutoff = new Date();
     expireCutoff.setMinutes(expireCutoff.getMinutes() + 30);
     if (user.stravaAccessTokenExpiresAt < expireCutoff) {
       await this.swapRefreshTokenForTokens(user);
     }
+  }
+
+  async queryStravaApi(url: URL, user: User) {
+    await this.ensureCurrentAccessToken(user);
 
     return await got(url, {
       headers: { Authorization: "Bearer " + user.stravaAccessToken },
@@ -259,6 +269,36 @@ class StravaService {
       res.sendStatus(500);
       return;
     }
+
+    res.redirect("/settings");
+  }
+
+  // TODO: Clean up synced activities?
+  async getDeauthorize(req: express.Request, res: express.Response) {
+    const user = await User.findOne({ where: { id: req.uid } });
+    if (user.stravaAccessToken == null) {
+      res.sendStatus(400);
+      return;
+    }
+
+    await this.ensureCurrentAccessToken(user);
+
+    const url = new URL(DEAUTH_URL);
+    url.searchParams.append("access_token", user.stravaAccessToken);
+    logger.info("Posting to deauth url:", url.toString());
+    try {
+      await got.post(url);
+    } catch (error) {
+      logger.error("deauth error:", error);
+      res.sendStatus(500);
+      return;
+    }
+
+    user.stravaAthleteId = null;
+    user.stravaAccessToken = null;
+    user.stravaAccessTokenExpiresAt = null;
+    user.stravaRefreshToken = null;
+    await user.save();
 
     res.sendStatus(200);
   }

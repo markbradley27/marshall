@@ -86,6 +86,7 @@ function userModelToApi(user: User): any {
   return {
     id: user.id,
     name: user.name,
+    stravaAthleteId: user.stravaAthleteId,
     activityCount: user.getDataValue("activityCount"),
     ascentCount: user.getDataValue("ascentCount"),
   };

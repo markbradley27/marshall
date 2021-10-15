@@ -5,7 +5,11 @@ async function apiFetch(url: string, idToken?: string) {
   if (idToken != null) {
     headers["id-token"] = idToken;
   }
-  return (await fetch(url, { headers })).json();
+  return await fetch(url, { headers });
+}
+
+async function apiFetchJson(url: string, idToken?: string) {
+  return (await apiFetch(url, idToken)).json();
 }
 
 interface ActivityState {
@@ -82,7 +86,7 @@ async function fetchActivities(options: FetchActivitiesOptions) {
         .join("&");
   }
 
-  const activitiesJson = await apiFetch(url, options.idToken);
+  const activitiesJson = await apiFetchJson(url, options.idToken);
 
   if (options.activityId != null) {
     return apiActivityToActivityState(activitiesJson, {
@@ -153,7 +157,7 @@ async function fetchAscents(options: FetchAscentsOptions) {
   if (options.includeMountains) {
     url += "?include_mountains=true";
   }
-  const ascentsJson = await apiFetch(url, options.idToken);
+  const ascentsJson = await apiFetchJson(url, options.idToken);
   return ascentsJson.map(apiAscentToAscentState);
 }
 
@@ -204,7 +208,7 @@ interface FetchMountainOptions {
   includeAscents?: boolean;
 }
 async function fetchMountain(id: number, options: FetchMountainOptions) {
-  const mountainJson = await apiFetch(
+  const mountainJson = await apiFetchJson(
     "/api/client/mountains/" +
       id +
       "?include_nearby=" +
@@ -219,6 +223,7 @@ async function fetchMountain(id: number, options: FetchMountainOptions) {
 interface UserState {
   id: string;
   name: string;
+  stravaAthleteId?: number;
   activityCount?: number;
   ascentCount?: number;
 }
@@ -226,13 +231,14 @@ function apiUserToUserState(apiUser: any): UserState {
   return {
     id: apiUser.id,
     name: apiUser.name,
+    stravaAthleteId: apiUser.stravaAthleteId,
     activityCount: apiUser.activityCount,
     ascentCount: apiUser.ascentCount,
   };
 }
 
 async function fetchUser(id: string, idToken: string) {
-  const userJson = await apiFetch("/api/client/user/" + id, idToken);
+  const userJson = await apiFetchJson("/api/client/user/" + id, idToken);
   return apiUserToUserState(userJson);
 }
 
@@ -244,6 +250,8 @@ async function postUser(id: string, name: string) {
 
 export type { ActivityState, AscentState, MountainState, UserState };
 export {
+  apiFetch,
+  apiFetchJson,
   fetchActivities,
   fetchActivity,
   fetchAscents,
