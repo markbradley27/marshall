@@ -169,7 +169,7 @@ enum MountainUiState {
 
 interface MountainState {
   id: number;
-  source: string;
+  source?: string;
   sourceId?: string;
   name: string;
   coords: google.maps.LatLng;
@@ -209,7 +209,7 @@ interface FetchMountainOptions {
 }
 async function fetchMountain(id: number, options: FetchMountainOptions) {
   const mountainJson = await apiFetchJson(
-    "/api/client/mountains/" +
+    "/api/client/mountain/" +
       id +
       "?include_nearby=" +
       (options.includeNearby || "false") +
@@ -218,6 +218,18 @@ async function fetchMountain(id: number, options: FetchMountainOptions) {
     options.idToken
   );
   return apiMountainToMountainState(mountainJson);
+}
+
+interface FetchMountainsOptions {
+  boundingBox?: string;
+}
+async function fetchMountains(options: FetchMountainsOptions) {
+  let url = "/api/client/mountains";
+  if (options.boundingBox != null) {
+    url += "?bounding_box=" + options.boundingBox;
+  }
+  const mountainsJson = await apiFetchJson(url);
+  return mountainsJson.map(apiMountainToMountainState);
 }
 
 interface UserState {
@@ -256,6 +268,7 @@ export {
   fetchActivity,
   fetchAscents,
   fetchMountain,
+  fetchMountains,
   fetchUser,
   MountainUiState,
   postUser,

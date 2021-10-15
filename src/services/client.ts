@@ -15,6 +15,7 @@ import {
   Ascent,
   List,
   Mountain,
+  MountainAttributes,
   sequelize,
   User,
 } from "../model";
@@ -138,7 +139,7 @@ class ClientService {
       this.postList.bind(this)
     );
     this.router.get(
-      "/mountains/:mountainId",
+      "/mountain/:mountainId",
       param("mountainId").isNumeric(),
       oneOf([
         query("include_nearby").optional().isBoolean(),
@@ -147,6 +148,13 @@ class ClientService {
       query("include_ascents").optional().isBoolean(),
       checkValidation,
       maybeVerifyIdToken,
+      this.getMountain.bind(this)
+    );
+    this.router.get(
+      "/mountains",
+      // TODO: Write a custom validator for this.
+      query("bounding_box").optional().isString(),
+      checkValidation,
       this.getMountains.bind(this)
     );
     this.router.get(
@@ -273,7 +281,7 @@ class ClientService {
     res.sendStatus(200);
   }
 
-  async getMountains(req: express.Request, res: express.Response) {
+  async getMountain(req: express.Request, res: express.Response) {
     if (req.query.include_ascents === "true" && req.uid === undefined) {
       res.sendStatus(403);
       return;
@@ -327,6 +335,28 @@ class ClientService {
     }
 
     res.json(resJson);
+  }
+
+  // TODO: Sanitize the bounding box input (and pass it to sequelize as the safe
+  // param type thingy.
+  async getMountains(req: express.Request, res: express.Response) {
+    let where: Sequelize.WhereOptions<MountainAttributes> = undefined;
+    if (req.query.bounding_box != null) {
+      const boundingBoxStr = req.query.bounding_box as string;
+      const [xmin, ymin, xmax, ymax] = boundingBoxStr.split(",");
+      where = Sequelize.fn(
+        "ST_Within",
+        Sequelize.cast(Sequelize.col("location"), "geometry"),
+        Sequelize.fn("ST_MakeEnvelope", xmin, ymin, xmax, ymax, 4326)
+      );
+    }
+
+    const mountains = await Mountain.findAll({
+      where,
+      attributes: ["id", "name", "location"],
+    });
+
+    res.json(mountains.map(mountainModelToApi));
   }
 
   async getUser(req: express.Request, res: express.Response) {

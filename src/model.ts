@@ -527,6 +527,7 @@ export {
   Ascent,
   List,
   Mountain,
+  MountainAttributes,
   MountainSource,
   User,
 };

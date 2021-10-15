@@ -6,17 +6,23 @@ interface MountainMarkerProps {
   coords: google.maps.LatLng;
   label?: string;
   state?: MountainUiState;
+  // Should be type Clusterer from react-google-maps, but that type isn't
+  // exported.
+  clusterer?: any;
 }
 export default function MountainMarker(props: MountainMarkerProps) {
   let scale = 3;
+  let zIndex = 2;
   switch (props.state) {
     case MountainUiState.NEUTRAL:
       break;
     case MountainUiState.SECONDARY:
       scale /= 1.5;
+      zIndex = 1;
       break;
     case MountainUiState.HIGHLIGHTED:
       scale *= 1.3;
+      zIndex = 3;
       break;
   }
 
@@ -30,5 +36,13 @@ export default function MountainMarker(props: MountainMarkerProps) {
     anchor: new google.maps.Point(13, 22),
   };
 
-  return <Marker position={props.coords} icon={icon} label={props.label} />;
+  return (
+    <Marker
+      position={props.coords}
+      icon={icon}
+      label={props.label}
+      zIndex={zIndex}
+      clusterer={props.clusterer}
+    />
+  );
 }

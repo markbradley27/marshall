@@ -54,7 +54,7 @@ function Mountain(props: MountainProps) {
         </Col>
         <Col xs={5}>
           <Ratio aspectRatio="4x3">
-            <MountainMap mountain={mountain} nearby={mountain.nearby} />
+            <MountainMap primary={mountain} secondaries={mountain.nearby} />
           </Ratio>
         </Col>
       </Row>

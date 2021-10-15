@@ -1,4 +1,4 @@
-import { GoogleMap } from "@react-google-maps/api";
+import { GoogleMap, MarkerClusterer } from "@react-google-maps/api";
 import { useCallback, useState } from "react";
 
 import { MountainState, MountainUiState } from "../api_shim";
@@ -11,46 +11,60 @@ const MAP_CONTAINER_STYLE = {
 };
 
 interface MountainMapProps {
-  mountain: MountainState;
-  nearby?: MountainState[];
+  primary?: MountainState;
+  secondaries?: MountainState[];
+
+  initialBounds?: google.maps.LatLngBounds;
+  zoom?: number;
 }
-function MountainMap(props: MountainMapProps) {
+export default function MountainMap(props: MountainMapProps) {
   const [, setMap] = useState<google.maps.Map | null>(null);
 
-  const onLoad = useCallback((map) => {
-    setMap(map);
-  }, []);
+  const onLoad = useCallback(
+    (map) => {
+      if (props.initialBounds != null) {
+        map.fitBounds(props.initialBounds);
+      }
+      setMap(map);
+    },
+    [props.initialBounds]
+  );
 
   const onUnmount = useCallback(function callback() {
     setMap(null);
   }, []);
 
-  return props.mountain ? (
+  return props.primary || props.secondaries ? (
     <GoogleMap
       mapContainerStyle={MAP_CONTAINER_STYLE}
       options={{
         streetViewControl: false,
         mapTypeId: google.maps.MapTypeId.TERRAIN,
       }}
-      center={props.mountain.coords}
-      zoom={12}
+      center={props.primary?.coords || { lat: 0, lng: 0 }}
+      zoom={props.zoom != null ? props.zoom : 12}
       onLoad={onLoad}
       onUnmount={onUnmount}
     >
-      <MountainMarker coords={props.mountain.coords} />
-      {props.nearby?.map((nearby) => {
-        return (
-          <MountainMarker
-            key={nearby.id}
-            coords={nearby.coords}
-            state={MountainUiState.SECONDARY}
-          />
-        );
-      })}
+      {props.primary && <MountainMarker coords={props.primary.coords} />}
+      {props.secondaries && (
+        <MarkerClusterer>
+          {(clusterer) => {
+            return props.secondaries?.map((secondary) => {
+              return (
+                <MountainMarker
+                  key={secondary.id}
+                  coords={secondary.coords}
+                  state={MountainUiState.SECONDARY}
+                  clusterer={clusterer}
+                />
+              );
+            });
+          }}
+        </MarkerClusterer>
+      )}
     </GoogleMap>
   ) : (
     <></>
   );
 }
-
-export default MountainMap;
