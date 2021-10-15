@@ -21,22 +21,22 @@ function App() {
         <Route exact path="/">
           {auth.user != null ? <Redirect to="/dashboard" /> : <Homepage />}
         </Route>
-        <Route exact path="/login">
+        <Route path="/login">
           {auth.user != null ? <Redirect to="/dashboard" /> : <Login />}
         </Route>
-        <Route exact path="/signup">
+        <Route path="/signup">
           {auth.user != null ? <Redirect to="/dashboard" /> : <SignUp />}
         </Route>
-        <Route exact path={["/dashboard", "/activities", "/ascents"]}>
+        <Route path={["/dashboard", "/activities", "/ascents"]}>
           {auth.user != null ? <Dashboard /> : <Redirect to="/" />}
         </Route>
-        <Route exact path="/settings">
+        <Route path="/settings">
           {auth.user == null ? <Redirect to="login" /> : <Settings />}
         </Route>
-        <Route exact path="/activity/:activityId">
+        <Route path="/activity/:activityId">
           <Activity />
         </Route>
-        <Route exact path="/mountain/:mountainId">
+        <Route path="/mountain/:mountainId">
           <Mountain />
         </Route>
       </Switch>
