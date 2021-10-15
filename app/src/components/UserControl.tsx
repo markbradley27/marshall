@@ -1,6 +1,7 @@
 import Button from "react-bootstrap/Button";
 import Dropdown from "react-bootstrap/Dropdown";
 import DropdownButton from "react-bootstrap/DropdownButton";
+import Nav from "react-bootstrap/Nav";
 
 import { useAuth } from "../contexts/auth";
 
@@ -9,10 +10,14 @@ function UserControl() {
 
   if (auth.user == null) {
     return (
-      <div>
-        <Button href="/login">Login</Button> or{" "}
-        <Button href="/signup">Sign Up</Button>
-      </div>
+      <Nav>
+        <Nav.Item className="px-2">
+          <Button href="/login">Login</Button>
+        </Nav.Item>
+        <Nav.Item className="px-2">
+          <Button href="/signup">Sign Up</Button>
+        </Nav.Item>
+      </Nav>
     );
   } else {
     return (

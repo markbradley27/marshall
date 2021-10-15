@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
+import Col from "react-bootstrap/Col";
 import Container from "react-bootstrap/Container";
+import Row from "react-bootstrap/Row";
+import { useLocation } from "react-router-dom";
 
 import { useAuth } from "../contexts/auth";
 import ActivityList from "./ActivityList";
@@ -12,6 +15,7 @@ import {
   AscentState,
   UserState,
 } from "../api_shim";
+import Sidebar from "./Sidebar";
 import useGoogleMaps from "../hooks/loadGoogleMaps";
 import UserStats from "./UserStats";
 
@@ -24,6 +28,7 @@ export default function Dashboard() {
 
   const auth = useAuth();
   const googleMapsLoaded = useGoogleMaps();
+  const location = useLocation();
 
   const refreshUser = useCallback(async (uid: string, idToken: string) => {
     const user = await fetchUser(uid, idToken);
@@ -79,15 +84,30 @@ export default function Dashboard() {
     activities &&
     user && (
       <Container>
-        <h3> Welcome {auth.user?.displayName}</h3>
-        <UserStats user={user} />
-        <AscentList title="Your ascents:" ascents={ascents} />
-        <ActivityList
-          title="Your activities:"
-          activities={activities}
-          onlyActivitiesWithAscents={onlyActivitiesWithAscents}
-          toggleOnlyActivitiesWithAscents={toggleOnlyActivitiesWithAscents}
-        />
+        <Row>
+          <Col xs={2}>
+            <Sidebar />
+          </Col>
+          <Col xs={8}>
+            {location.pathname === "/dashboard" && auth.user != null && (
+              <UserStats user={user} />
+            )}
+            {location.pathname === "/ascents" && (
+              <AscentList title="Your ascents:" ascents={ascents} />
+            )}
+            {location.pathname === "/activities" && (
+              <ActivityList
+                title="Your activities:"
+                activities={activities}
+                onlyActivitiesWithAscents={onlyActivitiesWithAscents}
+                toggleOnlyActivitiesWithAscents={
+                  toggleOnlyActivitiesWithAscents
+                }
+              />
+            )}
+          </Col>
+          <Col xs={2}></Col>
+        </Row>
       </Container>
     )
   );

@@ -1,4 +1,3 @@
-import Container from "react-bootstrap/Container";
 import { BrowserRouter, Redirect, Route, Switch } from "react-router-dom";
 
 import "./App.scss";
@@ -9,37 +8,39 @@ import Login from "./components/Login";
 import Mountain from "./components/Mountain";
 import Navbar from "./components/Navbar";
 import SignUp from "./components/SignUp";
+import Settings from "./components/Settings";
 import { useAuth } from "./contexts/auth";
 
 function App() {
   const auth = useAuth();
 
   return (
-    <Container>
-      <BrowserRouter>
-        <Navbar />
-        <Switch>
-          <Route exact path="/">
-            {auth.user != null ? <Redirect to="/dashboard" /> : <Homepage />}
-          </Route>
-          <Route path="/login">
-            {auth.user != null ? <Redirect to="/dashboard" /> : <Login />}
-          </Route>
-          <Route path="/signup">
-            {auth.user != null ? <Redirect to="/dashboard" /> : <SignUp />}
-          </Route>
-          <Route path="/dashboard">
-            {auth.user != null ? <Dashboard /> : <Redirect to="/" />}
-          </Route>
-          <Route path="/activity/:activityId">
-            <Activity />
-          </Route>
-          <Route path="/mountain/:mountainId">
-            <Mountain />
-          </Route>
-        </Switch>
-      </BrowserRouter>
-    </Container>
+    <BrowserRouter>
+      <Navbar />
+      <Switch>
+        <Route exact path="/">
+          {auth.user != null ? <Redirect to="/dashboard" /> : <Homepage />}
+        </Route>
+        <Route exact path="/login">
+          {auth.user != null ? <Redirect to="/dashboard" /> : <Login />}
+        </Route>
+        <Route exact path="/signup">
+          {auth.user != null ? <Redirect to="/dashboard" /> : <SignUp />}
+        </Route>
+        <Route exact path={["/dashboard", "/activities", "/ascents"]}>
+          {auth.user != null ? <Dashboard /> : <Redirect to="/" />}
+        </Route>
+        <Route exact path="/settings">
+          {auth.user == null ? <Redirect to="login" /> : <Settings />}
+        </Route>
+        <Route exact path="/activity/:activityId">
+          <Activity />
+        </Route>
+        <Route exact path="/mountain/:mountainId">
+          <Mountain />
+        </Route>
+      </Switch>
+    </BrowserRouter>
   );
 }
 

@@ -47,8 +47,7 @@ export default function Login() {
               />
             </Form.Group>
             <Button
-              className={"mb-2 " + (loggingIn ? "disabled" : "")}
-              style={{ width: "100%" }}
+              className={"mb-2 w-100 " + (loggingIn ? "disabled" : "")}
               type="submit"
             >
               Login
