@@ -1,8 +1,9 @@
 // TODO: Gracefully handle duplicate activities.
 
 import crypto from "crypto";
+
 import express from "express";
-import { oneOf, param, query } from "express-validator";
+import { param, oneOf, query } from "express-validator";
 import geojsonPolyline from "geojson-polyline";
 import got from "got";
 import { Logger } from "tslog";

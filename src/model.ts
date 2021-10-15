@@ -66,8 +66,10 @@ interface ActivityAttributes {
   UserId?: string;
 }
 
-interface ActivityCreationAttributes
-  extends Optional<ActivityAttributes, "id" | "sourceId" | "description"> {}
+type ActivityCreationAttributes = Optional<
+  ActivityAttributes,
+  "id" | "sourceId" | "description"
+>;
 
 class Activity
   extends Model<ActivityAttributes, ActivityCreationAttributes>
@@ -138,7 +140,7 @@ Activity.init(
   },
   {
     hooks: {
-      afterCreate: async (activity, options) => {
+      afterCreate: async (activity) => {
         const user = await activity.getUser();
 
         const mountainsAscended = await Mountain.findAll({
@@ -193,7 +195,7 @@ interface AscentAttributes {
   UserId?: string;
 }
 
-interface AscentCreationAttributes extends Optional<AscentAttributes, "id"> {}
+type AscentCreationAttributes = Optional<AscentAttributes, "id">;
 
 class Ascent
   extends Model<AscentAttributes, AscentCreationAttributes>
@@ -255,7 +257,7 @@ interface ListAttributes {
   OwnerId?: string;
 }
 
-interface ListCreationAttributes extends Optional<ListAttributes, "id"> {}
+type ListCreationAttributes = Optional<ListAttributes, "id">;
 
 class List
   extends Model<ListAttributes, ListCreationAttributes>
@@ -327,11 +329,10 @@ interface MountainAttributes {
   abstract: string;
 }
 
-interface MountainCreationAttributes
-  extends Optional<
-    MountainAttributes,
-    "id" | "sourceId" | "wikipediaLink" | "abstract"
-  > {}
+type MountainCreationAttributes = Optional<
+  MountainAttributes,
+  "id" | "sourceId" | "wikipediaLink" | "abstract"
+>;
 
 class Mountain
   extends Model<MountainAttributes, MountainCreationAttributes>
@@ -426,15 +427,14 @@ interface UserAttributes {
   ascentCount?: number;
 }
 
-interface UserCreationAttributes
-  extends Optional<
-    UserAttributes,
-    | "id"
-    | "stravaAccessToken"
-    | "stravaRefreshToken"
-    | "stravaAccessTokenExpiresAt"
-    | "stravaAthleteId"
-  > {}
+type UserCreationAttributes = Optional<
+  UserAttributes,
+  | "id"
+  | "stravaAccessToken"
+  | "stravaRefreshToken"
+  | "stravaAccessTokenExpiresAt"
+  | "stravaAthleteId"
+>;
 
 class User
   extends Model<UserAttributes, UserCreationAttributes>
