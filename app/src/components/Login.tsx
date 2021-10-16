@@ -1,8 +1,5 @@
 import { useState } from "react";
-import Button from "react-bootstrap/Button";
-import Col from "react-bootstrap/Col";
-import Form from "react-bootstrap/Form";
-import Row from "react-bootstrap/Row";
+import { Button, Form, Stack } from "react-bootstrap";
 
 import { useAuth } from "../contexts/auth";
 
@@ -23,11 +20,11 @@ export default function Login() {
 
   return (
     <UserManagementContainer>
-      <Row className="p-2 border">
+      <div className="p-3 border">
         <h2>LOGO</h2>
-        <Col>
-          <Form onSubmit={handleSubmit}>
-            <Form.Group className="mb-3" controlId="formBasicEmail">
+        <Form onSubmit={handleSubmit}>
+          <Stack gap={3}>
+            <Form.Group controlId="formBasicEmail">
               <Form.Label>Email</Form.Label>
               <Form.Control
                 type="email"
@@ -37,7 +34,7 @@ export default function Login() {
                 }}
               />
             </Form.Group>
-            <Form.Group className="mb-3" controlId="formBasicPassword">
+            <Form.Group controlId="formBasicPassword">
               <Form.Label>Password</Form.Label>
               <Form.Control
                 type="password"
@@ -53,18 +50,17 @@ export default function Login() {
             >
               Login
             </Button>
-          </Form>
-        </Col>
-      </Row>
-      <Row className="p-2 border" style={{ textAlign: "center" }}>
-        <Col>
+          </Stack>
+        </Form>
+        <hr />
+        <div style={{ textAlign: "center" }}>
           <a href="/TODO">Forgot password?</a>
-          <br />
-          . . .
-          <br />
+        </div>
+        <hr />
+        <div style={{ textAlign: "center" }}>
           Don't have an account yet? <a href="/signup">Sign up!</a>
-        </Col>
-      </Row>
+        </div>
+      </div>
     </UserManagementContainer>
   );
 }

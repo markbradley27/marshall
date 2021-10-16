@@ -1,8 +1,5 @@
 import { useCallback, useState } from "react";
-import Button from "react-bootstrap/Button";
-import Col from "react-bootstrap/Col";
-import Form from "react-bootstrap/Form";
-import Row from "react-bootstrap/Row";
+import { Button, Form, Stack } from "react-bootstrap";
 
 import { useAuth } from "../contexts/auth";
 
@@ -27,19 +24,21 @@ export default function SignUp() {
 
   return (
     <UserManagementContainer>
-      <Row className="p-2 border">
+      <div className="p-3 border">
         <h2>LOGO</h2>
-        <Col>
-          <Form onSubmit={handleSubmit}>
-            <Form.Group className="mb-3" controlId="formBasicEmail">
+        <Form onSubmit={handleSubmit}>
+          <Stack gap={3}>
+            <Form.Group controlId="formBasicName">
               <Form.Label>Name</Form.Label>
               <Form.Control
-                type="name"
+                type="text"
                 placeholder="Name"
                 onChange={(e) => {
                   setName(e.target.value);
                 }}
               />
+            </Form.Group>
+            <Form.Group controlId="formBasicEmail">
               <Form.Label>Email</Form.Label>
               <Form.Control
                 type="email"
@@ -49,7 +48,7 @@ export default function SignUp() {
                 }}
               />
             </Form.Group>
-            <Form.Group className="mb-3" controlId="formBasicPassword">
+            <Form.Group controlId="formBasicPassword">
               <Form.Label>Password</Form.Label>
               <Form.Control
                 type="password"
@@ -65,9 +64,9 @@ export default function SignUp() {
             >
               Sign Up
             </Button>
-          </Form>
-        </Col>
-      </Row>
+          </Stack>
+        </Form>
+      </div>
     </UserManagementContainer>
   );
 }

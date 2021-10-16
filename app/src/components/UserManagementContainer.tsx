@@ -1,14 +1,9 @@
-import { ReactNode } from "react";
+import { PropsWithChildren } from "react";
 import Container from "react-bootstrap/Container";
 
 import { useAuth } from "../contexts/auth";
 
-interface UserManagementContainerProps {
-  children: ReactNode;
-}
-export default function UserManagementContainer(
-  props: UserManagementContainerProps
-) {
+export default function UserManagementContainer(props: PropsWithChildren<{}>) {
   const auth = useAuth();
 
   if (auth.user != null) {
