@@ -5,17 +5,19 @@ import { useAuth } from "../contexts/auth";
 export default function Sidebar() {
   const auth = useAuth();
 
-  return (
-    <div>
+  return auth.user != null ? (
+    <>
       <h3>{auth.user?.displayName}</h3>
-      <Nav className="flex-column">
-        <Nav.Link className="px-0" href="/ascents">
+      <Nav className="flex-md-column">
+        <Nav.Link className="px-md-0" href="/ascents">
           Ascents
         </Nav.Link>
-        <Nav.Link className="px-0" href="/activities">
+        <Nav.Link className="px-md-0" href="/activities">
           Activities
         </Nav.Link>
       </Nav>
-    </div>
+    </>
+  ) : (
+    <></>
   );
 }

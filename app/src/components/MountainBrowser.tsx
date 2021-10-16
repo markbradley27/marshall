@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Col, Container, Ratio, Row } from "react-bootstrap";
+import { Ratio } from "react-bootstrap";
 
 import { fetchMountains, MountainState } from "../api_shim";
 import useGoogleMaps from "../hooks/loadGoogleMaps";
@@ -23,17 +23,9 @@ export default function MountainBrowser() {
   });
 
   return mountains ? (
-    <Container>
-      <Row>
-        <Col xs={2}></Col>
-        <Col xs={8}>
-          <Ratio aspectRatio="16x9">
-            <MountainMap secondaries={mountains} zoom={2} />
-          </Ratio>
-        </Col>
-        <Col xs={2}></Col>
-      </Row>
-    </Container>
+    <Ratio aspectRatio="16x9">
+      <MountainMap secondaries={mountains} zoom={2} />
+    </Ratio>
   ) : (
     <></>
   );

@@ -1,7 +1,4 @@
 import { useCallback, useEffect, useState } from "react";
-import Col from "react-bootstrap/Col";
-import Container from "react-bootstrap/Container";
-import Row from "react-bootstrap/Row";
 import { useLocation } from "react-router-dom";
 
 import {
@@ -17,7 +14,6 @@ import useGoogleMaps from "../hooks/loadGoogleMaps";
 
 import ActivityList from "./ActivityList";
 import AscentList from "./AscentList";
-import Sidebar from "./Sidebar";
 import UserStats from "./UserStats";
 
 export default function Dashboard() {
@@ -84,32 +80,22 @@ export default function Dashboard() {
     ascents &&
     activities &&
     user && (
-      <Container>
-        <Row>
-          <Col xs={2}>
-            <Sidebar />
-          </Col>
-          <Col xs={8}>
-            {location.pathname === "/dashboard" && auth.user != null && (
-              <UserStats user={user} />
-            )}
-            {location.pathname === "/ascents" && (
-              <AscentList title="Your ascents:" ascents={ascents} />
-            )}
-            {location.pathname === "/activities" && (
-              <ActivityList
-                title="Your activities:"
-                activities={activities}
-                onlyActivitiesWithAscents={onlyActivitiesWithAscents}
-                toggleOnlyActivitiesWithAscents={
-                  toggleOnlyActivitiesWithAscents
-                }
-              />
-            )}
-          </Col>
-          <Col xs={2}></Col>
-        </Row>
-      </Container>
+      <>
+        {location.pathname === "/dashboard" && auth.user != null && (
+          <UserStats user={user} />
+        )}
+        {location.pathname === "/ascents" && (
+          <AscentList title="Your ascents:" ascents={ascents} />
+        )}
+        {location.pathname === "/activities" && (
+          <ActivityList
+            title="Your activities:"
+            activities={activities}
+            onlyActivitiesWithAscents={onlyActivitiesWithAscents}
+            toggleOnlyActivitiesWithAscents={toggleOnlyActivitiesWithAscents}
+          />
+        )}
+      </>
     )
   );
 }

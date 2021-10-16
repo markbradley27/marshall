@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Button, Col, Container, Row } from "react-bootstrap";
+import { Button, Col, Row } from "react-bootstrap";
 
 import { apiFetch, UserState, fetchUser } from "../api_shim";
 import { useAuth } from "../contexts/auth";
@@ -33,47 +33,41 @@ export default function Settings() {
 
   return (
     user && (
-      <Container>
+      <>
+        <h3>Settings:</h3>
         <Row>
-          <Col xs={2}></Col>
+          <Col xs={4}>Third party integration:</Col>
           <Col xs={8}>
-            <h3>Settings:</h3>
-            <Row>
-              <Col xs={4}>Third party integration:</Col>
-              <Col xs={8}>
-                {user.stravaAthleteId != null ? (
-                  <>
-                    Synced to{" "}
-                    <a
-                      href={
-                        "http://www.strava.com/athletes/" + user.stravaAthleteId
-                      }
-                    >
-                      strava account
-                    </a>
-                    .
-                    <br />
-                    <Button className="mt-2" onClick={deauthorize}>
-                      Deauthorize Strava
-                    </Button>
-                  </>
-                ) : (
-                  <Button
-                    style={{
-                      backgroundColor: "#fc4c02",
-                      borderColor: "#fc4c02",
-                    }}
-                    href={`http://www.strava.com/oauth/authorize?client_id=${process.env.REACT_APP_STRAVA_CLIENT_ID}&redirect_uri=http://${process.env.REACT_APP_HOST}:${process.env.REACT_APP_PORT}/api/strava/authorize_callback&response_type=code&scope=activity:read,activity:read_all&state=${auth.user?.uid}`}
-                  >
-                    Sync strava
-                  </Button>
-                )}
-              </Col>
-            </Row>
+            {user.stravaAthleteId != null ? (
+              <>
+                Synced to{" "}
+                <a
+                  href={
+                    "http://www.strava.com/athletes/" + user.stravaAthleteId
+                  }
+                >
+                  strava account
+                </a>
+                .
+                <br />
+                <Button className="mt-2" onClick={deauthorize}>
+                  Deauthorize Strava
+                </Button>
+              </>
+            ) : (
+              <Button
+                style={{
+                  backgroundColor: "#fc4c02",
+                  borderColor: "#fc4c02",
+                }}
+                href={`http://www.strava.com/oauth/authorize?client_id=${process.env.REACT_APP_STRAVA_CLIENT_ID}&redirect_uri=http://${process.env.REACT_APP_HOST}:${process.env.REACT_APP_PORT}/api/strava/authorize_callback&response_type=code&scope=activity:read,activity:read_all&state=${auth.user?.uid}`}
+              >
+                Sync strava
+              </Button>
+            )}
           </Col>
-          <Col xs={2}></Col>
         </Row>
-      </Container>
+      </>
     )
   );
 }
