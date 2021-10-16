@@ -1,1 +1,7 @@
-@import "~bootstrap/scss/bootstrap"
+$tt-green: #004320;
+$tt-light-green: #deeede;
+
+$primary: $tt-green;
+$light: $tt-light-green;
+
+@import "~bootstrap/scss/bootstrap";
