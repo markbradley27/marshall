@@ -30,7 +30,7 @@ interface ActivityState {
 interface ApiActivityToActivityStateOptions {
   includeBounds: boolean;
 }
-function apiActivityToActivityState(
+function activityApiToState(
   apiActivity: any,
   options: ApiActivityToActivityStateOptions
 ): ActivityState {
@@ -44,7 +44,7 @@ function apiActivityToActivityState(
       return { lat: coords[1], lng: coords[0] };
     }),
     description: apiActivity.description,
-    ascents: apiActivity.ascents?.map(apiAscentToAscentState),
+    ascents: apiActivity.ascents?.map(ascentApiToState),
     userId: apiActivity.userId,
   };
   if (options.includeBounds) {
@@ -89,12 +89,12 @@ async function fetchActivities(options: FetchActivitiesOptions) {
   const activitiesJson = await apiFetchJson(url, options.idToken);
 
   if (options.activityId != null) {
-    return apiActivityToActivityState(activitiesJson, {
+    return activityApiToState(activitiesJson, {
       includeBounds: options.includeBounds || false,
     });
   }
   return activitiesJson.map((activityJson: any) => {
-    return apiActivityToActivityState(activityJson, {
+    return activityApiToState(activityJson, {
       includeBounds: options.includeBounds || false,
     });
   });
@@ -124,21 +124,21 @@ interface AscentState {
   n?: number;
 }
 
-function apiAscentToAscentState(apiAscent: any): AscentState {
+function ascentApiToState(apiAscent: any): AscentState {
   return {
     id: apiAscent.id,
     date: new Date(apiAscent.date),
     activityId: apiAscent.activityId,
     activity:
       apiAscent.activity != null
-        ? apiActivityToActivityState(apiAscent.activity, {
+        ? activityApiToState(apiAscent.activity, {
             includeBounds: false,
           })
         : undefined,
     mountainId: apiAscent.mountainId,
     mountain:
       apiAscent.mountain != null
-        ? apiMountainToMountainState(apiAscent.mountain)
+        ? mountainApiToState(apiAscent.mountain)
         : undefined,
     userId: apiAscent.userId,
   };
@@ -158,7 +158,7 @@ async function fetchAscents(options: FetchAscentsOptions) {
     url += "?include_mountains=true";
   }
   const ascentsJson = await apiFetchJson(url, options.idToken);
-  return ascentsJson.map(apiAscentToAscentState);
+  return ascentsJson.map(ascentApiToState);
 }
 
 enum MountainUiState {
@@ -184,7 +184,7 @@ interface MountainState {
   state?: MountainUiState;
 }
 
-function apiMountainToMountainState(apiMountain: any): MountainState {
+function mountainApiToState(apiMountain: any): MountainState {
   return {
     id: apiMountain.id,
     source: apiMountain.source,
@@ -196,8 +196,8 @@ function apiMountainToMountainState(apiMountain: any): MountainState {
     }),
     wikipediaLink: apiMountain.wikipediaLink,
     abstract: apiMountain.abstract,
-    ascents: apiMountain.ascents?.map(apiAscentToAscentState),
-    nearby: apiMountain.nearby?.map(apiMountainToMountainState),
+    ascents: apiMountain.ascents?.map(ascentApiToState),
+    nearby: apiMountain.nearby?.map(mountainApiToState),
     distance: apiMountain.distance,
   };
 }
@@ -217,19 +217,19 @@ async function fetchMountain(id: number, options: FetchMountainOptions) {
       (options.includeAscents || "false"),
     options.idToken
   );
-  return apiMountainToMountainState(mountainJson);
+  return mountainApiToState(mountainJson);
 }
 
 interface FetchMountainsOptions {
   boundingBox?: string;
 }
-async function fetchMountains(options: FetchMountainsOptions) {
+async function fetchMountains(options?: FetchMountainsOptions) {
   let url = "/api/client/mountains";
-  if (options.boundingBox != null) {
+  if (options?.boundingBox != null) {
     url += "?bounding_box=" + options.boundingBox;
   }
   const mountainsJson = await apiFetchJson(url);
-  return mountainsJson.map(apiMountainToMountainState);
+  return mountainsJson.map(mountainApiToState);
 }
 
 interface UserState {
@@ -239,7 +239,7 @@ interface UserState {
   activityCount?: number;
   ascentCount?: number;
 }
-function apiUserToUserState(apiUser: any): UserState {
+function userApiToState(apiUser: any): UserState {
   return {
     id: apiUser.id,
     name: apiUser.name,
@@ -251,7 +251,7 @@ function apiUserToUserState(apiUser: any): UserState {
 
 async function fetchUser(id: string, idToken: string) {
   const userJson = await apiFetchJson("/api/client/user/" + id, idToken);
-  return apiUserToUserState(userJson);
+  return userApiToState(userJson);
 }
 
 async function postUser(id: string, name: string) {
