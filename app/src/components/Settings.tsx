@@ -10,11 +10,13 @@ export default function Settings() {
 
   const refreshUser = useCallback(async () => {
     console.log("Refreshing user:", user);
-    const idToken = (await auth.user?.getIdToken()) as string;
-    const refreshedUser = await fetchUser(auth.user?.uid as string, idToken);
+    const refreshedUser = await fetchUser(
+      auth.user?.uid as string,
+      auth.idToken
+    );
     setUser(refreshedUser);
     console.log("Refreshed user:", refreshedUser);
-  }, [user, auth.user]);
+  }, [auth.idToken, auth.user, user]);
 
   useEffect(() => {
     async function fetchData() {
@@ -26,10 +28,9 @@ export default function Settings() {
   });
 
   const deauthorize = useCallback(async () => {
-    const idToken = (await auth.user?.getIdToken()) as string;
-    await apiFetch("/api/strava/deauthorize", idToken);
+    await apiFetch("/api/strava/deauthorize", auth.idToken);
     await refreshUser();
-  }, [refreshUser, auth.user]);
+  }, [auth.idToken, refreshUser]);
 
   return (
     user && (

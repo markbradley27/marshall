@@ -19,6 +19,7 @@ import { postUser } from "../api_shim";
 
 interface AuthContextValue {
   user: User | null;
+  idToken: string;
   signup: (email: string, password: string, name: string) => void;
   login: (email: string, password: string) => void;
   logout: () => void;
@@ -26,6 +27,7 @@ interface AuthContextValue {
 }
 const AuthContext = React.createContext<AuthContextValue>({
   user: null,
+  idToken: "",
   signup: () => {},
   login: () => {},
   logout: () => {},
@@ -38,6 +40,7 @@ export function useAuth() {
 
 export const AuthProvider: FunctionComponent = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [idToken, setIdToken] = useState("");
   const [loading, setLoading] = useState(true);
 
   async function signup(email: string, password: string, name: string) {
@@ -67,8 +70,13 @@ export const AuthProvider: FunctionComponent = ({ children }) => {
   }
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(getAuth(), (newUser) => {
+    const unsubscribe = onAuthStateChanged(getAuth(), async (newUser) => {
       setUser(newUser);
+      if (newUser != null) {
+        setIdToken(await newUser.getIdToken());
+      } else {
+        setIdToken("");
+      }
       setLoading(false);
     });
     return unsubscribe;
@@ -76,6 +84,7 @@ export const AuthProvider: FunctionComponent = ({ children }) => {
 
   const value: AuthContextValue = {
     user,
+    idToken,
     signup,
     login,
     logout,

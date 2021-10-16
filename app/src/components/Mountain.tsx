@@ -24,10 +24,9 @@ function Mountain(props: MountainProps) {
 
   useEffect(() => {
     async function fetchData() {
-      const idToken = (await auth.user?.getIdToken()) as string;
       const mountain = await fetchMountain(
         parseInt(props.match.params.mountainId, 10),
-        { idToken, includeNearby: true, includeAscents: true }
+        { idToken: auth.idToken, includeNearby: true, includeAscents: true }
       );
       setMountain(mountain);
     }

@@ -24,11 +24,10 @@ function Activity(props: ActivityProps) {
 
   useEffect(() => {
     async function fetchData() {
-      const idToken = (await auth.user?.getIdToken()) as string;
       const activity = await fetchActivity(
         parseInt(props.match.params.activityId, 10),
         {
-          idToken,
+          idToken: auth.idToken,
           includeAscents: true,
           includeBounds: true,
         }
