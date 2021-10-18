@@ -8,7 +8,7 @@ export default function AddSomethingDropdown() {
         <PlusLg style={{ verticalAlign: "-1px" }} />
       </Dropdown.Toggle>
       <Dropdown.Menu>
-        <Dropdown.Item>Ascent</Dropdown.Item>
+        <Dropdown.Item href="/add_ascent">Ascent</Dropdown.Item>
         <Dropdown.Item>Activity</Dropdown.Item>
       </Dropdown.Menu>
     </Dropdown>

@@ -123,6 +123,15 @@ class ClientService {
       verifyIdToken,
       this.getAscents.bind(this)
     );
+    this.router.post(
+      "/ascent",
+      query("mountain_id").isNumeric(),
+      // TODO: Should be isDate.
+      query("date").isString(),
+      checkValidation,
+      verifyIdToken,
+      this.postAscent.bind(this)
+    );
     this.router.get(
       "/list/:listId",
       param("listId").isNumeric(),
@@ -235,6 +244,16 @@ class ClientService {
       offset: PAGE_SIZE * parseInt(req.query.page as string, 10),
     });
     res.json(ascents.map(ascentModelToApi));
+  }
+
+  async postAscent(req: express.Request, res: express.Response) {
+    logger.info("Post ascent.");
+    Ascent.create({
+      UserId: req.uid,
+      MountainId: parseInt(req.query.mountain_id as string, 10),
+      date: new Date(req.query.date as string),
+    });
+    res.sendStatus(200);
   }
 
   async getList(req: express.Request, res: express.Response) {

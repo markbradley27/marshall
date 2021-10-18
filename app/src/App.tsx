@@ -2,6 +2,7 @@ import { BrowserRouter, Redirect, Route, Switch } from "react-router-dom";
 
 import "./App.scss";
 import Activity from "./components/Activity";
+import AddAscent from "./components/AddAscent";
 import Dashboard from "./components/Dashboard";
 import Homepage from "./components/Homepage";
 import Login from "./components/Login";
@@ -32,7 +33,7 @@ function App() {
             {auth.user != null ? <Dashboard /> : <Redirect to="/" />}
           </Route>
           <Route path="/settings">
-            {auth.user == null ? <Redirect to="login" /> : <Settings />}
+            {auth.user == null ? <Redirect to="/login" /> : <Settings />}
           </Route>
           <Route path="/activity/:activityId">
             <Activity />
@@ -42,6 +43,9 @@ function App() {
           </Route>
           <Route path="/mountains">
             <MountainBrowser />
+          </Route>
+          <Route path="/add_ascent">
+            {auth.user == null ? <Redirect to="/login" /> : <AddAscent />}
           </Route>
         </Switch>
       </PageFrame>

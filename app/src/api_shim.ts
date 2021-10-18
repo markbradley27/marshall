@@ -1,15 +1,26 @@
 import toBBox from "geojson-bounding-box";
 
-async function apiFetch(url: string, idToken?: string) {
-  let headers: any = {};
+function buildAuthHeaders(idToken?: string): any {
   if (idToken != null) {
-    headers["id-token"] = idToken;
+    return { "id-token": idToken };
+  } else {
+    return {};
   }
-  return await fetch(url, { headers });
+}
+
+async function apiFetch(url: string, idToken?: string) {
+  return await fetch(url, { headers: buildAuthHeaders(idToken) });
 }
 
 async function apiFetchJson(url: string, idToken?: string) {
   return (await apiFetch(url, idToken)).json();
+}
+
+async function apiPost(url: string, idToken?: string) {
+  return await fetch(url, {
+    headers: buildAuthHeaders(idToken),
+    method: "POST",
+  });
 }
 
 interface ActivityState {
@@ -161,6 +172,16 @@ async function fetchAscents(options: FetchAscentsOptions) {
   return ascentsJson.map(ascentApiToState);
 }
 
+async function postAscent(idToken: string, mountainId: number, date: Date) {
+  await apiPost(
+    "/api/client/ascent?mountain_id=" +
+      mountainId +
+      "&date=" +
+      date.toISOString(),
+    idToken
+  );
+}
+
 enum MountainUiState {
   NEUTRAL,
   SECONDARY,
@@ -267,6 +288,7 @@ export {
   fetchActivities,
   fetchActivity,
   fetchAscents,
+  postAscent,
   fetchMountain,
   fetchMountains,
   fetchUser,
