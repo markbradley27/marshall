@@ -126,8 +126,9 @@ class ClientService {
     this.router.post(
       "/ascent",
       query("mountain_id").isNumeric(),
-      // TODO: Should be isDate.
+      // TODO: isISODate
       query("date").isString(),
+      query("date_only").isBoolean(),
       checkValidation,
       verifyIdToken,
       this.postAscent.bind(this)
@@ -249,12 +250,13 @@ class ClientService {
   }
 
   async postAscent(req: express.Request, res: express.Response) {
-    Ascent.create({
+    const ascent = await Ascent.create({
       UserId: req.uid,
       MountainId: parseInt(req.query.mountain_id as string, 10),
       date: new Date(req.query.date as string),
+      dateOnly: req.query.date_only == "true",
     });
-    res.sendStatus(200);
+    res.status(200).json({ data: { id: ascent.id } });
   }
 
   async getList(req: express.Request, res: express.Response) {

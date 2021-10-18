@@ -168,6 +168,7 @@ Activity.init(
           mountainsAscended.map((mountain) => {
             return {
               date: activity.date,
+              dateonly: false,
               ActivityId: activity.id,
               MountainId: mountain.id,
               UserId: user.id,
@@ -189,13 +190,15 @@ Activity.init(
 interface AscentAttributes {
   id: number;
   date: Date;
+  // Indicates the date only represents a day (time will be midnight UTC).
+  dateOnly?: boolean;
 
   ActivityId?: number;
   MountainId?: number;
   UserId?: string;
 }
 
-type AscentCreationAttributes = Optional<AscentAttributes, "id">;
+type AscentCreationAttributes = Optional<AscentAttributes, "id" | "dateOnly">;
 
 class Ascent
   extends Model<AscentAttributes, AscentCreationAttributes>
@@ -203,6 +206,8 @@ class Ascent
 {
   id!: number;
   date!: Date;
+  dateOnly!: boolean;
+  timezone!: string;
 
   createdAt!: Date;
   updatedAt!: Date;
@@ -244,6 +249,10 @@ Ascent.init(
     date: {
       type: DataTypes.DATE,
       allowNull: false,
+    },
+    dateOnly: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
     },
   },
   { sequelize }

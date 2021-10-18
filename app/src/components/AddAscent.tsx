@@ -1,12 +1,15 @@
+import geoTz from "geo-tz";
+import { DateTime } from "luxon";
 import { Fragment, useCallback, useEffect, useState } from "react";
 import { Button, Form, Stack } from "react-bootstrap";
 import { Typeahead } from "react-bootstrap-typeahead";
+import { RouteComponentProps, withRouter } from "react-router-dom";
 
 import { fetchMountains, MountainState, postAscent } from "../api_client";
 import { useAuth } from "../contexts/auth";
 import useGoogleMaps from "../hooks/loadGoogleMaps";
 
-export default function AddAscent() {
+function AddAscent(props: RouteComponentProps<{}>) {
   const [mountains, setMountains] = useState<MountainState[] | null>(null);
   const [loaded, setLoaded] = useState(false);
 
@@ -29,21 +32,31 @@ export default function AddAscent() {
     }
   });
 
-  // TODO: Redirect to the new ascent page.
   const submitAscent = useCallback(
-    (e) => {
+    async (e) => {
       e.preventDefault();
-      console.log(`mountain: ${mountain}; date: ${date}; time: ${time}`);
-      console.log(Intl.DateTimeFormat().resolvedOptions().timeZone);
+      let dateTime: DateTime;
+      let dateOnly = false;
       if (time) {
-        console.log(new Date([date, time].join("T")));
+        const zone = geoTz(mountain?.coords.lat(), mountain?.coords.lng())[0];
+        dateTime = DateTime.fromISO([date, time].join("T"), { zone });
+      } else {
+        dateTime = DateTime.fromISO(date, { zone: "UTC" });
+        dateOnly = true;
       }
       if (mountain != null && date != null) {
         setSubmitting(true);
-        //postAscent(auth.idToken, mountain.id, date);
+        await postAscent(
+          auth.idToken,
+          mountain.id,
+          dateTime.toJSDate(),
+          dateOnly
+        );
+        // TODO: Redirect to ascent page once it exists.
+        props.history.push("/mountain/" + mountain.id);
       }
     },
-    [auth.idToken, date, mountain, time]
+    [auth.idToken, date, mountain, props.history, time]
   );
 
   return mountains != null ? (
@@ -96,3 +109,5 @@ export default function AddAscent() {
     <></>
   );
 }
+
+export default withRouter(AddAscent);

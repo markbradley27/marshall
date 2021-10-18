@@ -19,10 +19,16 @@ async function apiFetch(url: string, idToken?: string) {
 }
 
 async function apiPost(url: string, idToken?: string) {
-  return await fetch(url, {
-    headers: buildAuthHeaders(idToken),
-    method: "POST",
-  });
+  const res = await (
+    await fetch(url, {
+      headers: buildAuthHeaders(idToken),
+      method: "POST",
+    })
+  ).json();
+  if (res.error != null) {
+    throw Error(res.error.message);
+  }
+  return res.data;
 }
 
 interface ActivityState {
@@ -174,12 +180,19 @@ async function fetchAscents(options: FetchAscentsOptions) {
   return ascentsJson.map(ascentApiToState);
 }
 
-async function postAscent(idToken: string, mountainId: number, date: Date) {
-  await apiPost(
+async function postAscent(
+  idToken: string,
+  mountainId: number,
+  date: Date,
+  dateOnly: boolean
+) {
+  return await apiPost(
     "/api/client/ascent?mountain_id=" +
       mountainId +
       "&date=" +
-      date.toISOString(),
+      date.toISOString() +
+      "&date_only=" +
+      dateOnly,
     idToken
   );
 }
