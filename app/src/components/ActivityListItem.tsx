@@ -2,7 +2,7 @@ import Col from "react-bootstrap/Col";
 import ListGroup from "react-bootstrap/ListGroup";
 import Row from "react-bootstrap/Row";
 
-import { ActivityState } from "../api_shim";
+import { ActivityState } from "../api_client";
 
 interface ActivityListItemProps {
   activity: ActivityState;

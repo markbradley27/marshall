@@ -15,7 +15,7 @@ import React, {
   useState,
 } from "react";
 
-import { postUser } from "../api_shim";
+import { postUser } from "../api_client";
 
 interface AuthContextValue {
   user: User | null;

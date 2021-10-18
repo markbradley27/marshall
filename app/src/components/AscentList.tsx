@@ -1,7 +1,7 @@
 import Container from "react-bootstrap/Container";
 import ListGroup from "react-bootstrap/ListGroup";
 
-import { AscentState } from "../api_shim";
+import { AscentState } from "../api_client";
 
 import AscentListItem from "./AscentListItem";
 

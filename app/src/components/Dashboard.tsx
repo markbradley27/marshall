@@ -8,7 +8,7 @@ import {
   ActivityState,
   AscentState,
   UserState,
-} from "../api_shim";
+} from "../api_client";
 import { useAuth } from "../contexts/auth";
 import useGoogleMaps from "../hooks/loadGoogleMaps";
 

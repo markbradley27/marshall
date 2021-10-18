@@ -217,7 +217,9 @@ class ClientService {
     const activities = await Activity.findAll(findOptions);
 
     if (!activities) {
-      res.sendStatus(404);
+      res
+        .status(404)
+        .json({ error: { code: 404, message: "No activities found." } });
       return;
     }
 
@@ -225,7 +227,7 @@ class ClientService {
       res.json(activityModelToApi(activities[0]));
       return;
     }
-    res.json(activities.map(activityModelToApi));
+    res.json({ data: activities.map(activityModelToApi) });
   }
 
   async getAscents(req: express.Request, res: express.Response) {
@@ -243,11 +245,10 @@ class ClientService {
       limit: PAGE_SIZE,
       offset: PAGE_SIZE * parseInt(req.query.page as string, 10),
     });
-    res.json(ascents.map(ascentModelToApi));
+    res.json({ data: ascents.map(ascentModelToApi) });
   }
 
   async postAscent(req: express.Request, res: express.Response) {
-    logger.info("Post ascent.");
     Ascent.create({
       UserId: req.uid,
       MountainId: parseInt(req.query.mountain_id as string, 10),
@@ -267,11 +268,16 @@ class ClientService {
       return;
     }
     if (list.private && (req.uid == null || req.uid !== list.OwnerId)) {
-      res.sendStatus(403);
+      res.status(403).json({
+        error: {
+          code: 403,
+          message: "You don't have permission to view this list.",
+        },
+      });
       return;
     }
 
-    return res.json(listModelToApi(list));
+    return res.json({ data: listModelToApi(list) });
   }
 
   // TODO: Suggest user use identical (or similar?) public list instead.
@@ -302,7 +308,12 @@ class ClientService {
 
   async getMountain(req: express.Request, res: express.Response) {
     if (req.query.include_ascents === "true" && req.uid === undefined) {
-      res.sendStatus(403);
+      res.status(403).json({
+        error: {
+          code: 403,
+          message: "Must be authenticated to include ascents.",
+        },
+      });
       return;
     }
 
@@ -353,7 +364,7 @@ class ClientService {
       resJson.ascents = ascents.map(ascentModelToApi);
     }
 
-    res.json(resJson);
+    res.json({ data: resJson });
   }
 
   // TODO: Sanitize the bounding box input (and pass it to sequelize as the safe
@@ -375,7 +386,7 @@ class ClientService {
       attributes: ["id", "name", "location"],
     });
 
-    res.json(mountains.map(mountainModelToApi));
+    res.json({ data: mountains.map(mountainModelToApi) });
   }
 
   async getUser(req: express.Request, res: express.Response) {
@@ -405,7 +416,7 @@ class ClientService {
       ],
       group: ["User.id"],
     });
-    res.json(userModelToApi(user));
+    res.json({ data: userModelToApi(user) });
   }
 
   async postUser(req: express.Request, res: express.Response) {
@@ -416,8 +427,7 @@ class ClientService {
     try {
       await User.create({ id, name });
     } catch (error) {
-      logger.error("User.create error:", error);
-      res.status(400).send(error);
+      res.status(400).json({ error: { code: 400, message: error.name } });
       return;
     }
 
@@ -435,7 +445,7 @@ class ClientService {
       await admin.auth().deleteUser(uid);
       await user.destroy();
     } catch (error) {
-      res.status(400).send(error);
+      res.status(400).json({ error: { code: 400, message: error.name } });
       return;
     }
 
@@ -450,7 +460,9 @@ class ClientService {
     const geoJson = togeojson.gpx(req.body);
 
     if (geoJson.features[0].geometry.type !== "LineString") {
-      res.status(400).send("Multi-track GPX files not supported");
+      res.status(400).json({
+        error: { code: 400, message: "Multi-track GPX files not supported" },
+      });
       return;
     }
     if (geoJson.features[0].geometry.coordinates[0].length > 2) {

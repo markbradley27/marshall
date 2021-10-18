@@ -5,7 +5,7 @@ import Ratio from "react-bootstrap/Ratio";
 import Row from "react-bootstrap/Row";
 import { RouteComponentProps, withRouter } from "react-router-dom";
 
-import { fetchMountain, MountainState } from "../api_shim";
+import { fetchMountain, MountainState } from "../api_client";
 import { useAuth } from "../contexts/auth";
 import useGoogleMaps from "../hooks/loadGoogleMaps";
 

@@ -1,7 +1,7 @@
 import { GoogleMap, MarkerClusterer } from "@react-google-maps/api";
 import { useCallback, useState } from "react";
 
-import { MountainState, MountainUiState } from "../api_shim";
+import { MountainState, MountainUiState } from "../api_client";
 
 import MountainMarker from "./MountainMarker";
 

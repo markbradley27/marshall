@@ -290,8 +290,7 @@ class StravaService {
     try {
       await got.post(url);
     } catch (error) {
-      logger.error("deauth error:", error);
-      res.sendStatus(500);
+      res.status(500).json({ error: { code: 500, message: error.name } });
       return;
     }
 
@@ -315,7 +314,7 @@ class StravaService {
       try {
         await this.loadActivityById(activityId, user);
       } catch (error) {
-        res.status(400).send(error.toString());
+        res.status(400).json({ error: { code: 400, message: error.name } });
         return;
       }
       res.sendStatus(200);
@@ -334,7 +333,7 @@ class StravaService {
         );
         activities = listActivitiesRes.body as StravaActivity[];
       } catch (error) {
-        res.status(400).send(error.toString());
+        res.status(400).json({ error: { code: 400, message: error.name } });
         return;
       }
 
@@ -353,7 +352,7 @@ class StravaService {
             );
             continue;
           }
-          res.status(400).send(error.toString());
+          res.status(400).json({ error: { code: 400, message: error.name } });
           return;
         }
       }
@@ -376,11 +375,18 @@ class StravaService {
           },
         });
         if (!activity) {
-          res.sendStatus(404);
+          res
+            .status(404)
+            .json({ error: { code: 404, message: "Activity not found." } });
           return;
         }
         if (activity.UserId !== req.uid) {
-          res.sendStatus(403);
+          res.status(403).json({
+            error: {
+              code: 403,
+              message: "Must authenticate as owner to delete.",
+            },
+          });
           return;
         }
         await activity.destroy();
@@ -388,7 +394,7 @@ class StravaService {
         await Activity.destroy({ where: { UserId: req.uid } });
       }
     } catch (error) {
-      res.status(500).send(error.toString);
+      res.status(500).send({ error: { code: 500, message: error.name } });
       return;
     }
 
@@ -398,7 +404,9 @@ class StravaService {
   async getSubscriptionCallback(req: express.Request, res: express.Response) {
     logger.info("Got subscription callback probe.");
     if (req.query["hub.verify_token"] !== this.#subscriptionVerifyToken) {
-      res.status(400).send("verify token missmatch");
+      res
+        .status(400)
+        .json({ error: { code: 400, message: "verify token missmatch" } });
       return;
     }
 

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Button, Col, Row } from "react-bootstrap";
 
-import { apiFetch, UserState, fetchUser } from "../api_shim";
+import { apiFetch, UserState, fetchUser } from "../api_client";
 import { useAuth } from "../contexts/auth";
 
 export default function Settings() {

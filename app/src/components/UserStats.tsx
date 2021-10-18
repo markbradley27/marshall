@@ -2,7 +2,7 @@ import Col from "react-bootstrap/Col";
 import Container from "react-bootstrap/Container";
 import Row from "react-bootstrap/Row";
 
-import { UserState } from "../api_shim";
+import { UserState } from "../api_client";
 
 interface UserStatsProps {
   user: UserState;

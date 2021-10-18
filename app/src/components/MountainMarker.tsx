@@ -1,6 +1,6 @@
 import { Marker } from "@react-google-maps/api";
 
-import { MountainUiState } from "../api_shim";
+import { MountainUiState } from "../api_client";
 
 interface MountainMarkerProps {
   coords: google.maps.LatLng;

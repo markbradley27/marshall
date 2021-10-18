@@ -1,7 +1,7 @@
 import Container from "react-bootstrap/Container";
 import ListGroup from "react-bootstrap/ListGroup";
 
-import { MountainState } from "../api_shim";
+import { MountainState } from "../api_client";
 
 import MountainListItem from "./MountainListItem";
 

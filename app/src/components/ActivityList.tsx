@@ -4,7 +4,7 @@ import Form from "react-bootstrap/Form";
 import InputGroup from "react-bootstrap/InputGroup";
 import ListGroup from "react-bootstrap/ListGroup";
 
-import { ActivityState } from "../api_shim";
+import { ActivityState } from "../api_client";
 
 import ActivityListItem from "./ActivityListItem";
 
