@@ -222,7 +222,7 @@ class ClientService {
   async getAscents(req: express.Request, res: express.Response) {
     const whereClause: any = { UserId: req.uid };
     if (req.params.mountainId != null) {
-      whereClause.mountainId = parseInt(req.params.mountainId, 10);
+      whereClause.MountainId = parseInt(req.params.mountainId, 10);
     }
     const ascents = await Ascent.findAll({
       where: whereClause,
