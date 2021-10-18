@@ -8,9 +8,11 @@ import useGoogleMaps from "../hooks/loadGoogleMaps";
 
 export default function AddAscent() {
   const [mountains, setMountains] = useState<MountainState[] | null>(null);
-  const [mountainsFetchAttempted, setMountainsFetchAttempted] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+
   const [mountain, setMountain] = useState<MountainState | null>(null);
-  const [date, setDate] = useState<Date | null>(null);
+  const [date, setDate] = useState("");
+  const [time, setTime] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   const auth = useAuth();
@@ -18,11 +20,11 @@ export default function AddAscent() {
 
   useEffect(() => {
     async function fetchData() {
-      setMountainsFetchAttempted(true);
+      setLoaded(true);
       setMountains(await fetchMountains());
     }
 
-    if (!mountainsFetchAttempted && googleMapsLoaded) {
+    if (!loaded && googleMapsLoaded) {
       fetchData();
     }
   });
@@ -31,12 +33,17 @@ export default function AddAscent() {
   const submitAscent = useCallback(
     (e) => {
       e.preventDefault();
+      console.log(`mountain: ${mountain}; date: ${date}; time: ${time}`);
+      console.log(Intl.DateTimeFormat().resolvedOptions().timeZone);
+      if (time) {
+        console.log(new Date([date, time].join("T")));
+      }
       if (mountain != null && date != null) {
         setSubmitting(true);
-        postAscent(auth.idToken, mountain.id, date);
+        //postAscent(auth.idToken, mountain.id, date);
       }
     },
-    [auth.idToken, date, mountain]
+    [auth.idToken, date, mountain, time]
   );
 
   return mountains != null ? (
@@ -56,16 +63,26 @@ export default function AddAscent() {
               }}
             />
           </Form.Group>
-          {/* TODO: Split time out as optional.*/}
-          <Form.Group controlId="date">
-            <Form.Label>Date</Form.Label>
-            <Form.Control
-              type="datetime-local"
-              onChange={(e) => {
-                setDate(new Date(e.target.value));
-              }}
-            />
-          </Form.Group>
+          <Stack direction="horizontal" gap={3} className="w-100">
+            <Form.Group controlId="date">
+              <Form.Label>Date</Form.Label>
+              <Form.Control
+                type="date"
+                onChange={(e) => {
+                  setDate(e.target.value);
+                }}
+              />
+            </Form.Group>
+            <Form.Group>
+              <Form.Label>Time</Form.Label>
+              <Form.Control
+                type="time"
+                onChange={(e) => {
+                  setTime(e.target.value);
+                }}
+              />
+            </Form.Group>
+          </Stack>
           <Button
             className={"w-100" + (submitting ? " disabled" : "")}
             type="submit"
