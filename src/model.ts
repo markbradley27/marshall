@@ -58,6 +58,7 @@ interface ActivityAttributes {
   id: number;
   source: ActivitySource;
   sourceId: string;
+  sourceUserId: string;
   name: string;
   date: Date;
   path: any;
@@ -68,7 +69,7 @@ interface ActivityAttributes {
 
 type ActivityCreationAttributes = Optional<
   ActivityAttributes,
-  "id" | "sourceId" | "description"
+  "id" | "sourceId" | "sourceUserId" | "description"
 >;
 
 class Activity
@@ -78,6 +79,7 @@ class Activity
   id!: number;
   source!: ActivitySource;
   sourceId!: string;
+  sourceUserId!: string;
   name!: string;
   date!: Date;
   path!: any;
@@ -124,6 +126,7 @@ Activity.init(
       allowNull: false,
     },
     sourceId: DataTypes.STRING,
+    sourceUserId: DataTypes.STRING,
     name: {
       type: DataTypes.STRING,
       allowNull: false,

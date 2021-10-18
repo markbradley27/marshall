@@ -67,6 +67,8 @@ class StravaService {
   // This will be undefined if the service is not currently subscribed.
   #subscriptionId: number;
 
+  #currentlySyncing: any = {};
+
   constructor(clientId: number, clientSecret: string) {
     this.#clientId = clientId;
     this.#clientSecret = clientSecret;
@@ -197,6 +199,7 @@ class StravaService {
     await user.createActivity({
       source: ActivitySource.strava,
       sourceId: activity.id,
+      sourceUserId: activity.athlete.id,
       name: activity.name,
       date: activity.start_date,
       path: pathJson,
@@ -208,6 +211,62 @@ class StravaService {
     const getActivityRes = await this.queryStravaApi(getActivityUrl, user);
     const activity = getActivityRes.body as StravaActivity;
     await this.loadActivity(activity, user);
+  }
+
+  loadAllActivities(
+    user: User,
+    done?: () => void
+  ): { promise: Promise<void>; cancelFn: () => void } {
+    let keepGoing = true;
+
+    const loadAllActivitiesInternal = async () => {
+      const listActivitiesUrl = new URL(ACTIVITIES_URL);
+      for (let page = 1; ; page++) {
+        listActivitiesUrl.searchParams.append("page", page.toString());
+
+        const listActivitiesRes = await this.queryStravaApi(
+          listActivitiesUrl,
+          user
+        );
+        const activities = listActivitiesRes.body as StravaActivity[];
+
+        if (activities.length === 0) {
+          break;
+        }
+
+        for (const activity of activities) {
+          if (!keepGoing) {
+            logger.info("loadAllActivities aborting");
+            if (done != null) {
+              done();
+            }
+            return;
+          }
+          try {
+            await this.loadActivity(activity, user);
+          } catch (error) {
+            // TODO: I really hope there's a better way to do this...
+            if (error.toString().includes("SequelizeUniqueConstraintError")) {
+              logger.info(
+                `Skipping already loaded activity; id: ${activity.id}; name: ${activity.name}`
+              );
+              continue;
+            }
+            throw error;
+          }
+        }
+      }
+      if (done != null) {
+        done();
+      }
+    };
+
+    return {
+      promise: loadAllActivitiesInternal(),
+      cancelFn: () => {
+        keepGoing = false;
+      },
+    };
   }
 
   // Subscribes to strava webhook.
@@ -259,27 +318,38 @@ class StravaService {
     res.redirect(authUrl.toString());
   }
 
-  getAuthorizeCallback(req: express.Request, res: express.Response) {
+  async getAuthorizeCallback(req: express.Request, res: express.Response) {
     const authCode = req.query.code as string;
     const uid = req.query.state as string;
 
     try {
-      this.swapAuthCodeForTokens(authCode, uid);
+      await this.swapAuthCodeForTokens(authCode, uid);
     } catch (error) {
       logger.error("getAccessTokenFromAuthCode:", error);
       res.sendStatus(500);
       return;
     }
 
+    const user = await User.findOne({ where: { id: uid } });
+    this.#currentlySyncing[uid] = this.loadAllActivities(user, () => {
+      delete this.#currentlySyncing.uid;
+    });
+
     res.redirect("/settings");
   }
 
-  // TODO: Clean up synced activities?
+  // TODO: Make cleaning up synced activities optional.
   async getDeauthorize(req: express.Request, res: express.Response) {
     const user = await User.findOne({ where: { id: req.uid } });
     if (user.stravaAccessToken == null) {
-      res.sendStatus(400);
+      res.status(400).json({
+        error: { code: 400, message: "user not currently authorized" },
+      });
       return;
+    }
+
+    if (this.#currentlySyncing[req.uid] != null) {
+      this.#currentlySyncing[req.uid].cancelFn();
     }
 
     await this.ensureCurrentAccessToken(user);
@@ -293,6 +363,14 @@ class StravaService {
       res.status(500).json({ error: { code: 500, message: error.name } });
       return;
     }
+
+    await Activity.destroy({
+      where: {
+        UserId: req.uid,
+        source: "strava",
+        sourceUserId: user.stravaAthleteId.toString(),
+      },
+    });
 
     user.stravaAthleteId = null;
     user.stravaAccessToken = null;
@@ -321,43 +399,8 @@ class StravaService {
       return;
     }
 
-    const listActivitiesUrl = new URL(ACTIVITIES_URL);
-    for (let page = 1; ; page++) {
-      listActivitiesUrl.searchParams.append("page", page.toString());
-
-      let activities: StravaActivity[];
-      try {
-        const listActivitiesRes = await this.queryStravaApi(
-          listActivitiesUrl,
-          user
-        );
-        activities = listActivitiesRes.body as StravaActivity[];
-      } catch (error) {
-        res.status(400).json({ error: { code: 400, message: error.name } });
-        return;
-      }
-
-      if (activities.length === 0) {
-        break;
-      }
-
-      for (const activity of activities) {
-        try {
-          await this.loadActivity(activity, user);
-        } catch (error) {
-          // TODO: I really hope there's a better way to do this...
-          if (error.toString().includes("SequelizeUniqueConstraintError")) {
-            logger.info(
-              `Skipping already loaded activity; id: ${activity.id}; name: ${activity.name}`
-            );
-            continue;
-          }
-          res.status(400).json({ error: { code: 400, message: error.name } });
-          return;
-        }
-      }
-    }
-
+    const { promise } = this.loadAllActivities(user);
+    await promise;
     res.sendStatus(200);
   }
 

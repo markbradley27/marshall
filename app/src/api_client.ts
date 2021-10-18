@@ -8,27 +8,29 @@ function buildAuthHeaders(idToken?: string): any {
   }
 }
 
-async function apiFetch(url: string, idToken?: string) {
-  const res = await (
-    await fetch(url, { headers: buildAuthHeaders(idToken) })
-  ).json();
-  if (res.error != null) {
-    throw Error(res.error.message);
+async function maybeReturnJson(res: any) {
+  try {
+    const json = await res.json();
+    if (json.error != null) {
+      console.log(json.error);
+    }
+    return json.data;
+  } catch (error) {
+    return;
   }
-  return res.data;
+}
+
+async function apiFetch(url: string, idToken?: string) {
+  const res = await fetch(url, { headers: buildAuthHeaders(idToken) });
+  return maybeReturnJson(res);
 }
 
 async function apiPost(url: string, idToken?: string) {
-  const res = await (
-    await fetch(url, {
-      headers: buildAuthHeaders(idToken),
-      method: "POST",
-    })
-  ).json();
-  if (res.error != null) {
-    throw Error(res.error.message);
-  }
-  return res.data;
+  const res = await fetch(url, {
+    headers: buildAuthHeaders(idToken),
+    method: "POST",
+  });
+  return maybeReturnJson(res);
 }
 
 interface ActivityState {
