@@ -1,48 +1,57 @@
 // Reads mountain JSON data from stdin and commits to the DB via sequelize.
 // Used by load_mountains.py.
 
-import * as dotenv from "dotenv";
-dotenv.config();
-
-import * as asyncMutex from "async-mutex";
 import * as readline from "readline";
 
-import { Mountain, MountainSource } from "../src/model";
+import * as asyncMutex from "async-mutex";
+import * as dotenv from "dotenv";
+import { Point } from "geojson";
 
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: null,
-  terminal: false,
-});
+import { Mountain, MountainSource } from "../src/model/Mountain";
+import { createConnection } from "../src/model/connection";
 
-// This is used to ensure the "close" event doesn't cause the script to exit
-// while a "line" event is still being processed.
-const mu = new asyncMutex.Mutex();
+dotenv.config();
 
-rl.on("line", async (line) => {
-  const release = await mu.acquire();
-
-  const mountain = JSON.parse(line);
-  const location_geojson = {
-    type: "Point",
-    coordinates: [
-      mountain.location.long,
-      mountain.location.lat,
-      mountain.location.elevation,
-    ],
-  };
-
-  await Mountain.create({
-    source: MountainSource.dbpedia,
-    sourceId: mountain.uri,
-    name: mountain.name,
-    location: location_geojson,
-    wikipediaLink: mountain.wikipedia_link,
-    abstract: mountain.abstract,
+async function main() {
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: null,
+    terminal: false,
   });
 
-  release();
-}).on("close", async () => {
-  await mu.acquire();
-  process.exit(0);
-});
+  const connection = await createConnection();
+
+  // This is used to ensure the "close" event doesn't cause the script to exit
+  // while a "line" event is still being processed.
+  const mu = new asyncMutex.Mutex();
+
+  rl.on("line", async (line) => {
+    const release = await mu.acquire();
+
+    const mountainJson = JSON.parse(line);
+    const location: Point = {
+      type: "Point",
+      coordinates: [
+        mountainJson.location.long,
+        mountainJson.location.lat,
+        mountainJson.location.elevation,
+      ],
+    };
+
+    const mountain = new Mountain();
+    mountain.source = MountainSource.dbpedia;
+    mountain.sourceId = mountainJson.uri;
+    mountain.name = mountainJson.name;
+    mountain.location = location;
+    mountain.wikipediaLink = mountainJson.wikipedia_link;
+    mountain.abstract = mountainJson.abstract;
+    await connection.manager.save(mountain);
+
+    release();
+  }).on("close", async () => {
+    await mu.acquire();
+    process.exit(0);
+  });
+}
+
+main();
