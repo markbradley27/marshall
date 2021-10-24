@@ -11,7 +11,7 @@ import {
 import { Ascent } from "./Ascent";
 import { User } from "./User";
 
-enum ActivitySource {
+export enum ActivitySource {
   strava = "strava",
   gpx = "gpx",
 }

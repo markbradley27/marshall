@@ -1,7 +1,14 @@
 import dotenv from "dotenv";
+
+import { createConnection } from "./model/connection";
+import { Server } from "./server";
+
 dotenv.config();
 
-import { Server } from "./server";
-const server = new Server();
+async function main() {
+  const dbConn = await createConnection();
+  const server = new Server(dbConn);
+  server.listen();
+}
 
-server.listen();
+main();

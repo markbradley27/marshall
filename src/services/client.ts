@@ -3,23 +3,26 @@
 import express from "express";
 import { oneOf, param, query } from "express-validator";
 import admin from "firebase-admin";
-import Sequelize from "sequelize";
+import { auth } from "firebase-admin";
 import togeojson from "togeojson";
 import { Logger } from "tslog";
+import {
+  Connection,
+  FindConditions,
+  FindManyOptions,
+  IsNull,
+  Not,
+  Raw,
+} from "typeorm";
 
 import { maybeVerifyIdToken, verifyIdToken } from "../middleware/auth";
 import { logApiRequest } from "../middleware/debug";
 import { checkValidation } from "../middleware/validation";
-import {
-  Activity,
-  ActivitySource,
-  Ascent,
-  List,
-  Mountain,
-  MountainAttributes,
-  sequelize,
-  User,
-} from "../model";
+import { Activity, ActivitySource } from "../model/Activity";
+import { Ascent } from "../model/Ascent";
+import { List } from "../model/List";
+import { Mountain } from "../model/Mountain";
+import { User } from "../model/User";
 
 const logger = new Logger();
 
@@ -35,8 +38,8 @@ function activityModelToApi(activity: Activity): any {
     path: activity.path,
     description: activity.description,
 
-    ascents: activity.Ascents?.map(ascentModelToApi),
-    userId: activity.UserId,
+    ascents: activity.ascents?.map(ascentModelToApi),
+    user: activity.user != null ? userModelToApi(activity.user) : undefined,
   };
 }
 
@@ -44,9 +47,9 @@ function listModelToApi(list: List): any {
   return {
     id: list.id,
     name: list.name,
-    ownerId: list.OwnerId,
+    owner: list.owner != null ? userModelToApi(list.owner) : undefined,
     private: list.private,
-    mountains: list.Mountains?.map(mountainModelToApi),
+    mountains: list.mountains?.map(mountainModelToApi),
   };
 }
 
@@ -54,13 +57,11 @@ function ascentModelToApi(ascent: Ascent): any {
   return {
     id: ascent.id,
     date: ascent.date,
-    activityId: ascent.ActivityId,
     activity:
-      ascent.Activity != null ? activityModelToApi(ascent.Activity) : undefined,
-    mountainId: ascent.MountainId,
+      ascent.activity != null ? activityModelToApi(ascent.activity) : undefined,
     mountain:
-      ascent.Mountain != null ? mountainModelToApi(ascent.Mountain) : undefined,
-    userId: ascent.UserId,
+      ascent.mountain != null ? mountainModelToApi(ascent.mountain) : undefined,
+    user: ascent.user != null ? userModelToApi(ascent.user) : undefined,
   };
 }
 
@@ -76,21 +77,23 @@ function mountainModelToApi(mountain: MountainPlus): any {
     location: mountain.location,
     wikipediaLink: mountain.wikipediaLink,
     abstract: mountain.abstract,
-    ascents:
-      mountain.Ascents != null
-        ? mountain.Ascents.map(ascentModelToApi)
-        : undefined,
+    ascents: mountain.ascents?.map(ascentModelToApi),
     distance: mountain.distance,
   };
 }
 
-function userModelToApi(user: User): any {
+interface UserPlus extends User {
+  activityCount?: number;
+  ascentCount?: number;
+}
+function userModelToApi(user: UserPlus): any {
   return {
     id: user.id,
     name: user.name,
-    stravaAthleteId: user.stravaAthleteId,
-    activityCount: user.getDataValue("activityCount"),
-    ascentCount: user.getDataValue("ascentCount"),
+    stravaAthleteId:
+      user.stravaAthleteId != null ? user.stravaAthleteId : undefined,
+    activityCount: user.activityCount,
+    ascentCount: user.ascentCount,
   };
 }
 
@@ -103,13 +106,17 @@ interface NewList {
 class ClientService {
   router: express.Router;
 
-  constructor() {
+  #dbConn: Connection;
+
+  constructor(dbConn: Connection) {
+    this.#dbConn = dbConn;
+
     this.router = express.Router();
     this.router.use(logApiRequest);
     this.router.get(
       "/activities/:activityId?",
       param("activityId").optional().isNumeric(),
-      query("include_ascents").default("false").isBoolean(),
+      query("include_ascents").default(false).isBoolean(),
       query("only_with_ascents").default(false).isBoolean(),
       query("page").default(0).isNumeric(),
       checkValidation,
@@ -193,31 +200,33 @@ class ClientService {
   }
 
   async getActivities(req: express.Request, res: express.Response) {
-    const findOptions: any = {
-      where: { UserId: req.uid },
-      order: [["date", "DESC"]],
-      limit: PAGE_SIZE,
-      offset: PAGE_SIZE * parseInt(req.query.page as string, 10),
+    const activityRepo = this.#dbConn.getRepository(Activity);
+    const findOptions: FindManyOptions<Activity> = {
+      where: { user: { id: req.uid } },
+      order: { date: "DESC" },
+      relations: [],
+      take: PAGE_SIZE,
+      skip: PAGE_SIZE * Number(req.query.page),
     };
     if (req.params.activityId != null) {
-      findOptions.where.id = parseInt(req.params.activityId, 10);
+      (findOptions.where as FindConditions<Activity>).id = Number(
+        req.params.activityId
+      );
     }
-    if (req.query.only_with_ascents) {
-      if (findOptions.include == null) {
-        findOptions.include = {};
-      }
-      findOptions.include.model = Ascent;
-      findOptions.include.required = true;
+    if (
+      req.query.only_with_ascents === "true" ||
+      req.query.include_ascents === "true"
+    ) {
+      findOptions.relations.push("ascents");
+    }
+    if (req.query.only_with_ascents === "true") {
+      (findOptions.where as FindConditions<Activity>).ascents = Not(IsNull());
     }
     if (req.query.include_ascents === "true") {
-      if (findOptions.include == null) {
-        findOptions.include = {};
-      }
-      findOptions.include.model = Ascent;
-      findOptions.include.include = [{ model: Mountain }];
+      findOptions.relations.push("ascents.mountain");
     }
 
-    const activities = await Activity.findAll(findOptions);
+    const activities = await activityRepo.find(findOptions);
 
     if (!activities) {
       res
@@ -227,34 +236,30 @@ class ClientService {
     }
 
     if (activities.length === 1) {
-      res.json(activityModelToApi(activities[0]));
+      res.json({ data: activityModelToApi(activities[0]) });
       return;
     }
     res.json({ data: activities.map(activityModelToApi) });
   }
 
   async getAscents(req: express.Request, res: express.Response) {
-    const whereClause: any = { UserId: req.uid };
+    const whereClause: FindConditions<Ascent> = { user: { id: req.uid } };
     if (req.params.mountainId != null) {
-      whereClause.MountainId = parseInt(req.params.mountainId, 10);
+      whereClause.mountain = { id: Number(req.params.mountainId) };
     }
-    const ascents = await Ascent.findAll({
+    const ascents = await this.#dbConn.getRepository(Ascent).find({
       where: whereClause,
-      include:
-        req.query.include_mountains === "true"
-          ? { model: Mountain }
-          : undefined,
-      order: [["date", "DESC"]],
-      limit: PAGE_SIZE,
-      offset: PAGE_SIZE * parseInt(req.query.page as string, 10),
+      order: { date: "DESC" },
+      take: PAGE_SIZE,
+      skip: PAGE_SIZE * Number(req.query.page),
     });
     res.json({ data: ascents.map(ascentModelToApi) });
   }
 
   async postAscent(req: express.Request, res: express.Response) {
-    const ascent = await Ascent.create({
-      UserId: req.uid,
-      MountainId: parseInt(req.query.mountain_id as string, 10),
+    const ascent = this.#dbConn.getRepository(Ascent).create({
+      user: { id: req.uid },
+      mountain: { id: Number(req.query.mountain_id) },
       date: new Date(req.query.date as string),
       dateOnly: req.query.date_only == "true",
     });
@@ -262,16 +267,16 @@ class ClientService {
   }
 
   async getList(req: express.Request, res: express.Response) {
-    const list = await List.findOne({
-      where: { id: req.params.listId },
-      include: Mountain,
+    const list = await this.#dbConn.getRepository(List).findOne({
+      where: { id: Number(req.params.listId) },
+      relations: ["mountains"],
     });
 
     if (list == null) {
       res.sendStatus(404);
       return;
     }
-    if (list.private && (req.uid == null || req.uid !== list.OwnerId)) {
+    if (list.private && (req.uid == null || req.uid !== list.owner.id)) {
       res.status(403).json({
         error: {
           code: 403,
@@ -288,25 +293,17 @@ class ClientService {
   // TODO: Some way to update lists, not just create.
   async postList(req: express.Request, res: express.Response) {
     const listJson = req.body as NewList;
-    logger.info("listJson:", listJson);
-    const newList = await List.create({
-      name: listJson.name,
-      private: listJson.private,
-      OwnerId: req.uid,
+    const list = new List();
+    list.name = listJson.name;
+    list.private = listJson.private;
+    list.owner = new User();
+    list.owner.id = req.uid;
+    list.mountains = listJson.mountains.map((mountainId) => {
+      const mountain = new Mountain();
+      mountain.id = mountainId;
+      return mountain;
     });
-    // TODO: There might be a better way to handle this, rather than creating
-    // the list and destroying it on error.
-    // TODO: Ensure mountains exist first.
-    try {
-      for (const mountainId of listJson.mountains) {
-        newList.addMountain(mountainId);
-      }
-    } catch (error) {
-      newList.destroy();
-    }
-
-    await newList.save();
-
+    await this.#dbConn.getRepository(List).save(list);
     res.sendStatus(200);
   }
 
@@ -329,14 +326,13 @@ class ClientService {
       includeRadius = parseInt(includeNearby as string, 10);
     }
 
-    let resJson: any;
+    const mountain = await this.#dbConn
+      .getRepository(Mountain)
+      .findOne(req.params.mountainId);
+    const resJson = mountainModelToApi(mountain);
 
-    if (!includeRadius) {
-      const mountain = await Mountain.findOne({
-        where: { id: req.params.mountainId },
-      });
-      resJson = mountainModelToApi(mountain);
-    } else {
+    if (includeRadius) {
+      /*
       const nearby: any = await sequelize.query(
         `
         select
@@ -354,72 +350,69 @@ class ClientService {
           },
         }
       );
+      */
+      const nearby = await this.#dbConn
+        .getRepository(Mountain)
+        .createQueryBuilder("mountain")
+        .select("mountain.*")
+        // getRawMany won't automatically format location as GeoJSON, so we
+        // override it manually here.
+        .addSelect("ST_AsGeoJson(mountain.location)::json", "location")
+        .addSelect(
+          `ST_Distance(mountain.location, ST_GeomFromGeoJSON('${JSON.stringify(
+            mountain.location
+          )}'))`,
+          "distance"
+        )
+        .where({
+          location: Raw(
+            (location) =>
+              `ST_DWithin(${location}, ST_GeomFromGeoJSON(:mainLocation), :includeRadius)`,
+            { mainLocation: mountain.location, includeRadius }
+          ),
+        })
+        .orderBy("distance")
+        .getRawMany();
+      logger.info("nearby:", nearby);
 
-      const main = nearby[0][0];
-      delete main.distance;
-      resJson = mountainModelToApi(main);
-      resJson.nearby = nearby[0].slice(1).map(mountainModelToApi);
+      // Nearby will include the original mountain too, so 'slice' it off.
+      resJson.nearby = nearby.slice(1).map(mountainModelToApi);
     }
 
     if (req.query.include_ascents === "true") {
-      const ascents = await Ascent.findAll({
-        where: { UserId: req.uid, MountainId: req.params.mountainId },
+      const ascents = await this.#dbConn.getRepository(Ascent).find({
+        where: {
+          user: { id: req.uid },
+          mountain: { id: Number(req.params.mountainId) },
+        },
+        relations: ["activity", "user"],
       });
+      logger.info("ascents:", ascents);
       resJson.ascents = ascents.map(ascentModelToApi);
     }
 
     res.json({ data: resJson });
   }
 
-  // TODO: Sanitize the bounding box input (and pass it to sequelize as the safe
-  // param type thingy.
-  async getMountains(req: express.Request, res: express.Response) {
-    let where: Sequelize.WhereOptions<MountainAttributes> = undefined;
-    if (req.query.bounding_box != null) {
-      const boundingBoxStr = req.query.bounding_box as string;
-      const [xmin, ymin, xmax, ymax] = boundingBoxStr.split(",");
-      where = Sequelize.fn(
-        "ST_Within",
-        Sequelize.cast(Sequelize.col("location"), "geometry"),
-        Sequelize.fn("ST_MakeEnvelope", xmin, ymin, xmax, ymax, 4326)
-      );
-    }
-
-    const mountains = await Mountain.findAll({
-      where,
-      attributes: ["id", "name", "location"],
-    });
-
+  async getMountains(_req: express.Request, res: express.Response) {
+    const mountains = await this.#dbConn
+      .getRepository(Mountain)
+      .find({ select: ["id", "name", "location"] });
     res.json({ data: mountains.map(mountainModelToApi) });
   }
 
   async getUser(req: express.Request, res: express.Response) {
-    const user = await User.findOne({
-      where: { id: req.uid },
-      attributes: {
-        include: [
-          [
-            Sequelize.fn(
-              "COUNT",
-              Sequelize.fn("DISTINCT", Sequelize.col("Activities.id"))
-            ),
-            "activityCount",
-          ],
-          [
-            Sequelize.fn(
-              "COUNT",
-              Sequelize.fn("DISTINCT", Sequelize.col("Ascents.id"))
-            ),
-            "ascentCount",
-          ],
-        ],
-      },
-      include: [
-        { model: Activity, attributes: [] },
-        { model: Ascent, attributes: [] },
-      ],
-      group: ["User.id"],
-    });
+    const user = await this.#dbConn
+      .getRepository(User)
+      .createQueryBuilder("user")
+      .select('"user".*')
+      .addSelect("COUNT(DISTINCT(activity.id))", "activityCount")
+      .addSelect("COUNT(DISTINCT(ascent.id))", "ascentCount")
+      .leftJoin("user.activities", "activity")
+      .leftJoin("user.ascents", "ascent")
+      .where({ id: req.uid })
+      .groupBy("user.id")
+      .getRawOne();
     res.json({ data: userModelToApi(user) });
   }
 
@@ -427,13 +420,21 @@ class ClientService {
     const name = req.query.name as string;
     const id = req.query.id as string;
 
-    // TODO: Verify the uid exists with Firebase.
-    try {
-      await User.create({ id, name });
-    } catch (error) {
-      res.status(400).json({ error: { code: 400, message: error.name } });
+    // Ensure user has already been registered with firebase.
+    if (auth().getUser(id) == null) {
+      res.status(400).json({
+        error: {
+          code: 400,
+          message: "UID does not correspond to active firebase user.",
+        },
+      });
       return;
     }
+
+    const user = new User();
+    user.name = name;
+    user.id = id;
+    this.#dbConn.manager.save(user);
 
     res.sendStatus(200);
   }
@@ -442,12 +443,11 @@ class ClientService {
   async deleteUser(req: express.Request, res: express.Response) {
     const uid = req.query.uid as string;
 
+    const userRepo = this.#dbConn.getRepository(User);
     try {
-      const user = await User.findOne({
-        where: { id: uid },
-      });
+      const user = await userRepo.findOne(uid);
       await admin.auth().deleteUser(uid);
-      await user.destroy();
+      await userRepo.delete(user);
     } catch (error) {
       res.status(400).json({ error: { code: 400, message: error.name } });
       return;
@@ -478,11 +478,8 @@ class ClientService {
       }
     }
 
-    const user = await User.findOne({
-      where: { id: req.uid },
-    });
-
-    await user.createActivity({
+    this.#dbConn.getRepository(Activity).create({
+      user: { id: req.uid },
       source: ActivitySource.gpx,
       name: geoJson.features[0].properties.name,
       date: geoJson.features[0].properties.time,

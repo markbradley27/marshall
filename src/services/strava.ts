@@ -7,11 +7,13 @@ import { param, oneOf, query } from "express-validator";
 import geojsonPolyline from "geojson-polyline";
 import got from "got";
 import { Logger } from "tslog";
+import { Connection } from "typeorm";
 
 import { verifyIdToken } from "../middleware/auth";
 import { logApiRequest } from "../middleware/debug";
 import { checkValidation } from "../middleware/validation";
-import { Activity, ActivitySource, User } from "../model";
+import { Activity, ActivitySource } from "../model/Activity";
+import { User } from "../model/User";
 
 const logger: Logger = new Logger();
 
@@ -62,6 +64,8 @@ interface SubscriptionEvent {
 class StravaService {
   router: express.Router;
 
+  #dbConn: Connection;
+
   #clientId: number;
   #clientSecret: string;
   #subscriptionVerifyToken = "";
@@ -70,9 +74,10 @@ class StravaService {
 
   #currentlySyncing: any = {};
 
-  constructor(clientId: number, clientSecret: string) {
+  constructor(clientId: number, clientSecret: string, dbConn: Connection) {
     this.#clientId = clientId;
     this.#clientSecret = clientSecret;
+    this.#dbConn = dbConn;
 
     this.router = express.Router();
     this.router.use(logApiRequest);
@@ -136,14 +141,14 @@ class StravaService {
     });
     const token = tokenRes.body as StravaAccessToken;
 
-    await User.update(
+    await this.#dbConn.getRepository(User).update(
+      { id: uid },
       {
         stravaAccessToken: token.access_token,
         stravaRefreshToken: token.refresh_token,
         stravaAccessTokenExpiresAt: new Date(token.expires_at * 1000),
         stravaAthleteId: token.athlete.id,
-      },
-      { where: { id: uid } }
+      }
     );
     logger.info(`Saved tokens; uid: ${uid}; athlete id: ${token.athlete.id}`);
   }
@@ -164,7 +169,7 @@ class StravaService {
     user.stravaAccessToken = token.access_token;
     user.stravaRefreshToken = token.refresh_token;
     user.stravaAccessTokenExpiresAt = new Date(token.expires_at * 1000);
-    await user.save();
+    await this.#dbConn.getRepository(User).save(user);
     logger.info(`Saved tokens; uid: ${user.id}`);
   }
 
@@ -199,14 +204,15 @@ class StravaService {
       coordinates: activity.map.polyline || activity.map.summary_polyline,
     });
 
-    await user.createActivity({
-      source: ActivitySource.strava,
-      sourceId: activity.id,
-      sourceUserId: activity.athlete.id,
-      name: activity.name,
-      date: activity.start_date,
-      path: pathJson,
-    });
+    const dbActivity = new Activity();
+    dbActivity.user = user;
+    dbActivity.source = ActivitySource.strava;
+    dbActivity.sourceId = activity.id.toString();
+    dbActivity.sourceUserId = activity.athlete.id.toString();
+    dbActivity.name = activity.name;
+    dbActivity.date = new Date(activity.start_date);
+    dbActivity.path = pathJson;
+    this.#dbConn.getRepository(Activity).save(dbActivity);
   }
 
   async loadActivityById(activityId: number, user: User) {
@@ -333,7 +339,7 @@ class StravaService {
       return;
     }
 
-    const user = await User.findOne({ where: { id: uid } });
+    const user = await this.#dbConn.getRepository(User).findOne(uid);
     this.#currentlySyncing[uid] = this.loadAllActivities(user, () => {
       delete this.#currentlySyncing.uid;
     });
@@ -343,7 +349,8 @@ class StravaService {
 
   // TODO: Make cleaning up synced activities optional.
   async getDeauthorize(req: express.Request, res: express.Response) {
-    const user = await User.findOne({ where: { id: req.uid } });
+    const userRepo = this.#dbConn.getRepository(User);
+    const user = await userRepo.findOne(req.uid);
     if (user.stravaAccessToken == null) {
       res.status(400).json({
         error: { code: 400, message: "user not currently authorized" },
@@ -367,19 +374,17 @@ class StravaService {
       return;
     }
 
-    await Activity.destroy({
-      where: {
-        UserId: req.uid,
-        source: "strava",
-        sourceUserId: user.stravaAthleteId.toString(),
-      },
+    await this.#dbConn.getRepository(Activity).delete({
+      user: user,
+      source: ActivitySource.strava,
+      sourceUserId: user.stravaAthleteId.toString(),
     });
 
     user.stravaAthleteId = null;
     user.stravaAccessToken = null;
     user.stravaAccessTokenExpiresAt = null;
     user.stravaRefreshToken = null;
-    await user.save();
+    await userRepo.save(user);
 
     res.sendStatus(200);
   }
@@ -388,7 +393,7 @@ class StravaService {
     logger.info(
       `Got load activities request; uid: ${req.uid}; activityId: ${req.params.activityId}`
     );
-    const user = await User.findOne({ where: { id: req.uid } });
+    const user = await this.#dbConn.getRepository(User).findOne(req.uid);
 
     if (req.params.activityId) {
       const activityId = parseInt(req.params.activityId as string, 10);
@@ -412,9 +417,12 @@ class StravaService {
       `Got delete activities request; uid: ${req.uid}; activityId: ${req.params.activityId}`
     );
 
+    const activityRepo = this.#dbConn.getRepository(Activity);
     try {
-      if (req.params.activityId) {
-        const activity = await Activity.findOne({
+      if (!req.params.activityId) {
+        await activityRepo.delete({ user: { id: req.uid } });
+      } else {
+        const activity = await activityRepo.findOne({
           where: {
             source: ActivitySource.strava,
             sourceId: req.params.activityId.toString(),
@@ -426,7 +434,7 @@ class StravaService {
             .json({ error: { code: 404, message: "Activity not found." } });
           return;
         }
-        if (activity.UserId !== req.uid) {
+        if (activity.user.id !== req.uid) {
           res.status(403).json({
             error: {
               code: 403,
@@ -435,9 +443,7 @@ class StravaService {
           });
           return;
         }
-        await activity.destroy();
-      } else {
-        await Activity.destroy({ where: { UserId: req.uid } });
+        await activityRepo.delete(activity);
       }
     } catch (error) {
       res.status(500).send({ error: { code: 500, message: error.name } });
@@ -477,20 +483,18 @@ class StravaService {
 
     try {
       if (event.aspect_type === "create") {
-        const user = await User.findOne({
-          where: { stravaAthleteId: event.owner_id },
-        });
+        const user = await this.#dbConn
+          .getRepository(User)
+          .findOne({ stravaAthleteId: event.owner_id });
         await this.loadActivityById(event.object_id, user);
       } else if (event.aspect_type === "update") {
         // TODO: Support updates.
         logger.warn("Dropping update event on the floor!");
       } else if (event.aspect_type === "delete") {
         logger.info(`Deleting activity; id: ${event.object_id}`);
-        Activity.destroy({
-          where: {
-            source: ActivitySource.strava,
-            sourceId: event.object_id.toString(),
-          },
+        await this.#dbConn.getRepository(Activity).delete({
+          source: ActivitySource.strava,
+          sourceId: event.object_id.toString(),
         });
       }
     } catch (error) {
