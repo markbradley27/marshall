@@ -9,6 +9,7 @@ import got from "got";
 import { Logger } from "tslog";
 
 import { verifyIdToken } from "../middleware/auth";
+import { logApiRequest } from "../middleware/debug";
 import { checkValidation } from "../middleware/validation";
 import { Activity, ActivitySource, User } from "../model";
 
@@ -74,6 +75,8 @@ class StravaService {
     this.#clientSecret = clientSecret;
 
     this.router = express.Router();
+    this.router.use(logApiRequest);
+
     this.router.get("/authorize", verifyIdToken, this.getAuthorize.bind(this));
     this.router.get(
       "/authorize_callback",

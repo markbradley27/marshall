@@ -8,6 +8,7 @@ import togeojson from "togeojson";
 import { Logger } from "tslog";
 
 import { maybeVerifyIdToken, verifyIdToken } from "../middleware/auth";
+import { logApiRequest } from "../middleware/debug";
 import { checkValidation } from "../middleware/validation";
 import {
   Activity,
@@ -104,6 +105,7 @@ class ClientService {
 
   constructor() {
     this.router = express.Router();
+    this.router.use(logApiRequest);
     this.router.get(
       "/activities/:activityId?",
       param("activityId").optional().isNumeric(),
