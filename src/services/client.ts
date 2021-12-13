@@ -6,14 +6,7 @@ import admin from "firebase-admin";
 import { auth } from "firebase-admin";
 import togeojson from "togeojson";
 import { Logger } from "tslog";
-import {
-  Connection,
-  FindConditions,
-  FindManyOptions,
-  IsNull,
-  Not,
-  Raw,
-} from "typeorm";
+import { Connection, FindConditions, Raw } from "typeorm";
 
 import { maybeVerifyIdToken, verifyIdToken } from "../middleware/auth";
 import { logApiRequest } from "../middleware/debug";
@@ -201,32 +194,22 @@ class ClientService {
 
   async getActivities(req: express.Request, res: express.Response) {
     const activityRepo = this.#dbConn.getRepository(Activity);
-    const findOptions: FindManyOptions<Activity> = {
-      where: { user: { id: req.uid } },
-      order: { date: "DESC" },
-      relations: [],
-      take: PAGE_SIZE,
-      skip: PAGE_SIZE * Number(req.query.page),
-    };
+    const qb = activityRepo
+      .createQueryBuilder("activity")
+      .where("activity.userId = :userId", { userId: req.uid })
+      .orderBy("activity.date", "DESC")
+      .limit(PAGE_SIZE);
     if (req.params.activityId != null) {
-      (findOptions.where as FindConditions<Activity>).id = Number(
-        req.params.activityId
-      );
-    }
-    if (
-      req.query.only_with_ascents === "true" ||
-      req.query.include_ascents === "true"
-    ) {
-      findOptions.relations.push("ascents");
-    }
-    if (req.query.only_with_ascents === "true") {
-      (findOptions.where as FindConditions<Activity>).ascents = Not(IsNull());
+      qb.andWhere("activity.id = :id", { id: req.params.activityId });
     }
     if (req.query.include_ascents === "true") {
-      findOptions.relations.push("ascents.mountain");
+      qb.leftJoinAndSelect("activity.ascents", "ascent");
+    }
+    if (req.query.only_with_ascents === "true") {
+      qb.innerJoinAndSelect("activity.ascents", "ascent");
     }
 
-    const activities = await activityRepo.find(findOptions);
+    const activities = await qb.getMany();
 
     if (!activities) {
       res
