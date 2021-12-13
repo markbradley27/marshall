@@ -4,7 +4,6 @@ import { Logger } from "tslog";
 import { Connection } from "typeorm";
 
 import gpx from "./middleware/gpx";
-import "./model";
 import ClientService from "./services/client";
 import StravaService from "./services/strava";
 

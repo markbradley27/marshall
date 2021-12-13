@@ -23,7 +23,6 @@ export const BASE_CONFIG: ConnectionOptions = {
   username: process.env.PG_USERNAME,
   password: process.env.PG_PASSWORD,
   database: process.env.PG_DATABASE,
-  schema: "typeorm",
 };
 
 export function createConnection(options?: ConnectionOptions) {
