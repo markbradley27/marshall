@@ -1,5 +1,4 @@
-import Container from "react-bootstrap/Container";
-import ListGroup from "react-bootstrap/ListGroup";
+import { ListGroup, Row } from "react-bootstrap";
 
 import { AscentState } from "../api_client";
 
@@ -11,14 +10,14 @@ interface AscentListProps {
 }
 function AscentList(props: AscentListProps) {
   return (
-    <Container>
+    <Row>
       <h3>{props.title}</h3>
       <ListGroup>
         {props.ascents.map((ascent) => {
           return <AscentListItem key={ascent.id} ascent={ascent} />;
         })}
       </ListGroup>
-    </Container>
+    </Row>
   );
 }
 

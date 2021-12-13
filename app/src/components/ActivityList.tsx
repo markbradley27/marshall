@@ -1,8 +1,4 @@
-import Col from "react-bootstrap/Col";
-import Container from "react-bootstrap/Container";
-import Form from "react-bootstrap/Form";
-import InputGroup from "react-bootstrap/InputGroup";
-import ListGroup from "react-bootstrap/ListGroup";
+import { Col, Form, InputGroup, ListGroup, Row } from "react-bootstrap";
 
 import { ActivityState } from "../api_client";
 
@@ -16,7 +12,7 @@ interface ActivityListProps {
 }
 export default function ActivityList(props: ActivityListProps) {
   return (
-    <Container>
+    <Row>
       <Col>
         <h3>{props.title}</h3>
       </Col>
@@ -37,6 +33,6 @@ export default function ActivityList(props: ActivityListProps) {
           return <ActivityListItem key={activity.id} activity={activity} />;
         })}
       </ListGroup>
-    </Container>
+    </Row>
   );
 }

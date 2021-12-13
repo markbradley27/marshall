@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
 
 import {
   fetchActivities,
@@ -22,10 +21,10 @@ export default function Dashboard() {
   const [onlyActivitiesWithAscents, setOnlyActivitiesWithAscents] =
     useState(true);
   const [activities, setActivities] = useState<ActivityState[] | null>(null);
+  const [initialLoadAttempted, setInitialLoadAttempted] = useState(false);
 
   const auth = useAuth();
   const googleMapsLoaded = useGoogleMaps();
-  const location = useLocation();
 
   const refreshUser = useCallback(async (uid: string, idToken: string) => {
     const user = await fetchUser(uid, idToken);
@@ -53,16 +52,28 @@ export default function Dashboard() {
 
   useEffect(() => {
     async function fetchData() {
-      const idToken = (await auth.user?.getIdToken()) as string;
-      await refreshUser(auth.user?.uid as string, idToken);
+      if (!googleMapsLoaded || initialLoadAttempted || auth.user == null)
+        return;
+
+      const idToken = (await auth.user.getIdToken()) as string;
+      await refreshUser(auth.user.uid as string, idToken);
       await refreshAscents(idToken);
       await refreshActivities(idToken, onlyActivitiesWithAscents);
+      console.log("setting fetchAttempted.");
+      setInitialLoadAttempted(true);
     }
 
-    if ((ascents == null || activities == null) && googleMapsLoaded) {
-      fetchData();
-    }
-  });
+    console.log("Effect; fetchAttempted:", initialLoadAttempted);
+    fetchData();
+  }, [
+    auth.user,
+    initialLoadAttempted,
+    googleMapsLoaded,
+    refreshUser,
+    refreshAscents,
+    refreshActivities,
+    onlyActivitiesWithAscents,
+  ]);
 
   const toggleOnlyActivitiesWithAscents = useCallback(async () => {
     console.log(
@@ -77,25 +88,17 @@ export default function Dashboard() {
   }, [onlyActivitiesWithAscents, auth.user, refreshActivities]);
 
   return (
-    ascents &&
-    activities &&
-    user && (
-      <>
-        {location.pathname === "/dashboard" && auth.user != null && (
-          <UserStats user={user} />
-        )}
-        {location.pathname === "/ascents" && (
-          <AscentList title="Your ascents:" ascents={ascents} />
-        )}
-        {location.pathname === "/activities" && (
-          <ActivityList
-            title="Your activities:"
-            activities={activities}
-            onlyActivitiesWithAscents={onlyActivitiesWithAscents}
-            toggleOnlyActivitiesWithAscents={toggleOnlyActivitiesWithAscents}
-          />
-        )}
-      </>
-    )
+    <>
+      {user && <UserStats user={user} />}
+      {ascents && <AscentList title="Your ascents:" ascents={ascents} />}
+      {activities && (
+        <ActivityList
+          title="Your activities:"
+          activities={activities}
+          onlyActivitiesWithAscents={onlyActivitiesWithAscents}
+          toggleOnlyActivitiesWithAscents={toggleOnlyActivitiesWithAscents}
+        />
+      )}
+    </>
   );
 }
