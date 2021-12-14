@@ -1,6 +1,4 @@
-import Container from "react-bootstrap/Container";
-import Nav from "react-bootstrap/Nav";
-import BsNavbar from "react-bootstrap/Navbar";
+import { Container, Image, Nav, Navbar as BsNavbar } from "react-bootstrap";
 import { useLocation } from "react-router-dom";
 
 import { useAuth } from "../contexts/auth";
@@ -13,9 +11,11 @@ function Navbar() {
   const location = useLocation();
 
   return (
-    <BsNavbar className="pt-3 pb-3 mb-3 bg-light">
+    <BsNavbar className="mb-3 bg-light">
       <Container>
-        <BsNavbar.Brand href="/">Marshall</BsNavbar.Brand>
+        <BsNavbar.Brand href="/">
+          <Image src="graphics/logo_full.svg" />
+        </BsNavbar.Brand>
         <BsNavbar.Collapse>
           <Nav>
             <Nav.Link href="/mountains">Mountains</Nav.Link>
