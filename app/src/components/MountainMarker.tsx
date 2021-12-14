@@ -25,7 +25,7 @@ export default function MountainMarker(props: MountainMarkerProps) {
 
   const image = {
     url: "graphics/mountain_marker.svg",
-    anchor: new google.maps.Point(25, 65),
+    anchor: new google.maps.Point(24, 62),
   };
 
   return (
