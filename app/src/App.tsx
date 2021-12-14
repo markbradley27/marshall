@@ -9,8 +9,8 @@ import Login from "./components/Login";
 import Mountain from "./components/Mountain";
 import MountainBrowser from "./components/MountainBrowser";
 import PageFrame from "./components/PageFrame";
-import Settings from "./components/Settings";
 import SignUp from "./components/SignUp";
+import Settings from "./components/settings/Settings";
 import { useAuth } from "./contexts/auth";
 
 function App() {

@@ -59,11 +59,8 @@ export default function Dashboard() {
       await refreshUser(auth.user.uid as string, idToken);
       await refreshAscents(idToken);
       await refreshActivities(idToken, onlyActivitiesWithAscents);
-      console.log("setting fetchAttempted.");
       setInitialLoadAttempted(true);
     }
-
-    console.log("Effect; fetchAttempted:", initialLoadAttempted);
     fetchData();
   }, [
     auth.user,
