@@ -2,9 +2,9 @@
 <!-- Created with Inkscape (http://www.inkscape.org/) -->
 
 <svg
-   width="18.549999mm"
-   height="13.7mm"
-   viewBox="0 0 18.549999 13.7"
+   width="64"
+   height="64"
+   viewBox="0 0 16.933332 16.933334"
    version="1.1"
    id="svg5"
    inkscape:version="1.1.1 (3bf5ae0d25, 2021-09-20)"
@@ -24,7 +24,7 @@
      inkscape:document-units="mm"
      showgrid="false"
      inkscape:zoom="3.8228468"
-     inkscape:cx="66.050254"
+     inkscape:cx="66.050253"
      inkscape:cy="52.317032"
      inkscape:window-width="1920"
      inkscape:window-height="1010"
@@ -34,16 +34,8 @@
      inkscape:current-layer="layer1"
      showguides="true"
      inkscape:guide-bbox="true"
-     width="47.48mm">
-    <sodipodi:guide
-       position="21.732278,1.7962073"
-       orientation="0,-1"
-       id="guide21917" />
-    <sodipodi:guide
-       position="18.548568,9.8246921"
-       orientation="1,0"
-       id="guide21919" />
-  </sodipodi:namedview>
+     width="47.48mm"
+     units="px" />
   <defs
      id="defs2" />
   <g
@@ -52,7 +44,7 @@
      id="layer1">
     <g
        id="g21378"
-       transform="translate(-3.4965335,-2.6458334)">
+       transform="matrix(0.90980859,0,0,0.90980859,-3.1568327,-0.26718526)">
       <rect
          style="fill:#34758a;fill-opacity:1;stroke:#34758a;stroke-width:0;stroke-linecap:square;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;stop-color:#000000"
          id="rect21374"
@@ -68,7 +60,7 @@
     </g>
     <g
        id="g21470"
-       transform="translate(2.8534668,-2.6458334)">
+       transform="matrix(0.90980859,0,0,0.90980859,2.6204521,-0.26718526)">
       <rect
          style="fill:#34758a;fill-opacity:1;stroke:#34758a;stroke-width:0;stroke-linecap:square;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;stop-color:#000000"
          id="rect21466"
