@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@500&display=swap');
+
 $blue: #34758a;
 $yellow: #ffb027;
 $orange: #fd793d;
@@ -7,10 +9,13 @@ $red: #c4482f;
 $green: #1c7241;
 $teal: #219781;
 $cyan: #2b8992;
-$body-bg: #f8f9fa;
+// TODO: Figure out a better way to override bootstrap variables.
+$body-bg: #f8f9fa;  // gray-100
+$light: #e9ecef;  // gray-200
 $border-radius: 0.75rem;
 $border-radius-lg: 0.85rem;
 $border-radius-sm: .5rem;
+$font-family-sans-serif: 'Quicksand', sans-serif;
 
 @import "~bootstrap/scss/bootstrap";
 
