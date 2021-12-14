@@ -3,6 +3,7 @@ import { Col, Container, Row } from "react-bootstrap";
 
 import Navbar from "./Navbar";
 import Sidebar from "./Sidebar";
+import SidebarAd from "./SidebarAd";
 
 export default function PageFrame(props: PropsWithChildren<{}>) {
   return (
@@ -15,7 +16,10 @@ export default function PageFrame(props: PropsWithChildren<{}>) {
         <Col md={{ span: 8, order: 2 }} xs={{ order: 3 }}>
           {props.children}
         </Col>
-        <Col md={{ span: 2, order: 3 }} xs={{ order: 1 }}></Col>
+        {/* TODO: Handle narrow windows better.*/}
+        <Col md={{ span: 2, order: 3 }} xs={{ order: 1 }}>
+          <SidebarAd />
+        </Col>
       </Row>
     </Container>
   );
