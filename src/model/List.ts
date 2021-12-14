@@ -25,6 +25,7 @@ export class List {
   @JoinTable()
   mountains: Mountain[];
 
+  // TODO: Think about what should happen to lists when the owner is deleted.
   @ManyToOne(() => User, (user) => user.lists)
   owner: User;
 }

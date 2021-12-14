@@ -24,12 +24,10 @@ export class User {
   @Column({ nullable: true })
   stravaAthleteId: number;
 
-  @OneToMany(() => Activity, (activity) => activity.user, {
-    onDelete: "CASCADE",
-  })
+  @OneToMany(() => Activity, (activity) => activity.user)
   activities: Activity[];
 
-  @OneToMany(() => Ascent, (ascent) => ascent.user, { onDelete: "CASCADE" })
+  @OneToMany(() => Ascent, (ascent) => ascent.user)
   ascents: Ascent[];
 
   @OneToMany(() => List, (list) => list.owner)

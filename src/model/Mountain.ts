@@ -42,7 +42,7 @@ export class Mountain {
   @Column({ nullable: true })
   abstract: string;
 
-  @OneToMany(() => Ascent, (ascent) => ascent.mountain, { onDelete: "CASCADE" })
+  @OneToMany(() => Ascent, (ascent) => ascent.mountain)
   ascents: Ascent[];
 
   @ManyToMany(() => List, (list) => list.mountains)

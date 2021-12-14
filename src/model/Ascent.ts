@@ -16,12 +16,16 @@ export class Ascent {
   @Column({ default: false })
   dateOnly: boolean;
 
-  @ManyToOne(() => Activity, (activity) => activity.ascents)
+  @ManyToOne(() => Activity, (activity) => activity.ascents, {
+    onDelete: "CASCADE",
+  })
   activity: Activity;
 
-  @ManyToOne(() => Mountain, (mountain) => mountain.ascents)
+  @ManyToOne(() => Mountain, (mountain) => mountain.ascents, {
+    onDelete: "CASCADE",
+  })
   mountain: Mountain;
 
-  @ManyToOne(() => User, (user) => user.ascents)
+  @ManyToOne(() => User, (user) => user.ascents, { onDelete: "CASCADE" })
   user: User;
 }

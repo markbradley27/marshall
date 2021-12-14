@@ -46,9 +46,9 @@ export class Activity {
   @Column({ nullable: true })
   description: string;
 
-  @OneToMany(() => Ascent, (ascent) => ascent.activity, { onDelete: "CASCADE" })
+  @OneToMany(() => Ascent, (ascent) => ascent.activity)
   ascents: Ascent[];
 
-  @ManyToOne(() => User, (user) => user.activities)
+  @ManyToOne(() => User, (user) => user.activities, { onDelete: "CASCADE" })
   user: User;
 }
