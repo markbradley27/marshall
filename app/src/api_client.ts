@@ -292,10 +292,19 @@ async function fetchUser(id: string, idToken: string) {
   return userApiToState(userJson);
 }
 
-async function postUser(id: string, name: string) {
-  await fetch("/api/client/user?id=" + id + "&name=" + name, {
-    method: "POST",
-  });
+interface PostUserOptions {
+  name?: string;
+}
+async function postUser(
+  id: string,
+  idToken: string,
+  options?: PostUserOptions
+) {
+  let url = "/api/client/user/" + id;
+  if (options?.name != null) {
+    url += "?name=" + options.name;
+  }
+  return await apiPost(url, idToken);
 }
 
 export type { ActivityState, AscentState, MountainState, UserState };

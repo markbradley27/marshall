@@ -177,16 +177,18 @@ class ClientService {
       this.getUser.bind(this)
     );
     this.router.post(
-      "/user",
+      "/user/:userId",
+      param("userId").isString(),
       query("name").isString(),
-      query("id").isString(),
       checkValidation,
+      verifyIdToken,
       this.postUser.bind(this)
     );
     this.router.delete(
-      "/user",
-      query("uid").isString(),
+      "/user/:userId",
+      param("userId").isString(),
       checkValidation,
+      verifyIdToken,
       this.deleteUser.bind(this)
     );
     this.router.post("/gpx", verifyIdToken, this.postGpx.bind(this));
@@ -384,6 +386,7 @@ class ClientService {
     res.json({ data: mountains.map(mountainModelToApi) });
   }
 
+  // TODO: Allow getting info about other users.
   async getUser(req: express.Request, res: express.Response) {
     const user = await this.#dbConn
       .getRepository(User)
@@ -399,38 +402,44 @@ class ClientService {
     res.json({ data: userModelToApi(user) });
   }
 
+  // Creates or updates the given user in both firebase and the local DB.
   async postUser(req: express.Request, res: express.Response) {
+    const uid = req.params.userId as string;
     const name = req.query.name as string;
-    const id = req.query.id as string;
 
-    // Ensure user has already been registered with firebase.
-    if (auth().getUser(id) == null) {
-      res.status(400).json({
-        error: {
-          code: 400,
-          message: "UID does not correspond to active firebase user.",
-        },
-      });
+    // Users can only be modified by that authenticated user.
+    if (uid != req.uid) {
+      res.sendStatus(500);
       return;
     }
 
+    // Update firebase.
+    await auth().updateUser(uid, { displayName: name });
+
+    // Update local DB.
+    const userRepo = this.#dbConn.getRepository(User);
     const user = new User();
+    user.id = uid;
     user.name = name;
-    user.id = id;
-    this.#dbConn.manager.save(user);
+    await userRepo.save(user);
 
     res.sendStatus(200);
   }
 
-  // Deletes a user from both firebase and the local db.
+  // Deletes a user from both firebase and the local DB.
   async deleteUser(req: express.Request, res: express.Response) {
-    const uid = req.query.uid as string;
+    const uid = req.params.userId as string;
+
+    // Allow deletion iff the user being deleted is also the authenticated user.
+    if (uid != req.uid) {
+      res.sendStatus(500);
+      return;
+    }
 
     const userRepo = this.#dbConn.getRepository(User);
     try {
-      const user = await userRepo.findOne(uid);
+      await userRepo.delete({ id: uid });
       await admin.auth().deleteUser(uid);
-      await userRepo.delete(user);
     } catch (error) {
       res.status(400).json({ error: { code: 400, message: error.name } });
       return;
