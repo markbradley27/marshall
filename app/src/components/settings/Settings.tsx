@@ -15,10 +15,10 @@ export default function Settings() {
   const refreshUser = useCallback(async () => {
     const refreshedUser = await fetchUser(
       auth.user?.uid as string,
-      auth.idToken
+      (await auth.user?.getIdToken()) as string
     );
     setUser(refreshedUser);
-  }, [auth.idToken, auth.user]);
+  }, [auth.user]);
 
   useEffect(() => {
     async function fetchData() {

@@ -25,9 +25,9 @@ function Activity(props: ActivityProps) {
   useEffect(() => {
     async function fetchData() {
       const activity = await fetchActivity(
-        parseInt(props.match.params.activityId, 10),
+        Number(props.match.params.activityId),
         {
-          idToken: auth.idToken,
+          idToken: (await auth.user?.getIdToken()) as string,
           includeAscents: true,
           includeBounds: true,
         }

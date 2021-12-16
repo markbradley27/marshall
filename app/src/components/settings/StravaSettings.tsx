@@ -13,7 +13,7 @@ export default function StravaSettings(props: StravaSettingsProps) {
   const auth = useAuth();
 
   const deauthorizeStrava = useCallback(async () => {
-    await apiFetch("/api/strava/deauthorize", auth.idToken);
+    await apiFetch("/api/strava/deauthorize", await auth.user?.getIdToken());
     props.refreshUser();
   }, [props, auth]);
 

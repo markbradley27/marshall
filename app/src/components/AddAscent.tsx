@@ -47,7 +47,7 @@ function AddAscent(props: RouteComponentProps<{}>) {
       if (mountain != null && date != null) {
         setSubmitting(true);
         await postAscent(
-          auth.idToken,
+          (await auth.user?.getIdToken()) as string,
           mountain.id,
           dateTime.toJSDate(),
           dateOnly
@@ -56,7 +56,7 @@ function AddAscent(props: RouteComponentProps<{}>) {
         props.history.push("/mountain/" + mountain.id);
       }
     },
-    [auth.idToken, date, mountain, props.history, time]
+    [auth.user, date, mountain, props.history, time]
   );
 
   return mountains != null ? (
