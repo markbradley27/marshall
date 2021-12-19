@@ -208,7 +208,8 @@ class ClientService {
       qb.andWhere("activity.id = :id", { id: req.params.activityId });
     }
     if (req.query.include_ascents === "true") {
-      qb.leftJoinAndSelect("activity.ascents", "ascent");
+      qb.leftJoinAndSelect("activity.ascents", "ascents");
+      qb.leftJoinAndSelect("ascents.mountain", "mountain");
     }
     if (req.query.only_with_ascents === "true") {
       qb.innerJoinAndSelect("activity.ascents", "ascent");
