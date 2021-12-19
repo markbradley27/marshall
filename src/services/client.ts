@@ -1,5 +1,3 @@
-// TODO: Some of these methods should ABSOLUTELY NOT be deployed to prod!
-
 import express from "express";
 import { oneOf, param, query } from "express-validator";
 import admin from "firebase-admin";
