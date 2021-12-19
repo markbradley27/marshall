@@ -14,10 +14,9 @@ export default function Settings() {
   const auth = useAuth();
 
   const refreshUser = useCallback(async () => {
-    const refreshedUser = await fetchUser(
-      auth.user?.uid as string,
-      (await auth.user?.getIdToken()) as string
-    );
+    const refreshedUser = await fetchUser(auth.user?.uid as string, {
+      idToken: (await auth.user?.getIdToken()) as string,
+    });
     setUser(refreshedUser);
   }, [auth.user]);
 

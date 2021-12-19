@@ -1,5 +1,13 @@
 import toBBox from "geojson-bounding-box";
 
+const BASE_URL = new URL(
+  "http://" +
+    process.env.REACT_APP_HOST +
+    ":" +
+    process.env.REACT_APP_PORT +
+    "/api/client/"
+);
+
 function buildAuthHeaders(idToken?: string): any {
   if (idToken != null) {
     return { "id-token": idToken };
@@ -20,13 +28,15 @@ async function maybeReturnJson(res: any) {
   }
 }
 
-async function apiFetch(url: string, idToken?: string) {
-  const res = await fetch(url, { headers: buildAuthHeaders(idToken) });
+async function apiFetch(url: URL | string, idToken?: string) {
+  const res = await fetch(url.toString(), {
+    headers: buildAuthHeaders(idToken),
+  });
   return maybeReturnJson(res);
 }
 
-async function apiPost(url: string, idToken?: string) {
-  const res = await fetch(url, {
+async function apiPost(url: URL | string, idToken?: string) {
+  const res = await fetch(url.toString(), {
     headers: buildAuthHeaders(idToken),
     method: "POST",
   });
@@ -79,54 +89,44 @@ function activityApiToState(
 }
 
 interface FetchActivitiesOptions {
-  idToken: string;
+  idToken?: string;
   activityId?: number;
   includeAscents?: boolean;
   onlyWithAscents?: boolean;
   includeBounds?: boolean;
 }
-async function fetchActivities(options: FetchActivitiesOptions) {
-  let url = "/api/client/activities";
-  if (options.activityId != null) {
-    url += "/" + options.activityId.toString();
+async function fetchActivities(options?: FetchActivitiesOptions) {
+  const url = new URL("activities", BASE_URL);
+  if (options?.activityId != null) {
+    url.pathname += "/" + options.activityId.toString();
   }
-  const query: any = {};
-  if (options.includeAscents) {
-    query.include_ascents = true;
+  if (options?.includeAscents) {
+    url.searchParams.set("include_ascents", "true");
   }
-  if (options.onlyWithAscents) {
-    query.only_with_ascents = true;
-  }
-  if (Object.keys(query).length) {
-    url +=
-      "?" +
-      Object.entries(query)
-        .map((entry: any) => {
-          return entry.join("=");
-        })
-        .join("&");
+  if (options?.onlyWithAscents) {
+    url.searchParams.set("only_with_ascents", "true");
   }
 
-  const activitiesJson = await apiFetch(url, options.idToken);
+  const activitiesJson = await apiFetch(url, options?.idToken);
 
-  if (options.activityId != null) {
+  if (options?.activityId != null) {
     return activityApiToState(activitiesJson, {
       includeBounds: options.includeBounds || false,
     });
   }
   return activitiesJson.map((activityJson: any) => {
     return activityApiToState(activityJson, {
-      includeBounds: options.includeBounds || false,
+      includeBounds: options?.includeBounds || false,
     });
   });
 }
 
 interface FetchActivityOptions {
-  idToken: string;
+  idToken?: string;
   includeAscents?: boolean;
   includeBounds?: boolean;
 }
-async function fetchActivity(id: number, options: FetchActivityOptions) {
+async function fetchActivity(id: number, options?: FetchActivityOptions) {
   const pluralOptions = options as FetchActivitiesOptions;
   pluralOptions.activityId = id;
   return fetchActivities(pluralOptions);
@@ -166,19 +166,19 @@ function ascentApiToState(apiAscent: any): AscentState {
 }
 
 interface FetchAscentsOptions {
-  idToken: string;
+  idToken?: string;
   mountainId?: number;
   includeMountains?: boolean;
 }
-async function fetchAscents(options: FetchAscentsOptions) {
-  let url = "/api/client/ascents";
-  if (options.mountainId != null) {
-    url += "/" + options.mountainId.toString();
+async function fetchAscents(options?: FetchAscentsOptions) {
+  const url = new URL("ascents", BASE_URL);
+  if (options?.mountainId != null) {
+    url.pathname += "/" + options.mountainId.toString();
   }
-  if (options.includeMountains) {
-    url += "?include_mountains=true";
+  if (options?.includeMountains) {
+    url.searchParams.set("include_mountains", "true");
   }
-  const ascentsJson = await apiFetch(url, options.idToken);
+  const ascentsJson = await apiFetch(url, options?.idToken);
   return ascentsJson.map(ascentApiToState);
 }
 
@@ -188,15 +188,11 @@ async function postAscent(
   date: Date,
   dateOnly: boolean
 ) {
-  return await apiPost(
-    "/api/client/ascent?mountain_id=" +
-      mountainId +
-      "&date=" +
-      date.toISOString() +
-      "&date_only=" +
-      dateOnly,
-    idToken
-  );
+  const url = new URL("ascent", BASE_URL);
+  url.searchParams.set("mountain_id", mountainId.toString());
+  url.searchParams.set("date", date.toISOString());
+  url.searchParams.set("dateOnly", dateOnly.toString());
+  return await apiPost(url, idToken);
 }
 
 enum MountainUiState {
@@ -245,16 +241,15 @@ interface FetchMountainOptions {
   includeNearby?: boolean;
   includeAscents?: boolean;
 }
-async function fetchMountain(id: number, options: FetchMountainOptions) {
-  const mountainJson = await apiFetch(
-    "/api/client/mountain/" +
-      id +
-      "?include_nearby=" +
-      (options.includeNearby || "false") +
-      "&include_ascents=" +
-      (options.includeAscents || "false"),
-    options.idToken
-  );
+async function fetchMountain(id: number, options?: FetchMountainOptions) {
+  const url = new URL("mountain/" + id, BASE_URL);
+  if (options?.includeNearby) {
+    url.searchParams.set("include_nearby", "true");
+  }
+  if (options?.includeAscents) {
+    url.searchParams.set("include_ascents", "true");
+  }
+  const mountainJson = await apiFetch(url, options?.idToken);
   return mountainApiToState(mountainJson);
 }
 
@@ -262,9 +257,9 @@ interface FetchMountainsOptions {
   boundingBox?: string;
 }
 async function fetchMountains(options?: FetchMountainsOptions) {
-  let url = "/api/client/mountains";
+  const url = new URL("mountains", BASE_URL);
   if (options?.boundingBox != null) {
-    url += "?bounding_box=" + options.boundingBox;
+    url.searchParams.set("bounding_box", options.boundingBox);
   }
   const mountainsJson = await apiFetch(url);
   return mountainsJson.map(mountainApiToState);
@@ -287,8 +282,12 @@ function userApiToState(apiUser: any): UserState {
   };
 }
 
-async function fetchUser(id: string, idToken: string) {
-  const userJson = await apiFetch("/api/client/user/" + id, idToken);
+interface FetchUserOptions {
+  idToken?: string;
+}
+async function fetchUser(id: string, options?: FetchUserOptions) {
+  const url = new URL("user/" + id, BASE_URL);
+  const userJson = await apiFetch(url, options?.idToken);
   return userApiToState(userJson);
 }
 
@@ -300,9 +299,9 @@ async function postUser(
   idToken: string,
   options?: PostUserOptions
 ) {
-  let url = "/api/client/user/" + id;
+  const url = new URL("user/" + id, BASE_URL);
   if (options?.name != null) {
-    url += "?name=" + options.name;
+    url.searchParams.set("name", options.name);
   }
   return await apiPost(url, idToken);
 }

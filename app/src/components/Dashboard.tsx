@@ -27,7 +27,7 @@ export default function Dashboard() {
   const googleMapsLoaded = useGoogleMaps();
 
   const refreshUser = useCallback(async (uid: string, idToken: string) => {
-    const user = await fetchUser(uid, idToken);
+    const user = await fetchUser(uid, { idToken });
     setUser(user);
   }, []);
 
