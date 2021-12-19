@@ -14,7 +14,7 @@ function Navbar() {
     <BsNavbar className="mb-3 bg-light">
       <Container>
         <BsNavbar.Brand href="/">
-          <Image src="graphics/logo_full.svg" />
+          <Image src="/graphics/logo_full.svg" />
         </BsNavbar.Brand>
         <BsNavbar.Collapse>
           <Nav>
