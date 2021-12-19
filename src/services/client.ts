@@ -31,16 +31,7 @@ function activityModelToApi(activity: Activity): any {
 
     ascents: activity.ascents?.map(ascentModelToApi),
     user: activity.user != null ? userModelToApi(activity.user) : undefined,
-  };
-}
-
-function listModelToApi(list: List): any {
-  return {
-    id: list.id,
-    name: list.name,
-    owner: list.owner != null ? userModelToApi(list.owner) : undefined,
-    private: list.private,
-    mountains: list.mountains?.map(mountainModelToApi),
+    userId: activity.userId,
   };
 }
 
@@ -50,9 +41,23 @@ function ascentModelToApi(ascent: Ascent): any {
     date: ascent.date,
     activity:
       ascent.activity != null ? activityModelToApi(ascent.activity) : undefined,
+    activityId: ascent.activityId,
     mountain:
       ascent.mountain != null ? mountainModelToApi(ascent.mountain) : undefined,
+    mountainId: ascent.mountainId,
     user: ascent.user != null ? userModelToApi(ascent.user) : undefined,
+    userId: ascent.userId,
+  };
+}
+
+function listModelToApi(list: List): any {
+  return {
+    id: list.id,
+    name: list.name,
+    private: list.private,
+    mountains: list.mountains?.map(mountainModelToApi),
+    owner: list.owner != null ? userModelToApi(list.owner) : undefined,
+    ownerId: list.ownerId,
   };
 }
 

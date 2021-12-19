@@ -5,6 +5,7 @@ import {
   ManyToMany,
   ManyToOne,
   JoinTable,
+  RelationId,
 } from "typeorm";
 
 import { Mountain } from "./Mountain";
@@ -28,4 +29,7 @@ export class List {
   // TODO: Think about what should happen to lists when the owner is deleted.
   @ManyToOne(() => User, (user) => user.lists)
   owner: User;
+
+  @RelationId((list: List) => list.owner)
+  ownerId: number;
 }

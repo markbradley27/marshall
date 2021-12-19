@@ -6,6 +6,7 @@ import {
   OneToMany,
   ManyToOne,
   Unique,
+  RelationId,
 } from "typeorm";
 
 import { Ascent } from "./Ascent";
@@ -51,4 +52,7 @@ export class Activity {
 
   @ManyToOne(() => User, (user) => user.activities, { onDelete: "CASCADE" })
   user: User;
+
+  @RelationId((activity: Activity) => activity.user)
+  userId: number;
 }

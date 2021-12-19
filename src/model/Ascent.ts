@@ -1,4 +1,10 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from "typeorm";
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  RelationId,
+} from "typeorm";
 
 import { Activity } from "./Activity";
 import { Mountain } from "./Mountain";
@@ -21,11 +27,20 @@ export class Ascent {
   })
   activity: Activity;
 
+  @RelationId((ascent: Ascent) => ascent.activity)
+  activityId: number;
+
   @ManyToOne(() => Mountain, (mountain) => mountain.ascents, {
     onDelete: "CASCADE",
   })
   mountain: Mountain;
 
+  @RelationId((ascent: Ascent) => ascent.mountain)
+  mountainId: number;
+
   @ManyToOne(() => User, (user) => user.ascents, { onDelete: "CASCADE" })
   user: User;
+
+  @RelationId((ascent: Ascent) => ascent.user)
+  userId: number;
 }
