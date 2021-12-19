@@ -40,7 +40,7 @@ function ActivityMap(props: ActivityMapProps) {
       onLoad={onLoad}
       onUnmount={onUnmount}
     >
-      <Polyline path={props.path} options={{ strokeColor: "green" }} />
+      <Polyline path={props.path} options={{ strokeColor: "#34758a" }} />
       {props.ascents.map((ascent: any) => {
         return (
           <MountainMarker
