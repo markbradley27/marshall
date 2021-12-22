@@ -4,7 +4,7 @@ import admin from "firebase-admin";
 import { auth } from "firebase-admin";
 import togeojson from "togeojson";
 import { Logger } from "tslog";
-import { Connection, FindConditions, Raw } from "typeorm";
+import { Connection, FindConditions, FindManyOptions, Raw } from "typeorm";
 
 import { maybeVerifyIdToken, verifyIdToken } from "../middleware/auth";
 import { logApiRequest } from "../middleware/debug";
@@ -232,16 +232,21 @@ class ClientService {
   }
 
   async getAscents(req: express.Request, res: express.Response) {
-    const whereClause: FindConditions<Ascent> = { user: { id: req.uid } };
-    if (req.params.mountainId != null) {
-      whereClause.mountain = { id: Number(req.params.mountainId) };
-    }
-    const ascents = await this.#dbConn.getRepository(Ascent).find({
-      where: whereClause,
+    const findOptions: FindManyOptions<Ascent> = {
+      where: { user: { id: req.uid } },
       order: { date: "DESC" },
       take: PAGE_SIZE,
       skip: PAGE_SIZE * Number(req.query.page),
-    });
+    };
+    if (req.params.mountainId != null) {
+      (findOptions.where as FindConditions<Ascent>).mountain = {
+        id: Number(req.params.mountainId),
+      };
+    }
+    if (req.query.include_mountains === "true") {
+      findOptions.relations = ["mountain"];
+    }
+    const ascents = await this.#dbConn.getRepository(Ascent).find(findOptions);
     res.json({ data: ascents.map(ascentModelToApi) });
   }
 

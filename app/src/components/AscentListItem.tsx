@@ -20,9 +20,15 @@ function AscentListItem(props: AscentListItemProps) {
           </Col>
         )}
         <Col>
-          <a href={"/activity/" + props.ascent.activityId}>
-            {props.ascent.date.toLocaleString()}
-          </a>
+          {props.ascent.activityId != null ? (
+            <a href={"/activity/" + props.ascent.activityId}>
+              {props.ascent.date.toLocaleString()}
+            </a>
+          ) : (
+            <span className="text-muted">
+              {props.ascent.date.toLocaleString()}
+            </span>
+          )}
         </Col>
       </Row>
     </ListGroup.Item>
