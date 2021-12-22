@@ -1,4 +1,4 @@
-import { Col, Form, InputGroup, ListGroup, Row } from "react-bootstrap";
+import { Col, Form, ListGroup, Row } from "react-bootstrap";
 
 import { ActivityState } from "../api_client";
 
@@ -13,19 +13,22 @@ interface ActivityListProps {
 export default function ActivityList(props: ActivityListProps) {
   return (
     <Row>
-      <Col>
+      <Col xs="auto">
         <h3>{props.title}</h3>
       </Col>
-      <Col>
-        {/*
-        TODO: Look at bootstrap toggle for this: https://www.bootstraptoggle.com/
-        */}
-        <Form>
-          <InputGroup.Checkbox
-            checked={props.onlyActivitiesWithAscents}
-            onChange={props.toggleOnlyActivitiesWithAscents}
-          />
-          Only activities with ascents
+      <Col className="ms-auto" xs="auto">
+        <Form as={Row}>
+          <Form.Label column xs="auto">
+            Only show activities with ascents:
+          </Form.Label>
+          <Col className="ps-0">
+            <Form.Check
+              checked={props.onlyActivitiesWithAscents}
+              className="mt-2"
+              onChange={props.toggleOnlyActivitiesWithAscents}
+              type="switch"
+            />
+          </Col>
         </Form>
       </Col>
       <ListGroup>

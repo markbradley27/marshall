@@ -14,7 +14,7 @@ export default function ActivityListItem(props: ActivityListItemProps) {
         <Col>
           <a href={"/activity/" + props.activity.id}>{props.activity.name}</a>
         </Col>
-        <Col>{props.activity.date.toLocaleString()}</Col>
+        <Col className="text-muted">{props.activity.date.toLocaleString()}</Col>
       </Row>
     </ListGroup.Item>
   );
