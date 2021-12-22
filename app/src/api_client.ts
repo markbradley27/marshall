@@ -191,7 +191,7 @@ async function postAscent(
   const url = new URL("ascent", BASE_URL);
   url.searchParams.set("mountain_id", mountainId.toString());
   url.searchParams.set("date", date.toISOString());
-  url.searchParams.set("dateOnly", dateOnly.toString());
+  url.searchParams.set("date_only", dateOnly.toString());
   return await apiPost(url, idToken);
 }
 
