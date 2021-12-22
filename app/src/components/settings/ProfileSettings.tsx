@@ -1,5 +1,5 @@
 import { FormEvent, useCallback, useState } from "react";
-import { Button, Form } from "react-bootstrap";
+import { Button, Col, Form, Row } from "react-bootstrap";
 
 import { postUser, UserState } from "../../api_client";
 import { useAuth } from "../../contexts/auth";
@@ -51,17 +51,25 @@ export default function ProfileSettings(props: ProfileSettingsProps) {
   return (
     <>
       <Form onSubmit={save}>
-        <Form.Group>
-          <Form.Label>Name:</Form.Label>
-          <Form.Control
-            onChange={onChange}
-            type="text"
-            defaultValue={props.user.name}
-          />
+        <Form.Group as={Row} className="mb-3">
+          <Form.Label column xs="auto">
+            Name:
+          </Form.Label>
+          <Col>
+            <Form.Control
+              defaultValue={props.user.name}
+              onChange={onChange}
+              type="text"
+            />
+          </Col>
         </Form.Group>
-        <Button disabled={saveState !== SaveState.MODIFIED} type="submit">
-          {saveState === SaveState.SAVING ? "Saving..." : "Save"}
-        </Button>
+        <Form.Group as={Row} className="justify-content-center">
+          <Col xs="auto">
+            <Button disabled={saveState !== SaveState.MODIFIED} type="submit">
+              {saveState === SaveState.SAVING ? "Updating..." : "Update"}
+            </Button>
+          </Col>
+        </Form.Group>
       </Form>
     </>
   );

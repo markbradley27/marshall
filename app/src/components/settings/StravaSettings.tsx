@@ -21,30 +21,31 @@ export default function StravaSettings(props: StravaSettingsProps) {
     <>
       {props.user.stravaAthleteId != null ? (
         <>
-          Synced to{" "}
-          <a
-            href={
-              "http://www.strava.com/athletes/" + props.user.stravaAthleteId
-            }
-          >
-            strava account
-          </a>
-          .
-          <br />
-          <Button className="mt-2" onClick={deauthorizeStrava}>
+          <span className="align-middle">
+            Synced to{" "}
+            <a
+              href={
+                "http://www.strava.com/athletes/" + props.user.stravaAthleteId
+              }
+            >
+              strava account
+            </a>
+            .
+          </span>
+          <Button className="ms-3" onClick={deauthorizeStrava}>
             Deauthorize Strava
           </Button>
         </>
       ) : (
         <Button
+          href={`http://www.strava.com/oauth/authorize?client_id=${process.env.REACT_APP_STRAVA_CLIENT_ID}&redirect_uri=http://${process.env.REACT_APP_HOST}:${process.env.REACT_APP_PORT}/api/strava/authorize_callback&response_type=code&scope=activity:read,activity:read_all&state=${auth.user?.uid}`}
           style={{
             backgroundColor: "#fc4c02",
             borderColor: "#fc4c02",
           }}
-          href={`http://www.strava.com/oauth/authorize?client_id=${process.env.REACT_APP_STRAVA_CLIENT_ID}&redirect_uri=http://${process.env.REACT_APP_HOST}:${process.env.REACT_APP_PORT}/api/strava/authorize_callback&response_type=code&scope=activity:read,activity:read_all&state=${auth.user?.uid}`}
         >
-          {/* TODO: Remove the line break between text and image somehow.*/}
-          Sync to <Image src="/graphics/strava_logo.svg" />
+          <span className="align-middle">Sync to </span>
+          <Image src="/graphics/strava_logo.svg" style={{ height: 18 }} />
         </Button>
       )}
     </>

@@ -34,14 +34,18 @@ export default function Settings() {
       <>
         <h3>Settings:</h3>
         <Row>
-          <Col xs={4}>Profile:</Col>
+          <Col xs={4}>
+            <h5>Profile:</h5>
+          </Col>
           <Col xs={8}>
             <ProfileSettings user={user} />
           </Col>
         </Row>
-        <br />
+        <hr />
         <Row>
-          <Col xs={4}>Third party integration:</Col>
+          <Col xs={4}>
+            <h5>Third party integration:</h5>
+          </Col>
           <Col xs={8}>
             <StravaSettings user={user} refreshUser={refreshUser} />
           </Col>
