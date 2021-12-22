@@ -362,7 +362,6 @@ class ClientService {
         })
         .orderBy("distance")
         .getRawMany();
-      logger.info("nearby:", nearby);
 
       // Nearby will include the original mountain too, so 'slice' it off.
       resJson.nearby = nearby.slice(1).map(mountainModelToApi);
@@ -376,7 +375,6 @@ class ClientService {
         },
         relations: ["activity", "user"],
       });
-      logger.info("ascents:", ascents);
       resJson.ascents = ascents.map(ascentModelToApi);
     }
 
