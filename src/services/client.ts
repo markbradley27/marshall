@@ -246,13 +246,14 @@ class ClientService {
   }
 
   async postAscent(req: express.Request, res: express.Response) {
-    const ascent = this.#dbConn.getRepository(Ascent).create({
+    const insertResult = await this.#dbConn.getRepository(Ascent).insert({
       user: { id: req.uid },
       mountain: { id: Number(req.query.mountain_id) },
       date: new Date(req.query.date as string),
       dateOnly: req.query.date_only == "true",
     });
-    res.status(200).json({ data: { id: ascent.id } });
+    // Returns id of inserted ascent.
+    res.status(200).json({ data: { id: insertResult.identifiers[0] } });
   }
 
   async getList(req: express.Request, res: express.Response) {
