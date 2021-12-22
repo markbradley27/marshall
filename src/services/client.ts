@@ -35,6 +35,7 @@ function activityModelToApi(activity: Activity): any {
   };
 }
 
+// TODO: Handle dateOnly.
 function ascentModelToApi(ascent: Ascent): any {
   return {
     id: ascent.id,
