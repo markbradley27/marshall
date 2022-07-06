@@ -4,7 +4,7 @@ import { Logger } from "tslog";
 import { Connection } from "typeorm";
 
 import gpx from "./middleware/gpx";
-import ClientService from "./services/client";
+import { ClientService } from "./services/client/client_service";
 import StravaService from "./services/strava";
 
 const logger: Logger = new Logger();
