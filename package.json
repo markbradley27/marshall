@@ -49,6 +49,7 @@
   },
   "dependencies": {
     "@types/geojson": "^7946.0.8",
+    "@types/multer": "^1.4.7",
     "@types/validator": "^13.6.3",
     "dotenv": "^10.0.0",
     "express": "^4.17.1",
@@ -56,6 +57,7 @@
     "firebase-admin": "^9.11.1",
     "geojson-polyline": "^1.0.3",
     "got": "^11.8.2",
+    "multer": "^1.4.5-lts.1",
     "pg": "^8.7.1",
     "prettier": "^2.4.1",
     "togeojson": "^0.16.0",

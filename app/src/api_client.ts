@@ -35,10 +35,35 @@ async function apiFetch(url: URL | string, idToken?: string) {
   return maybeReturnJson(res);
 }
 
+async function apiFetchBlob(url: URL | string) {
+  const res = await fetch(url.toString());
+  if (res.status === 404) {
+    return null;
+  }
+  const blob = await res.blob();
+  return URL.createObjectURL(blob);
+}
+
 async function apiPost(url: URL | string, idToken?: string) {
   const res = await fetch(url.toString(), {
     headers: buildAuthHeaders(idToken),
     method: "POST",
+  });
+  return maybeReturnJson(res);
+}
+
+async function apiPutBlob(
+  url: URL | string,
+  identifier: string,
+  blob: Blob,
+  idToken?: string
+) {
+  const formData = new FormData();
+  formData.append(identifier, blob);
+  const res = await fetch(url.toString(), {
+    headers: buildAuthHeaders(idToken),
+    method: "PUT",
+    body: formData,
   });
   return maybeReturnJson(res);
 }
@@ -195,6 +220,16 @@ async function postAscent(
   return await apiPost(url, idToken);
 }
 
+async function fetchAvatar(id: string) {
+  const url = new URL("avatar/" + id, BASE_URL);
+  return apiFetchBlob(url);
+}
+
+async function putAvatar(idToken: string, avatar: Blob) {
+  const url = new URL("avatar", BASE_URL);
+  return await apiPutBlob(url, "avatar", avatar, idToken);
+}
+
 enum MountainUiState {
   NEUTRAL,
   SECONDARY,
@@ -313,6 +348,8 @@ export {
   fetchActivity,
   fetchAscents,
   postAscent,
+  fetchAvatar,
+  putAvatar,
   fetchMountain,
   fetchMountains,
   fetchUser,

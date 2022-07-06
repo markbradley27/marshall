@@ -52,7 +52,7 @@ export default function ProfileSettings(props: ProfileSettingsProps) {
     <>
       <Form onSubmit={save}>
         <Form.Group as={Row} className="mb-3">
-          <Form.Label column xs="auto">
+          <Form.Label column xs="4">
             Name:
           </Form.Label>
           <Col>
