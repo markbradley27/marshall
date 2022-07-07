@@ -52,6 +52,17 @@ async function apiPost(url: URL | string, idToken?: string) {
   return maybeReturnJson(res);
 }
 
+async function apiPostJson(url: URL | string, data: any, idToken?: string) {
+  const res = await fetch(url.toString(), {
+    headers: Object.assign({}, buildAuthHeaders(idToken), {
+      "content-type": "application/json",
+    }),
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+  return maybeReturnJson(res);
+}
+
 async function apiPutBlob(
   url: URL | string,
   identifier: string,
@@ -303,6 +314,11 @@ async function fetchMountains(options?: FetchMountainsOptions) {
 interface UserState {
   id: string;
   name: string;
+  location: string;
+  gender: string;
+  bio: string;
+  activitiesDefaultPrivate: boolean;
+  ascentsDefaultPrivate: boolean;
   stravaAthleteId?: number;
   activityCount?: number;
   ascentCount?: number;
@@ -311,6 +327,11 @@ function userApiToState(apiUser: any): UserState {
   return {
     id: apiUser.id,
     name: apiUser.name,
+    location: apiUser.location,
+    gender: apiUser.gender,
+    bio: apiUser.bio,
+    activitiesDefaultPrivate: apiUser.activitiesDefaultPrivate,
+    ascentsDefaultPrivate: apiUser.ascentsDefaultPrivate,
     stravaAthleteId: apiUser.stravaAthleteId,
     activityCount: apiUser.activityCount,
     ascentCount: apiUser.ascentCount,
@@ -328,6 +349,11 @@ async function fetchUser(id: string, options?: FetchUserOptions) {
 
 interface PostUserOptions {
   name?: string;
+  location?: string;
+  gender?: string;
+  bio?: string;
+  activitiesDefaultPrivate?: boolean;
+  ascentsDefaultPrivate?: boolean;
 }
 async function postUser(
   id: string,
@@ -335,10 +361,7 @@ async function postUser(
   options?: PostUserOptions
 ) {
   const url = new URL("user/" + id, BASE_URL);
-  if (options?.name != null) {
-    url.searchParams.set("name", options.name);
-  }
-  return await apiPost(url, idToken);
+  return await apiPostJson(url, options, idToken);
 }
 
 export type { ActivityState, AscentState, MountainState, UserState };

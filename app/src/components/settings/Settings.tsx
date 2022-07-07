@@ -4,6 +4,7 @@ import { Col, Row } from "react-bootstrap";
 import { UserState, fetchUser } from "../../api_client";
 import { useAuth } from "../../contexts/auth";
 
+import PrivacySettings from "./PrivacySettings";
 import ProfilePhotoEditor from "./ProfilePhotoEditor";
 import ProfileSettings from "./ProfileSettings";
 import StravaSettings from "./StravaSettings";
@@ -37,7 +38,7 @@ export default function Settings() {
         <hr />
         <Row>
           <Col xs={4}>
-            <h5>Profile:</h5>
+            <h4>Profile:</h4>
           </Col>
           <Col xs={8}>
             <ProfilePhotoEditor />
@@ -48,7 +49,16 @@ export default function Settings() {
         <hr />
         <Row>
           <Col xs={4}>
-            <h5>Third party integration:</h5>
+            <h4>Privacy:</h4>
+          </Col>
+          <Col xs={8}>
+            <PrivacySettings user={user} />
+          </Col>
+        </Row>
+        <hr />
+        <Row>
+          <Col xs={4}>
+            <h4>Third party integration:</h4>
           </Col>
           <Col xs={8}>
             <StravaSettings user={user} refreshUser={refreshUser} />

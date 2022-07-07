@@ -1,5 +1,5 @@
 import express from "express";
-import { param, query } from "express-validator";
+import { body, param } from "express-validator";
 import admin from "firebase-admin";
 import { auth } from "firebase-admin";
 import { Connection } from "typeorm";
@@ -29,7 +29,13 @@ export class UserRoutes {
     this.router.post(
       "/user/:userId",
       param("userId").isString(),
-      query("name").isString(),
+      body("name").optional().isString(),
+      body("location").optional().isString(),
+      // TODO: Validate enum values.
+      body("gender").optional().isString(),
+      body("bio").optional().isString(),
+      body("activitiesDefaultPrivate").optional().isBoolean(),
+      body("ascentsDefaultPrivate").optional().isBoolean(),
       checkValidation,
       verifyIdToken,
       this.postUser.bind(this)
@@ -59,10 +65,12 @@ export class UserRoutes {
     res.json({ data: userModelToApi(user) });
   }
 
-  // Creates or updates the given user in both firebase and the local DB.
+  // Creates or updates the given user.
+  //
+  // The user must already exist in firebase.
+  // The user will be created or updated in the local db.
   async postUser(req: express.Request, res: express.Response) {
     const uid = req.params.userId as string;
-    const name = req.query.name as string;
 
     // Users can only be modified by that authenticated user.
     if (uid != req.uid) {
@@ -71,13 +79,20 @@ export class UserRoutes {
     }
 
     // Update firebase.
-    await auth().updateUser(uid, { displayName: name });
+    if (req.body.name) {
+      await auth().updateUser(uid, { displayName: req.body.name });
+    }
 
     // Update local DB.
     const userRepo = this.#dbConn.getRepository(User);
     const user = new User();
     user.id = uid;
-    user.name = name;
+    user.name = req.body.name;
+    user.location = req.body.location;
+    user.gender = req.body.gender;
+    user.bio = req.body.bio;
+    user.activitiesDefaultPrivate = req.body.activitiesDefaultPrivate;
+    user.ascentsDefaultPrivate = req.body.ascentsDefaultPrivate;
     await userRepo.save(user);
 
     res.sendStatus(200);
