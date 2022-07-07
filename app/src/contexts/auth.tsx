@@ -14,20 +14,26 @@ import React, {
   useState,
 } from "react";
 
-import { postUser } from "../api_client";
+import { fetchUser, postUser, UserState } from "../api_client";
 
 interface AuthContextValue {
-  user: User | null;
+  fbUser: User | null;
+  dbUser: UserState | null;
   signup: (email: string, password: string, name: string) => void;
   login: (email: string, password: string) => void;
   logout: () => void;
+  updateUser: (options: any) => Promise<void>;
+  refreshDbUser: () => Promise<void>;
   deleteCurrentUser: () => void;
 }
 const AuthContext = React.createContext<AuthContextValue>({
-  user: null,
+  fbUser: null,
+  dbUser: null,
   signup: () => {},
   login: () => {},
   logout: () => {},
+  updateUser: async () => {},
+  refreshDbUser: async () => {},
   deleteCurrentUser: () => {},
 });
 
@@ -36,7 +42,8 @@ export function useAuth() {
 }
 
 export const AuthProvider: FunctionComponent = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [fbUser, setFbUser] = useState<User | null>(null);
+  const [dbUser, setDbUser] = useState<UserState | null>(null);
   const [loading, setLoading] = useState(true);
   const [signingUp, setSigningUp] = useState(false);
 
@@ -64,25 +71,63 @@ export const AuthProvider: FunctionComponent = ({ children }) => {
     signOut(getAuth());
   }
 
+  async function updateUser(options: any) {
+    // TODO: Throw an error or something.
+    if (fbUser == null) {
+      return;
+    }
+    await postUser(fbUser.uid, await fbUser.getIdToken(), options);
+    setDbUser(
+      await fetchUser(fbUser.uid, { idToken: await fbUser.getIdToken() })
+    );
+  }
+
+  async function refreshDbUser() {
+    if (fbUser != null) {
+      setDbUser(
+        await fetchUser(fbUser.uid, { idToken: await fbUser.getIdToken() })
+      );
+    }
+  }
+
   function deleteCurrentUser() {
-    if (user != null) {
-      deleteUser(user);
+    if (fbUser != null) {
+      deleteUser(fbUser);
     }
   }
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(getAuth(), async (newUser) => {
-      setUser(newUser);
+    const unsubscribe = onAuthStateChanged(getAuth(), async (newFbUser) => {
+      // This gets called even when it appears the user has not changed. The
+      // hack is to ignore the calls when they're not actually changes.
+      if (newFbUser?.uid === fbUser?.uid) {
+        setLoading(false);
+        return;
+      }
+
+      setFbUser(newFbUser);
+      if (newFbUser == null) {
+        setDbUser(null);
+      } else {
+        setDbUser(
+          await fetchUser(newFbUser.uid, {
+            idToken: await newFbUser.getIdToken(),
+          })
+        );
+      }
       setLoading(false);
     });
     return unsubscribe;
   });
 
   const value: AuthContextValue = {
-    user,
+    fbUser,
+    dbUser,
     signup,
     login,
     logout,
+    updateUser,
+    refreshDbUser,
     deleteCurrentUser,
   };
 

@@ -27,7 +27,7 @@ function Activity(props: ActivityProps) {
       const activity = await fetchActivity(
         Number(props.match.params.activityId),
         {
-          idToken: (await auth.user?.getIdToken()) as string,
+          idToken: (await auth.fbUser?.getIdToken()) as string,
           includeAscents: true,
           includeBounds: true,
         }
@@ -42,7 +42,7 @@ function Activity(props: ActivityProps) {
       setActivity(activity);
     }
 
-    if (activity == null && auth.user != null && googleMapsLoaded) {
+    if (activity == null && auth.fbUser != null && googleMapsLoaded) {
       fetchData();
     }
   });

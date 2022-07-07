@@ -1,7 +1,6 @@
 import { FormEvent, useCallback, useState } from "react";
 import { Button, Col, Form, Row } from "react-bootstrap";
 
-import { postUser, UserState } from "../../api_client";
 import { useAuth } from "../../contexts/auth";
 
 enum SaveState {
@@ -10,17 +9,14 @@ enum SaveState {
   SAVING,
 }
 
-interface ProfileSettingsProps {
-  user: UserState;
-}
-export default function ProfileSettings(props: ProfileSettingsProps) {
-  const [saveState, setSaveState] = useState<SaveState>(SaveState.NO_CHANGE);
-  const [name, setName] = useState(props.user.name);
-  const [location, setLocation] = useState(props.user.location);
-  const [gender, setGender] = useState(props.user.gender);
-  const [bio, setBio] = useState(props.user.bio);
-
+export default function ProfileSettings() {
   const auth = useAuth();
+
+  const [saveState, setSaveState] = useState<SaveState>(SaveState.NO_CHANGE);
+  const [name, setName] = useState(auth.dbUser?.name);
+  const [location, setLocation] = useState(auth.dbUser?.location);
+  const [gender, setGender] = useState(auth.dbUser?.gender);
+  const [bio, setBio] = useState(auth.dbUser?.bio);
 
   const onNameChange = useCallback((e) => {
     setSaveState(SaveState.MODIFIED);
@@ -42,23 +38,17 @@ export default function ProfileSettings(props: ProfileSettingsProps) {
     setBio(e.target.value);
   }, []);
 
-  // TODO: This doesn't propegate updates everywhere. Maybe basic user info
-  // should be in the auth context?
   const save = useCallback(
     (e: FormEvent<HTMLFormElement>) => {
       const saveAsync = async () => {
         e.preventDefault();
         setSaveState(SaveState.SAVING);
-        await postUser(
-          props.user.id,
-          (await auth.user?.getIdToken()) as string,
-          { name, location, gender, bio }
-        );
+        auth.updateUser({ name, location, gender, bio });
         setSaveState(SaveState.NO_CHANGE);
       };
       saveAsync();
     },
-    [auth, bio, gender, location, name, props.user.id]
+    [auth, bio, gender, location, name]
   );
 
   return (
@@ -70,7 +60,7 @@ export default function ProfileSettings(props: ProfileSettingsProps) {
           </Form.Label>
           <Col>
             <Form.Control
-              defaultValue={props.user.name}
+              defaultValue={auth.dbUser?.name}
               onChange={onNameChange}
               type="text"
             />
@@ -82,7 +72,7 @@ export default function ProfileSettings(props: ProfileSettingsProps) {
           </Form.Label>
           <Col>
             <Form.Control
-              defaultValue={props.user.location}
+              defaultValue={auth.dbUser?.location}
               onChange={onLocationChange}
               type="text"
             />
@@ -94,7 +84,7 @@ export default function ProfileSettings(props: ProfileSettingsProps) {
           </Form.Label>
           <Col>
             <Form.Select
-              defaultValue={props.user.gender}
+              defaultValue={auth.dbUser?.gender}
               onChange={onGenderChange}
             >
               <option value="female">Female</option>
@@ -111,7 +101,7 @@ export default function ProfileSettings(props: ProfileSettingsProps) {
           <Col>
             <Form.Control
               as="textarea"
-              defaultValue={props.user.bio}
+              defaultValue={auth.dbUser?.bio}
               onChange={onBioChange}
             />
           </Col>

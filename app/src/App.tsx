@@ -21,19 +21,19 @@ function App() {
       <PageFrame>
         <Switch>
           <Route exact path="/">
-            {auth.user != null ? <Redirect to="/dashboard" /> : <Homepage />}
+            {auth.fbUser != null ? <Redirect to="/dashboard" /> : <Homepage />}
           </Route>
           <Route path="/login">
-            {auth.user != null ? <Redirect to="/dashboard" /> : <Login />}
+            {auth.fbUser != null ? <Redirect to="/dashboard" /> : <Login />}
           </Route>
           <Route path="/signup">
-            {auth.user != null ? <Redirect to="/dashboard" /> : <SignUp />}
+            {auth.fbUser != null ? <Redirect to="/dashboard" /> : <SignUp />}
           </Route>
           <Route path={["/dashboard", "/activities", "/ascents"]}>
-            {auth.user != null ? <Dashboard /> : <Redirect to="/" />}
+            {auth.fbUser != null ? <Dashboard /> : <Redirect to="/" />}
           </Route>
           <Route path="/settings">
-            {auth.user == null ? <Redirect to="/login" /> : <Settings />}
+            {auth.fbUser == null ? <Redirect to="/login" /> : <Settings />}
           </Route>
           <Route path="/activity/:activityId">
             <Activity />
@@ -45,7 +45,7 @@ function App() {
             <MountainBrowser />
           </Route>
           <Route path="/add_ascent">
-            {auth.user == null ? <Redirect to="/login" /> : <AddAscent />}
+            {auth.fbUser == null ? <Redirect to="/login" /> : <AddAscent />}
           </Route>
         </Switch>
       </PageFrame>

@@ -6,16 +6,15 @@ import { useAuth } from "../../contexts/auth";
 
 interface StravaSettingsProps {
   user: UserState;
-  refreshUser: () => void;
 }
 
 export default function StravaSettings(props: StravaSettingsProps) {
   const auth = useAuth();
 
   const deauthorizeStrava = useCallback(async () => {
-    await apiFetch("/api/strava/deauthorize", await auth.user?.getIdToken());
-    props.refreshUser();
-  }, [props, auth]);
+    await apiFetch("/api/strava/deauthorize", await auth.fbUser?.getIdToken());
+    auth.refreshDbUser();
+  }, [auth]);
 
   return (
     <>
@@ -38,7 +37,7 @@ export default function StravaSettings(props: StravaSettingsProps) {
         </>
       ) : (
         <Button
-          href={`http://www.strava.com/oauth/authorize?client_id=${process.env.REACT_APP_STRAVA_CLIENT_ID}&redirect_uri=http://${process.env.REACT_APP_HOST}:${process.env.REACT_APP_PORT}/api/strava/authorize_callback&response_type=code&scope=activity:read,activity:read_all&state=${auth.user?.uid}`}
+          href={`http://www.strava.com/oauth/authorize?client_id=${process.env.REACT_APP_STRAVA_CLIENT_ID}&redirect_uri=http://${process.env.REACT_APP_HOST}:${process.env.REACT_APP_PORT}/api/strava/authorize_callback&response_type=code&scope=activity:read,activity:read_all&state=${auth.fbUser?.uid}`}
           style={{
             backgroundColor: "#fc4c02",
             borderColor: "#fc4c02",

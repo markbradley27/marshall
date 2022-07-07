@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 import { Col, Form, Row } from "react-bootstrap";
 
-import { postUser, UserState } from "../../api_client";
+import { UserState } from "../../api_client";
 import { useAuth } from "../../contexts/auth";
 
 interface PrivacySettingsProps {
@@ -26,24 +26,24 @@ export default function PrivacySettings(props: PrivacySettingsProps) {
     async (e) => {
       setSavingActivitiesDefaultPrivate(true);
       setActivitiesDefaultPrivate(e.target.checked);
-      await postUser(props.user.id, (await auth.user?.getIdToken()) as string, {
+      await auth.updateUser({
         activitiesDefaultPrivate: e.target.checked,
       });
       setSavingActivitiesDefaultPrivate(false);
     },
-    [auth.user, props.user.id]
+    [auth]
   );
 
   const onAscentsDefaultPrivateChange = useCallback(
     async (e) => {
       setSavingAscentsDefaultPrivate(true);
       setAscentsDefaultPrivate(e.target.checked);
-      await postUser(props.user.id, (await auth.user?.getIdToken()) as string, {
+      await auth.updateUser({
         ascentsDefaultPrivate: e.target.checked,
       });
       setSavingAscentsDefaultPrivate(false);
     },
-    [auth.user, props.user.id]
+    [auth]
   );
 
   return (

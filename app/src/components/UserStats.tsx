@@ -1,17 +1,20 @@
 import Col from "react-bootstrap/Col";
 import Row from "react-bootstrap/Row";
 
-import { UserState } from "../api_client";
+import { useAuth } from "../contexts/auth";
 
-interface UserStatsProps {
-  user: UserState;
-}
-export default function UserStats(props: UserStatsProps) {
+export default function UserStats() {
+  const auth = useAuth();
+
   return (
-    <Row className="border">
-      <Col>{props.user.name}</Col>
-      <Col>Activities: {props.user.activityCount}</Col>
-      <Col>Ascents: {props.user.ascentCount}</Col>
-    </Row>
+    <>
+      {auth.dbUser && (
+        <Row className="border">
+          <Col>{auth.dbUser.name}</Col>
+          <Col>Activities: {auth.dbUser.activityCount}</Col>
+          <Col>Ascents: {auth.dbUser.ascentCount}</Col>
+        </Row>
+      )}
+    </>
   );
 }

@@ -8,7 +8,7 @@ import { useAuth } from "../contexts/auth";
 function UserControl() {
   const auth = useAuth();
 
-  if (auth.user == null) {
+  if (auth.fbUser == null) {
     return (
       <Nav>
         <Nav.Item className="px-2">
@@ -21,7 +21,7 @@ function UserControl() {
     );
   } else {
     return (
-      <DropdownButton className="px-2" title={auth.user.displayName}>
+      <DropdownButton className="px-2" title={auth.dbUser?.name}>
         <Dropdown.Item href="/settings">Settings</Dropdown.Item>
         <Dropdown.Item onClick={auth.logout}>Logout</Dropdown.Item>
       </DropdownButton>

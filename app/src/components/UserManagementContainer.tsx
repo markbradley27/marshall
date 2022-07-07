@@ -6,8 +6,8 @@ import { useAuth } from "../contexts/auth";
 export default function UserManagementContainer(props: PropsWithChildren<{}>) {
   const auth = useAuth();
 
-  if (auth.user != null) {
-    return <h2>Signed in as {auth.user.displayName}.</h2>;
+  if (auth.fbUser != null) {
+    return <h2>Signed in as {auth.fbUser.displayName}.</h2>;
   } else {
     return <Container style={{ width: "400px" }}>{props.children}</Container>;
   }
