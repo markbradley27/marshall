@@ -8,6 +8,8 @@ export function logApiRequest(
   _: express.Response,
   next: express.NextFunction
 ) {
-  logger.info(`API Request: ${req.method} ${req.originalUrl}`);
+  logger.info(
+    `API Request: ${req.method} ${req.originalUrl} ${JSON.stringify(req.body)}`
+  );
   next();
 }
