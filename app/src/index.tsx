@@ -3,7 +3,7 @@ import ReactDOM from "react-dom";
 
 import App from "./App";
 import { AuthProvider } from "./contexts/auth";
-import "./firebase";
+import "./firebase_init";
 import reportWebVitals from "./reportWebVitals";
 
 ReactDOM.render(
