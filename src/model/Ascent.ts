@@ -9,11 +9,19 @@ import {
 import { Activity } from "./Activity";
 import { Mountain } from "./Mountain";
 import { User } from "./User";
+import { PrivacySetting } from "./privacy_setting";
 
 @Entity()
 export class Ascent {
   @PrimaryGeneratedColumn()
   id: number;
+
+  @Column({
+    type: "enum",
+    enum: PrivacySetting,
+    default: PrivacySetting.PRIVATE,
+  })
+  privacy: PrivacySetting;
 
   @Column()
   date: Date;

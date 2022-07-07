@@ -190,6 +190,7 @@ class StravaService {
     });
   }
 
+  // TODO: Handle privacy settings.
   async loadActivity(activity: StravaActivity, user: User) {
     if (!activity.map.polyline && !activity.map.summary_polyline) {
       logger.info(

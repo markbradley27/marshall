@@ -11,6 +11,7 @@ import {
 
 import { Ascent } from "./Ascent";
 import { User } from "./User";
+import { PrivacySetting } from "./privacy_setting";
 
 export enum ActivitySource {
   strava = "strava",
@@ -22,6 +23,13 @@ export enum ActivitySource {
 export class Activity {
   @PrimaryGeneratedColumn()
   id: number;
+
+  @Column({
+    type: "enum",
+    enum: PrivacySetting,
+    default: PrivacySetting.PRIVATE,
+  })
+  privacy: PrivacySetting;
 
   @Column({ type: "enum", enum: ActivitySource })
   source: ActivitySource;
