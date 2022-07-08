@@ -220,14 +220,14 @@ async function fetchAscents(options?: FetchAscentsOptions) {
 
 async function postAscent(
   idToken: string,
-  mountainId: number,
-  date: Date,
-  dateOnly: boolean
+  privacy: string,
+  date: string,
+  mountainId: number
 ) {
   const url = new URL("ascent", BASE_URL);
-  url.searchParams.set("mountain_id", mountainId.toString());
-  url.searchParams.set("date", date.toISOString());
-  url.searchParams.set("date_only", dateOnly.toString());
+  url.searchParams.set("privacy", privacy);
+  url.searchParams.set("date", date);
+  url.searchParams.set("mountainId", mountainId.toString());
   return await apiPost(url, idToken);
 }
 
