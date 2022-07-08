@@ -1,10 +1,10 @@
 import express from "express";
-import { param, query } from "express-validator";
+import { query } from "express-validator";
 import { find as findTz } from "geo-tz";
 import { DateTime } from "luxon";
-import { Connection, FindConditions, FindManyOptions } from "typeorm";
+import { Connection } from "typeorm";
 
-import { verifyIdToken } from "../../middleware/auth";
+import { maybeVerifyIdToken, verifyIdToken } from "../../middleware/auth";
 import { checkValidation } from "../../middleware/validation";
 import { Ascent } from "../../model/Ascent";
 import { Mountain } from "../../model/Mountain";
@@ -24,15 +24,19 @@ export class AscentRoutes {
     this.#dbConn = dbConn;
 
     this.router = express.Router();
+
+    // Default order is by date descending.
     this.router.get(
-      "/ascents/:mountainId?",
-      param("mountainId").optional().isNumeric(),
-      query("include_mountains").optional().isBoolean(),
+      "/ascents",
+      query("mountainId").optional().isNumeric(),
+      query("userId").optional().isString(),
+      query("includeMountains").optional().isBoolean(),
       query("page").default(0).isNumeric(),
       checkValidation,
-      verifyIdToken,
+      maybeVerifyIdToken,
       this.getAscents.bind(this)
     );
+
     // date may be a simple date (YYYY-MM-DD) or a datetime
     // (YYYY-MM-DDTHH:MM:SS). If a datetime is provided with a timezone offset
     // (...+/-XX:XX), the provided offset will be used. If no timezone offset is
@@ -51,22 +55,45 @@ export class AscentRoutes {
     );
   }
 
+  // TODO: Support FOLLOWERS_ONLY.
   async getAscents(req: express.Request, res: express.Response) {
-    const findOptions: FindManyOptions<Ascent> = {
-      where: { user: { id: req.uid } },
-      order: { date: "DESC" },
-      take: PAGE_SIZE,
-      skip: PAGE_SIZE * Number(req.query.page),
-    };
-    if (req.params.mountainId != null) {
-      (findOptions.where as FindConditions<Ascent>).mountain = {
-        id: Number(req.params.mountainId),
-      };
+    const ascentsQuery = this.#dbConn
+      .getRepository(Ascent)
+      .createQueryBuilder("ascent")
+      .take(PAGE_SIZE)
+      .skip(Number(req.query.page) * PAGE_SIZE)
+      .orderBy("ascent.date", "DESC");
+
+    if (req.uid) {
+      ascentsQuery.andWhere(
+        "(ascent.userId = :uid or ascent.privacy = 'PUBLIC')",
+        { uid: req.uid }
+      );
+    } else {
+      ascentsQuery.andWhere("ascent.privacy = 'PUBLIC'");
     }
-    if (req.query.include_mountains === "true") {
-      findOptions.relations = ["mountain"];
+
+    if (req.query.mountainId) {
+      ascentsQuery.andWhere("ascent.mountainId = :mountainId", {
+        mountainId: req.query.mountainId,
+      });
     }
-    const ascents = await this.#dbConn.getRepository(Ascent).find(findOptions);
+
+    if (req.query.userId) {
+      ascentsQuery.andWhere("ascent.userId = :userId", {
+        userId: req.query.userId,
+      });
+    }
+
+    if (
+      req.query.includeMountains &&
+      (req.query.includeMountains as string).toLowerCase() == "true"
+    ) {
+      ascentsQuery.leftJoinAndSelect("ascent.mountain", "mountain");
+    }
+
+    const ascents = await ascentsQuery.getMany();
+
     res.json({ data: ascents.map(ascentModelToApi) });
   }
 

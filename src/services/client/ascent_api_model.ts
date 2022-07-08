@@ -4,11 +4,16 @@ import { activityModelToApi } from "./activity_api_model";
 import { mountainModelToApi } from "./mountain_api_model";
 import { userModelToApi } from "./user_api_model";
 
-// TODO: Handle dateOnly.
 export function ascentModelToApi(ascent: Ascent): any {
+  let dateStr = ascent.date.toISOString();
+  if (ascent.dateOnly) {
+    dateStr = dateStr.split("T")[0];
+  }
+
   return {
     id: ascent.id,
-    date: ascent.date,
+    privacy: ascent.privacy,
+    date: dateStr,
     activity:
       ascent.activity != null ? activityModelToApi(ascent.activity) : undefined,
     activityId: ascent.activityId,
