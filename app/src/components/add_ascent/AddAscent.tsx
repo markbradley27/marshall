@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Button, Form, Stack } from "react-bootstrap";
 import { Typeahead } from "react-bootstrap-typeahead";
 import { RouteComponentProps, withRouter } from "react-router-dom";
@@ -12,12 +12,12 @@ function AddAscent(props: RouteComponentProps<{}>) {
 
   const [mountains, setMountains] = useState<MountainState[] | null>(null);
   const [loaded, setLoaded] = useState(false);
-
   const [mountain, setMountain] = useState<MountainState | null>(null);
-  const [date, setDate] = useState("");
-  const [time, setTime] = useState("");
-  const [privacy, setPrivacy] = useState(auth.dbUser?.defaultAscentPrivacy);
   const [submitting, setSubmitting] = useState(false);
+
+  const dateControl = useRef<HTMLInputElement>(null);
+  const timeControl = useRef<HTMLInputElement>(null);
+  const privacySelect = useRef<HTMLSelectElement>(null);
 
   const googleMapsLoaded = useGoogleMaps();
 
@@ -32,32 +32,28 @@ function AddAscent(props: RouteComponentProps<{}>) {
     }
   });
 
-  const onPrivacyChange = useCallback((e) => {
-    setPrivacy(e.target.value);
-  }, []);
-
   const submitAscent = useCallback(
     async (e) => {
       e.preventDefault();
-      if (mountain == null || date == null) {
+      if (mountain == null || dateControl?.current?.value === "") {
         return;
       }
 
-      let dateToPost = date;
-      if (time) {
-        dateToPost += "T" + time;
+      let dateToPost = dateControl?.current?.value;
+      if (timeControl?.current?.value) {
+        dateToPost += "T" + timeControl?.current?.value;
       }
       setSubmitting(true);
       await postAscent(
         (await auth.fbUser?.getIdToken()) as string,
-        privacy as string,
-        dateToPost,
+        privacySelect?.current?.value as string,
+        dateToPost as string,
         mountain.id
       );
       // TODO: Redirect to ascent page once it exists.
       props.history.push("/mountain/" + mountain.id);
     },
-    [auth.fbUser, date, mountain, privacy, props.history, time]
+    [auth.fbUser, mountain, props.history]
   );
 
   return mountains != null ? (
@@ -80,27 +76,17 @@ function AddAscent(props: RouteComponentProps<{}>) {
           <Stack direction="horizontal" gap={3}>
             <Form.Group controlId="date">
               <Form.Label>Date</Form.Label>
-              <Form.Control
-                type="date"
-                onChange={(e) => {
-                  setDate(e.target.value);
-                }}
-              />
+              <Form.Control ref={dateControl} type="date" />
             </Form.Group>
             <Form.Group>
               <Form.Label>Time</Form.Label>
-              <Form.Control
-                type="time"
-                onChange={(e) => {
-                  setTime(e.target.value);
-                }}
-              />
+              <Form.Control ref={timeControl} type="time" />
             </Form.Group>
             <Form.Group>
               <Form.Label>Privacy</Form.Label>
               <Form.Select
                 defaultValue={auth.dbUser?.defaultAscentPrivacy}
-                onChange={onPrivacyChange}
+                ref={privacySelect}
               >
                 <option value="PUBLIC">Public</option>
                 <option value="FOLLOWERS_ONLY">Followers Only</option>
