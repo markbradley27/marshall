@@ -21,7 +21,12 @@ function UserControl() {
     );
   } else {
     return (
-      <DropdownButton className="px-2" title={auth.dbUser?.name}>
+      <DropdownButton
+        className="px-2"
+        // For a split second, auth.dbUser is undefined. This avoids the
+        // warning that titles must never be undefined.
+        title={auth.dbUser ? auth.dbUser.name : "..."}
+      >
         <Dropdown.Item href="/settings">Settings</Dropdown.Item>
         <Dropdown.Item onClick={auth.logout}>Logout</Dropdown.Item>
       </DropdownButton>
