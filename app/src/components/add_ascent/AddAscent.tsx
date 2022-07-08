@@ -12,12 +12,15 @@ function AddAscent(props: RouteComponentProps<{}>) {
 
   const [mountains, setMountains] = useState<MountainState[] | null>(null);
   const [loaded, setLoaded] = useState(false);
-  const [mountain, setMountain] = useState<MountainState | null>(null);
-  const [submitting, setSubmitting] = useState(false);
 
+  const [mountain, setMountain] = useState<MountainState | null>(null);
+  const [mountainInvalid, setMountainInvalid] = useState(false);
   const dateControl = useRef<HTMLInputElement>(null);
+  const [dateInvalid, setDateInvalid] = useState(false);
   const timeControl = useRef<HTMLInputElement>(null);
   const privacySelect = useRef<HTMLSelectElement>(null);
+
+  const [submitting, setSubmitting] = useState(false);
 
   const googleMapsLoaded = useGoogleMaps();
 
@@ -35,7 +38,20 @@ function AddAscent(props: RouteComponentProps<{}>) {
   const submitAscent = useCallback(
     async (e) => {
       e.preventDefault();
-      if (mountain == null || dateControl?.current?.value === "") {
+      var invalid = false;
+      if (mountain == null) {
+        setMountainInvalid(true);
+        invalid = true;
+      } else {
+        setMountainInvalid(false);
+      }
+      if (!dateControl?.current?.value) {
+        setDateInvalid(true);
+        invalid = true;
+      } else {
+        setDateInvalid(false);
+      }
+      if (invalid) {
         return;
       }
 
@@ -48,12 +64,11 @@ function AddAscent(props: RouteComponentProps<{}>) {
         (await auth.fbUser?.getIdToken()) as string,
         privacySelect?.current?.value as string,
         dateToPost as string,
-        mountain.id
+        mountain?.id as number
       );
-      // TODO: Redirect to ascent page once it exists.
-      props.history.push("/mountain/" + mountain.id);
+      setSubmitting(false);
     },
-    [auth.fbUser, mountain, props.history]
+    [auth.fbUser, mountain]
   );
 
   return mountains != null ? (
@@ -65,6 +80,7 @@ function AddAscent(props: RouteComponentProps<{}>) {
             <Form.Label>Mountain</Form.Label>
             <Typeahead
               id="mountain"
+              isInvalid={mountainInvalid}
               labelKey="name"
               options={mountains}
               placeholder="Search by mountain name..."
@@ -76,7 +92,11 @@ function AddAscent(props: RouteComponentProps<{}>) {
           <Stack direction="horizontal" gap={3}>
             <Form.Group controlId="date">
               <Form.Label>Date</Form.Label>
-              <Form.Control ref={dateControl} type="date" />
+              <Form.Control
+                isInvalid={dateInvalid}
+                ref={dateControl}
+                type="date"
+              />
             </Form.Group>
             <Form.Group>
               <Form.Label>Time</Form.Label>
@@ -98,7 +118,7 @@ function AddAscent(props: RouteComponentProps<{}>) {
             className={"w-100" + (submitting ? " disabled" : "")}
             type="submit"
           >
-            Submit
+            {submitting ? "Submitting..." : "Submit"}
           </Button>
         </Stack>
       </Form>
