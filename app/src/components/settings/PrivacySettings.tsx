@@ -1,47 +1,34 @@
 import { useCallback, useState } from "react";
-import { Col, Form, Row } from "react-bootstrap";
+import { Col, Form, Row, Stack } from "react-bootstrap";
 
-import { UserState } from "../../api_client";
 import { useAuth } from "../../contexts/auth";
 
-interface PrivacySettingsProps {
-  user: UserState;
-}
-
-export default function PrivacySettings(props: PrivacySettingsProps) {
-  const [activitiesDefaultPrivate, setActivitiesDefaultPrivate] = useState(
-    props.user.activitiesDefaultPrivate
-  );
-  const [savingActivitiesDefaultPrivate, setSavingActivitiesDefaultPrivate] =
+export default function PrivacySettings() {
+  const [savingDefaultActivityPrivacy, setSavingDefaultActivityPrivacy] =
     useState(false);
-  const [ascentsDefaultPrivate, setAscentsDefaultPrivate] = useState(
-    props.user.ascentsDefaultPrivate
-  );
-  const [savingAscentsDefaultPrivate, setSavingAscentsDefaultPrivate] =
+  const [savingDefaultAscentPrivacy, setSavingDefaultAscentPrivacy] =
     useState(false);
 
   const auth = useAuth();
 
-  const onActivitiesDefaultPrivateChange = useCallback(
+  const onDefaultActivityPrivacyChange = useCallback(
     async (e) => {
-      setSavingActivitiesDefaultPrivate(true);
-      setActivitiesDefaultPrivate(e.target.checked);
+      setSavingDefaultActivityPrivacy(true);
       await auth.updateUser({
-        activitiesDefaultPrivate: e.target.checked,
+        defaultActivityPrivacy: e.target.value,
       });
-      setSavingActivitiesDefaultPrivate(false);
+      setSavingDefaultActivityPrivacy(false);
     },
     [auth]
   );
 
-  const onAscentsDefaultPrivateChange = useCallback(
+  const onDefaultAscentPrivacyChange = useCallback(
     async (e) => {
-      setSavingAscentsDefaultPrivate(true);
-      setAscentsDefaultPrivate(e.target.checked);
+      setSavingDefaultAscentPrivacy(true);
       await auth.updateUser({
-        ascentsDefaultPrivate: e.target.checked,
+        defaultAscentPrivacy: e.target.value,
       });
-      setSavingAscentsDefaultPrivate(false);
+      setSavingDefaultAscentPrivacy(false);
     },
     [auth]
   );
@@ -49,30 +36,40 @@ export default function PrivacySettings(props: PrivacySettingsProps) {
   return (
     <>
       <Form>
-        <Form.Group as={Row} className="mb-3">
-          <Form.Label column style={{ textAlign: "right" }} xs={7}>
-            New activities are private by default:
-          </Form.Label>
-          <Col>
-            <Form.Switch
-              checked={activitiesDefaultPrivate}
-              disabled={savingActivitiesDefaultPrivate}
-              onChange={onActivitiesDefaultPrivateChange}
-            />
-          </Col>
-        </Form.Group>
-        <Form.Group as={Row} className="mb-3 text-right">
-          <Form.Label column style={{ textAlign: "right" }} xs={7}>
-            New ascents are private by default:
-          </Form.Label>
-          <Col>
-            <Form.Switch
-              checked={ascentsDefaultPrivate}
-              disabled={savingAscentsDefaultPrivate}
-              onChange={onAscentsDefaultPrivateChange}
-            />
-          </Col>
-        </Form.Group>
+        <Stack gap={3}>
+          <Form.Group as={Row}>
+            <Form.Label column xs={6}>
+              Default visibility for new activities:
+            </Form.Label>
+            <Col>
+              <Form.Select
+                defaultValue={auth.dbUser?.defaultActivityPrivacy}
+                disabled={savingDefaultActivityPrivacy}
+                onChange={onDefaultActivityPrivacyChange}
+              >
+                <option value="PUBLIC">Public</option>
+                <option value="FOLLOWERS_ONLY">Followers Only</option>
+                <option value="PRIVATE">Private</option>
+              </Form.Select>
+            </Col>
+          </Form.Group>
+          <Form.Group as={Row}>
+            <Form.Label column xs={6}>
+              Default visibility for new ascents:
+            </Form.Label>
+            <Col>
+              <Form.Select
+                defaultValue={auth.dbUser?.defaultAscentPrivacy}
+                disabled={savingDefaultAscentPrivacy}
+                onChange={onDefaultAscentPrivacyChange}
+              >
+                <option value="PUBLIC">Public</option>
+                <option value="FOLLOWERS_ONLY">Followers Only</option>
+                <option value="PRIVATE">Private</option>
+              </Form.Select>
+            </Col>
+          </Form.Group>
+        </Stack>
       </Form>
     </>
   );

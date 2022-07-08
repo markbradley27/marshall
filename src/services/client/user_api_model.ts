@@ -11,8 +11,8 @@ export function userModelToApi(user: UserPlus): any {
     location: user.location,
     gender: user.gender,
     bio: user.bio,
-    activitiesDefaultPrivate: user.activitiesDefaultPrivate,
-    ascentsDefaultPrivate: user.ascentsDefaultPrivate,
+    defaultActivityPrivacy: user.defaultActivityPrivacy,
+    defaultAscentPrivacy: user.defaultAscentPrivacy,
     stravaAthleteId:
       user.stravaAthleteId != null ? user.stravaAthleteId : undefined,
     activityCount: user.activityCount,

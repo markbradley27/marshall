@@ -317,8 +317,8 @@ interface UserState {
   location: string;
   gender: string;
   bio: string;
-  activitiesDefaultPrivate: boolean;
-  ascentsDefaultPrivate: boolean;
+  defaultActivityPrivacy: string;
+  defaultAscentPrivacy: string;
   stravaAthleteId?: number;
   activityCount?: number;
   ascentCount?: number;
@@ -330,8 +330,8 @@ function userApiToState(apiUser: any): UserState {
     location: apiUser.location,
     gender: apiUser.gender,
     bio: apiUser.bio,
-    activitiesDefaultPrivate: apiUser.activitiesDefaultPrivate,
-    ascentsDefaultPrivate: apiUser.ascentsDefaultPrivate,
+    defaultActivityPrivacy: apiUser.defaultActivityPrivacy,
+    defaultAscentPrivacy: apiUser.defaultAscentPrivacy,
     stravaAthleteId: apiUser.stravaAthleteId,
     activityCount: apiUser.activityCount,
     ascentCount: apiUser.ascentCount,
@@ -352,8 +352,8 @@ interface PostUserOptions {
   location?: string;
   gender?: string;
   bio?: string;
-  activitiesDefaultPrivate?: boolean;
-  ascentsDefaultPrivate?: boolean;
+  defaultActivityPrivacy?: string;
+  defaultAscentPrivacy?: string;
 }
 async function postUser(
   id: string,

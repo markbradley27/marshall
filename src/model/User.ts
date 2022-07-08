@@ -3,6 +3,7 @@ import { Entity, PrimaryColumn, Column, OneToMany } from "typeorm";
 import { Activity } from "./Activity";
 import { Ascent } from "./Ascent";
 import { List } from "./List";
+import { PrivacySetting } from "./privacy_setting";
 
 export enum Gender {
   UNSPECIFIED = "unspecified",
@@ -28,11 +29,19 @@ export class User {
   @Column({ nullable: true })
   bio: string;
 
-  @Column({ default: false })
-  activitiesDefaultPrivate: boolean;
+  @Column({
+    type: "enum",
+    enum: PrivacySetting,
+    default: PrivacySetting.PUBLIC,
+  })
+  defaultActivityPrivacy: PrivacySetting;
 
-  @Column({ default: false })
-  ascentsDefaultPrivate: boolean;
+  @Column({
+    type: "enum",
+    enum: PrivacySetting,
+    default: PrivacySetting.PUBLIC,
+  })
+  defaultAscentPrivacy: PrivacySetting;
 
   @Column({ nullable: true })
   stravaAccessToken: string;

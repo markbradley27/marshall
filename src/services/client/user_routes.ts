@@ -34,8 +34,8 @@ export class UserRoutes {
       // TODO: Validate enum values.
       body("gender").optional().isString(),
       body("bio").optional().isString(),
-      body("activitiesDefaultPrivate").optional().isBoolean(),
-      body("ascentsDefaultPrivate").optional().isBoolean(),
+      body("defaultActivityPrivacy").optional().isString(),
+      body("defaultAscentPrivacy").optional().isString(),
       checkValidation,
       verifyIdToken,
       this.postUser.bind(this)
@@ -91,8 +91,8 @@ export class UserRoutes {
     user.location = req.body.location;
     user.gender = req.body.gender;
     user.bio = req.body.bio;
-    user.activitiesDefaultPrivate = req.body.activitiesDefaultPrivate;
-    user.ascentsDefaultPrivate = req.body.ascentsDefaultPrivate;
+    user.defaultActivityPrivacy = req.body.defaultActivityPrivacy;
+    user.defaultAscentPrivacy = req.body.defaultAscentPrivacy;
     await userRepo.save(user);
 
     res.sendStatus(200);

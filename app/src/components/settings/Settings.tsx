@@ -31,7 +31,7 @@ export default function Settings() {
             <h4>Privacy:</h4>
           </Col>
           <Col xs={8}>
-            <PrivacySettings user={auth.dbUser} />
+            <PrivacySettings />
           </Col>
         </Row>
         <hr />
