@@ -1,54 +1,62 @@
-import { FormEvent, useCallback, useState } from "react";
+import { FormEvent, useCallback, useRef, useState } from "react";
 import { Button, Col, Form, Row } from "react-bootstrap";
 
 import { useAuth } from "../../contexts/auth";
 
-enum SaveState {
-  NO_CHANGE,
-  MODIFIED,
-  SAVING,
-}
-
 export default function ProfileSettings() {
   const auth = useAuth();
 
-  const [saveState, setSaveState] = useState<SaveState>(SaveState.NO_CHANGE);
-  const [name, setName] = useState(auth.dbUser?.name);
-  const [location, setLocation] = useState(auth.dbUser?.location);
-  const [gender, setGender] = useState(auth.dbUser?.gender);
-  const [bio, setBio] = useState(auth.dbUser?.bio);
-
-  const onNameChange = useCallback((e) => {
-    setSaveState(SaveState.MODIFIED);
-    setName(e.target.value);
-  }, []);
-
-  const onLocationChange = useCallback((e) => {
-    setSaveState(SaveState.MODIFIED);
-    setLocation(e.target.value);
-  }, []);
-
-  const onGenderChange = useCallback((e) => {
-    setSaveState(SaveState.MODIFIED);
-    setGender(e.target.value);
-  }, []);
-
-  const onBioChange = useCallback((e) => {
-    setSaveState(SaveState.MODIFIED);
-    setBio(e.target.value);
-  }, []);
+  const [saving, setSaving] = useState(false);
+  const [nameModified, setNameModified] = useState(false);
+  const nameControl = useRef<HTMLInputElement>(null);
+  const [nameInvalid, setNameInvalid] = useState(false);
+  const [locationModified, setLocationModified] = useState(false);
+  const locationControl = useRef<HTMLInputElement>(null);
+  const [genderModified, setGenderModified] = useState(false);
+  const genderControl = useRef<HTMLSelectElement>(null);
+  const [bioModified, setBioModified] = useState(false);
+  const bioControl = useRef<HTMLTextAreaElement>(null);
 
   const save = useCallback(
     (e: FormEvent<HTMLFormElement>) => {
       const saveAsync = async () => {
         e.preventDefault();
-        setSaveState(SaveState.SAVING);
-        auth.updateUser({ name, location, gender, bio });
-        setSaveState(SaveState.NO_CHANGE);
+
+        var invalid = false;
+        if (!nameControl?.current?.value) {
+          setNameInvalid(true);
+          invalid = true;
+        } else {
+          setNameInvalid(false);
+        }
+        if (invalid) {
+          return;
+        }
+
+        setSaving(true);
+        const updateOpts: any = {};
+        if (nameModified) {
+          updateOpts.name = nameControl?.current?.value;
+        }
+        if (locationModified) {
+          updateOpts.location = locationControl?.current?.value;
+        }
+        if (genderModified) {
+          updateOpts.gender = genderControl?.current?.value;
+        }
+        if (bioModified) {
+          updateOpts.bio = bioControl?.current?.value;
+        }
+        await auth.updateUser(updateOpts);
+        setNameModified(false);
+        setLocationModified(false);
+        setGenderModified(false);
+        setBioModified(false);
+        setSaving(false);
       };
       saveAsync();
     },
-    [auth, bio, gender, location, name]
+    [auth, bioModified, genderModified, locationModified, nameModified]
   );
 
   return (
@@ -61,7 +69,11 @@ export default function ProfileSettings() {
           <Col>
             <Form.Control
               defaultValue={auth.dbUser?.name}
-              onChange={onNameChange}
+              isInvalid={nameInvalid}
+              onChange={() => {
+                setNameModified(true);
+              }}
+              ref={nameControl}
               type="text"
             />
           </Col>
@@ -73,7 +85,10 @@ export default function ProfileSettings() {
           <Col>
             <Form.Control
               defaultValue={auth.dbUser?.location}
-              onChange={onLocationChange}
+              onChange={() => {
+                setLocationModified(true);
+              }}
+              ref={locationControl}
               type="text"
             />
           </Col>
@@ -85,7 +100,10 @@ export default function ProfileSettings() {
           <Col>
             <Form.Select
               defaultValue={auth.dbUser?.gender}
-              onChange={onGenderChange}
+              onChange={() => {
+                setGenderModified(true);
+              }}
+              ref={genderControl}
             >
               <option value="female">Female</option>
               <option value="male">Male</option>
@@ -102,14 +120,27 @@ export default function ProfileSettings() {
             <Form.Control
               as="textarea"
               defaultValue={auth.dbUser?.bio}
-              onChange={onBioChange}
+              onChange={() => {
+                setBioModified(true);
+              }}
+              ref={bioControl}
             />
           </Col>
         </Form.Group>
         <Form.Group as={Row} className="justify-content-center">
           <Col xs="auto">
-            <Button disabled={saveState !== SaveState.MODIFIED} type="submit">
-              {saveState === SaveState.SAVING ? "Saving..." : "Save"}
+            <Button
+              disabled={
+                !(
+                  nameModified ||
+                  locationModified ||
+                  genderModified ||
+                  bioModified
+                ) || saving
+              }
+              type="submit"
+            >
+              {saving ? "Saving..." : "Save"}
             </Button>
           </Col>
         </Form.Group>
