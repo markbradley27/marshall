@@ -31,5 +31,5 @@ export class List {
   owner: User;
 
   @RelationId((list: List) => list.owner)
-  ownerId: number;
+  ownerId: string;
 }

@@ -62,5 +62,5 @@ export class Activity {
   user: User;
 
   @RelationId((activity: Activity) => activity.user)
-  userId: number;
+  userId: string;
 }

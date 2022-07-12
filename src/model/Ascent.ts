@@ -50,5 +50,5 @@ export class Ascent {
   user: User;
 
   @RelationId((ascent: Ascent) => ascent.user)
-  userId: number;
+  userId: string;
 }
