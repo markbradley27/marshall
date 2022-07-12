@@ -1,8 +1,8 @@
 import express from "express";
-import { query } from "express-validator";
+import { param, query } from "express-validator";
 import { find as findTz } from "geo-tz";
 import { DateTime } from "luxon";
-import { Connection } from "typeorm";
+import { Connection, FindOneOptions } from "typeorm";
 
 import { maybeVerifyIdToken, verifyIdToken } from "../../middleware/auth";
 import { checkValidation } from "../../middleware/validation";
@@ -25,9 +25,19 @@ export class AscentRoutes {
 
     this.router = express.Router();
 
+    this.router.get(
+      "/ascent/:ascentId",
+      param("ascentId").isNumeric(),
+      query("includeMountain").optional().isBoolean(),
+      checkValidation,
+      maybeVerifyIdToken,
+      this.getAscent.bind(this)
+    );
+
     // Default order is by date descending.
     this.router.get(
       "/ascents",
+      query("ascentId").optional().isNumeric(),
       query("mountainId").optional().isNumeric(),
       query("userId").optional().isString(),
       query("includeMountains").optional().isBoolean(),
@@ -55,6 +65,43 @@ export class AscentRoutes {
     );
   }
 
+  // TODO: Support followers only.
+  async getAscent(req: express.Request, res: express.Response) {
+    const findOptions: FindOneOptions<Ascent> = {
+      where: { id: req.params.ascentId },
+    };
+    if (
+      req.query.includeMountain &&
+      (req.query.includeMountain as string).toLowerCase() === "true"
+    ) {
+      findOptions.relations = ["mountain"];
+    }
+    const ascent = await this.#dbConn
+      .getRepository(Ascent)
+      .findOne(findOptions);
+
+    if (!ascent) {
+      res.status(404).json({
+        error: {
+          code: 404,
+          message: `Ascent ${req.params.ascentId} not found.`,
+        },
+      });
+      return;
+    }
+    if (ascent.privacy !== PrivacySetting.PUBLIC && ascent.userId != req.uid) {
+      res.status(403).json({
+        error: {
+          code: 403,
+          message: `You don't have permission to view ascent ${req.params.ascentId}`,
+        },
+      });
+      return;
+    }
+
+    res.json({ data: ascentModelToApi(ascent) });
+  }
+
   // TODO: Support FOLLOWERS_ONLY.
   async getAscents(req: express.Request, res: express.Response) {
     const ascentsQuery = this.#dbConn
@@ -73,18 +120,21 @@ export class AscentRoutes {
       ascentsQuery.andWhere("ascent.privacy = 'PUBLIC'");
     }
 
+    if (req.query.ascentId) {
+      ascentsQuery.andWhere("ascent.id = :ascentId", {
+        ascentId: req.query.ascentId,
+      });
+    }
     if (req.query.mountainId) {
       ascentsQuery.andWhere("ascent.mountainId = :mountainId", {
         mountainId: req.query.mountainId,
       });
     }
-
     if (req.query.userId) {
       ascentsQuery.andWhere("ascent.userId = :userId", {
         userId: req.query.userId,
       });
     }
-
     if (
       req.query.includeMountains &&
       (req.query.includeMountains as string).toLowerCase() == "true"
