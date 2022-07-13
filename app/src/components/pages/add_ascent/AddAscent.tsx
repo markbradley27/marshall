@@ -4,10 +4,8 @@ import useGoogleMaps from "hooks/loadGoogleMaps";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button, Form, Stack } from "react-bootstrap";
 import { Typeahead } from "react-bootstrap-typeahead";
-import { RouteComponentProps, withRouter } from "react-router-dom";
 
-
-function AddAscent(props: RouteComponentProps<{}>) {
+export default function AddAscent() {
   const auth = useAuth();
 
   const [mountains, setMountains] = useState<MountainState[] | null>(null);
@@ -127,5 +125,3 @@ function AddAscent(props: RouteComponentProps<{}>) {
     <></>
   );
 }
-
-export default withRouter(AddAscent);
