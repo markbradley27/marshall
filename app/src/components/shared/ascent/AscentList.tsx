@@ -1,8 +1,7 @@
+
+import { AscentState } from "api_client";
+import AscentListItem from "components/shared/ascent/AscentListItem";
 import { ListGroup, Row } from "react-bootstrap";
-
-import { AscentState } from "../api_client";
-
-import AscentListItem from "./AscentListItem";
 
 interface AscentListProps {
   title: string;

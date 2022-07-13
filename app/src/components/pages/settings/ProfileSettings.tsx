@@ -1,7 +1,6 @@
+import { useAuth } from "contexts/auth";
 import { FormEvent, useCallback, useRef, useState } from "react";
 import { Button, Col, Form, Row } from "react-bootstrap";
-
-import { useAuth } from "../../contexts/auth";
 
 export default function ProfileSettings() {
   const auth = useAuth();

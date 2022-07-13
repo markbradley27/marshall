@@ -1,17 +1,16 @@
-import { useCallback, useEffect, useState } from "react";
 
 import {
   fetchActivities,
   fetchAscents,
   ActivityState,
   AscentState,
-} from "../api_client";
-import { useAuth } from "../contexts/auth";
-import useGoogleMaps from "../hooks/loadGoogleMaps";
-
-import ActivityList from "./ActivityList";
-import AscentList from "./AscentList";
-import UserStats from "./UserStats";
+} from "api_client";
+import ActivityList from "components/ActivityList";
+import UserStats from "components/UserStats";
+import AscentList from "components/shared/ascent/AscentList";
+import { useAuth } from "contexts/auth";
+import useGoogleMaps from "hooks/loadGoogleMaps";
+import { useCallback, useEffect, useState } from "react";
 
 export default function Dashboard() {
   const [ascents, setAscents] = useState<AscentState[] | null>(null);

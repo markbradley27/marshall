@@ -1,11 +1,9 @@
+import PrivacySettings from "components/pages/settings/PrivacySettings";
+import ProfilePhotoEditor from "components/pages/settings/ProfilePhotoEditor";
+import ProfileSettings from "components/pages/settings/ProfileSettings";
+import StravaSettings from "components/pages/settings/StravaSettings";
+import { useAuth } from "contexts/auth";
 import { Col, Row } from "react-bootstrap";
-
-import { useAuth } from "../../contexts/auth";
-
-import PrivacySettings from "./PrivacySettings";
-import ProfilePhotoEditor from "./ProfilePhotoEditor";
-import ProfileSettings from "./ProfileSettings";
-import StravaSettings from "./StravaSettings";
 
 export default function Settings() {
   const auth = useAuth();

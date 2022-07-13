@@ -1,8 +1,7 @@
+import { AscentState } from "api_client";
 import Col from "react-bootstrap/Col";
 import ListGroup from "react-bootstrap/ListGroup";
 import Row from "react-bootstrap/Row";
-
-import { AscentState } from "../api_client";
 
 interface AscentListItemProps {
   ascent: AscentState;

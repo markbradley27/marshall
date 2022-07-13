@@ -1,16 +1,14 @@
+import { fetchActivity, ActivityState, AscentState } from "api_client";
+import { ActivityMap } from "components/ActivityMap";
+import AscentList from "components/shared/ascent/AscentList";
+import { useAuth } from "contexts/auth";
+import useGoogleMaps from "hooks/loadGoogleMaps";
 import { useEffect, useState } from "react";
 import Col from "react-bootstrap/Col";
 import Container from "react-bootstrap/Container";
 import Ratio from "react-bootstrap/Ratio";
 import Row from "react-bootstrap/Row";
 import { RouteComponentProps, withRouter } from "react-router-dom";
-
-import { fetchActivity, ActivityState, AscentState } from "../api_client";
-import { useAuth } from "../contexts/auth";
-import useGoogleMaps from "../hooks/loadGoogleMaps";
-
-import { ActivityMap } from "./ActivityMap";
-import AscentList from "./AscentList";
 
 type ActivityProps = RouteComponentProps<{
   activityId: string;

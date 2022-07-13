@@ -1,17 +1,16 @@
+import "App.scss";
+import Activity from "components/Activity";
+import Dashboard from "components/Dashboard";
+import Homepage from "components/Homepage";
+import Login from "components/Login";
+import Mountain from "components/Mountain";
+import MountainBrowser from "components/MountainBrowser";
+import PageFrame from "components/PageFrame";
+import SignUp from "components/SignUp";
+import AddAscent from "components/pages/add_ascent/AddAscent";
+import Settings from "components/pages/settings/Settings";
+import { useAuth } from "contexts/auth";
 import { BrowserRouter, Redirect, Route, Switch } from "react-router-dom";
-
-import "./App.scss";
-import Activity from "./components/Activity";
-import Dashboard from "./components/Dashboard";
-import Homepage from "./components/Homepage";
-import Login from "./components/Login";
-import Mountain from "./components/Mountain";
-import MountainBrowser from "./components/MountainBrowser";
-import PageFrame from "./components/PageFrame";
-import SignUp from "./components/SignUp";
-import AddAscent from "./components/add_ascent/AddAscent";
-import Settings from "./components/settings/Settings";
-import { useAuth } from "./contexts/auth";
 
 function App() {
   const auth = useAuth();

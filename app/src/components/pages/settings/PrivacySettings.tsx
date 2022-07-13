@@ -1,7 +1,6 @@
+import { useAuth } from "contexts/auth";
 import { useCallback, useState } from "react";
 import { Col, Form, Row, Stack } from "react-bootstrap";
-
-import { useAuth } from "../../contexts/auth";
 
 export default function PrivacySettings() {
   const [savingDefaultActivityPrivacy, setSavingDefaultActivityPrivacy] =

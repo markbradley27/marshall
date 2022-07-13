@@ -1,8 +1,7 @@
+import { apiFetch, UserState } from "api_client";
+import { useAuth } from "contexts/auth";
 import { useCallback } from "react";
 import { Button, Image } from "react-bootstrap";
-
-import { apiFetch, UserState } from "../../api_client";
-import { useAuth } from "../../contexts/auth";
 
 interface StravaSettingsProps {
   user: UserState;

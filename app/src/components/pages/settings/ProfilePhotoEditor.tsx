@@ -1,9 +1,8 @@
+import { fetchAvatar, putAvatar } from "api_client";
+import { useAuth } from "contexts/auth";
 import { useCallback, useEffect, useRef, useState } from "react";
 import AvatarEditor from "react-avatar-editor";
 import { Button, Col, Form, Row } from "react-bootstrap";
-
-import { fetchAvatar, putAvatar } from "../../api_client";
-import { useAuth } from "../../contexts/auth";
 
 export default function ProfilePhotoEditor() {
   const [editing, setEditing] = useState(false);
