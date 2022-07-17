@@ -8,11 +8,11 @@ export default function UserStats() {
 
   return (
     <>
-      {auth.dbUser && (
+      {auth.users?.db && (
         <Row className="border">
-          <Col>{auth.dbUser.name}</Col>
-          <Col>Activities: {auth.dbUser.activityCount}</Col>
-          <Col>Ascents: {auth.dbUser.ascentCount}</Col>
+          <Col>{auth.users.db.name}</Col>
+          <Col>Activities: {auth.users.db.activityCount}</Col>
+          <Col>Ascents: {auth.users.db.ascentCount}</Col>
         </Row>
       )}
     </>

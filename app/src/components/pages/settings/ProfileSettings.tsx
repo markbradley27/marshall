@@ -46,7 +46,7 @@ export default function ProfileSettings() {
         if (bioModified) {
           updateOpts.bio = bioControl?.current?.value;
         }
-        await auth.updateUser(updateOpts);
+        await auth.updateDbUser(updateOpts);
         setNameModified(false);
         setLocationModified(false);
         setGenderModified(false);
@@ -67,7 +67,7 @@ export default function ProfileSettings() {
           </Form.Label>
           <Col>
             <Form.Control
-              defaultValue={auth.dbUser?.name}
+              defaultValue={auth.users?.db?.name}
               isInvalid={nameInvalid}
               onChange={() => {
                 setNameModified(true);
@@ -83,7 +83,7 @@ export default function ProfileSettings() {
           </Form.Label>
           <Col>
             <Form.Control
-              defaultValue={auth.dbUser?.location}
+              defaultValue={auth.users?.db?.location}
               onChange={() => {
                 setLocationModified(true);
               }}
@@ -98,7 +98,7 @@ export default function ProfileSettings() {
           </Form.Label>
           <Col>
             <Form.Select
-              defaultValue={auth.dbUser?.gender}
+              defaultValue={auth.users?.db?.gender}
               onChange={() => {
                 setGenderModified(true);
               }}
@@ -118,7 +118,7 @@ export default function ProfileSettings() {
           <Col>
             <Form.Control
               as="textarea"
-              defaultValue={auth.dbUser?.bio}
+              defaultValue={auth.users?.db?.bio}
               onChange={() => {
                 setBioModified(true);
               }}

@@ -16,23 +16,26 @@ import React, {
 
 import { fetchUser, postUser, UserState } from "../api_client";
 
+interface AuthUsers {
+  fb: User | null;
+  db: UserState | null;
+}
+
 interface AuthContextValue {
-  fbUser: User | null;
-  dbUser: UserState | null;
+  users: AuthUsers | null;
   signup: (email: string, password: string, name: string) => void;
   login: (email: string, password: string) => void;
   logout: () => void;
-  updateUser: (options: any) => Promise<void>;
+  updateDbUser: (options: any) => Promise<void>;
   refreshDbUser: () => Promise<void>;
   deleteCurrentUser: () => void;
 }
 const AuthContext = React.createContext<AuthContextValue>({
-  fbUser: null,
-  dbUser: null,
+  users: null,
   signup: () => {},
   login: () => {},
   logout: () => {},
-  updateUser: async () => {},
+  updateDbUser: async () => {},
   refreshDbUser: async () => {},
   deleteCurrentUser: () => {},
 });
@@ -42,13 +45,15 @@ export function useAuth() {
 }
 
 export const AuthProvider: FunctionComponent = ({ children }) => {
-  const [fbUser, setFbUser] = useState<User | null>(null);
-  const [dbUser, setDbUser] = useState<UserState | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [signingUp, setSigningUp] = useState(false);
+  // Users object is null before firebase auth has loaded.
+  // Will be an AuthUsers object with null members if nobody is logged in.
+  // Otherwise, both members will always be set.
+  const [users, setUsers] = useState<AuthUsers | null>(null);
 
   async function signup(email: string, password: string, name: string) {
-    setSigningUp(true);
+    // Avoids rendering until the signup has completed and the browser has
+    // authenticated.
+    setUsers(null);
     const auth = getAuth();
     await createUserWithEmailAndPassword(auth, email, password);
     try {
@@ -60,7 +65,6 @@ export const AuthProvider: FunctionComponent = ({ children }) => {
     } catch (error) {
       auth.currentUser?.delete();
     }
-    setSigningUp(false);
   }
 
   function login(email: string, password: string) {
@@ -71,28 +75,38 @@ export const AuthProvider: FunctionComponent = ({ children }) => {
     signOut(getAuth());
   }
 
-  async function updateUser(options: any) {
+  async function updateDbUser(options: any) {
     // TODO: Throw an error or something.
-    if (fbUser == null) {
+    if (users?.fb == null) {
       return;
     }
-    await postUser(fbUser.uid, await fbUser.getIdToken(), options);
-    setDbUser(
-      await fetchUser(fbUser.uid, { idToken: await fbUser.getIdToken() })
-    );
+    await postUser(users.fb.uid, await users.fb.getIdToken(), options);
+    const dbUser = await fetchUser(users.fb.uid, {
+      idToken: await users.fb.getIdToken(),
+    });
+    setUsers((users) => {
+      return {
+        fb: users?.fb,
+        db: dbUser,
+      } as AuthUsers;
+    });
   }
 
   async function refreshDbUser() {
-    if (fbUser != null) {
-      setDbUser(
-        await fetchUser(fbUser.uid, { idToken: await fbUser.getIdToken() })
-      );
+    if (users?.fb != null) {
+      const dbUser = await fetchUser(users?.fb?.uid as string, {
+        idToken: await users?.fb?.getIdToken(),
+      });
+      setUsers({
+        fb: users.fb,
+        db: dbUser,
+      });
     }
   }
 
   function deleteCurrentUser() {
-    if (fbUser != null) {
-      deleteUser(fbUser);
+    if (users?.fb != null) {
+      deleteUser(users?.fb);
     }
   }
 
@@ -100,43 +114,38 @@ export const AuthProvider: FunctionComponent = ({ children }) => {
     const unsubscribe = onAuthStateChanged(getAuth(), async (newFbUser) => {
       // This gets called even when it appears the user has not changed. The
       // hack is to ignore the calls when they're not actually changes.
-      if (newFbUser?.uid === fbUser?.uid) {
-        setLoading(false);
+      if (users != null && newFbUser?.uid === users?.fb?.uid) {
         return;
       }
 
-      setFbUser(newFbUser);
-      if (newFbUser == null) {
-        setDbUser(null);
-      } else {
-        setDbUser(
-          await fetchUser(newFbUser.uid, {
-            idToken: await newFbUser.getIdToken(),
-          })
-        );
+      let dbUser = null;
+      if (newFbUser != null) {
+        dbUser = await fetchUser(newFbUser.uid, {
+          idToken: await newFbUser.getIdToken(),
+        });
       }
-      setLoading(false);
+      setUsers({
+        fb: newFbUser,
+        db: dbUser,
+      });
+      return;
     });
     return unsubscribe;
   });
 
   const value: AuthContextValue = {
-    fbUser,
-    dbUser,
+    users,
     signup,
     login,
     logout,
-    updateUser,
+    updateDbUser,
     refreshDbUser,
     deleteCurrentUser,
   };
 
-  // TODO: This 'signingUp' approach works but makes the screen go blank
-  // whenever you're signing up. Some method that allows for a loading
-  // indicator would be better.
   return (
     <AuthContext.Provider value={value}>
-      {!loading && !signingUp && children}
+      {users && children}
     </AuthContext.Provider>
   );
 };

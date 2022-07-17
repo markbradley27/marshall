@@ -59,14 +59,14 @@ export default function AddAscentForm() {
       }
       setSubmitting(true);
       await postAscent(
-        (await auth.fbUser?.getIdToken()) as string,
+        (await auth.users?.fb?.getIdToken()) as string,
         privacySelect?.current?.value as string,
         dateToPost as string,
         mountain?.id as number
       );
       setSubmitting(false);
     },
-    [auth.fbUser, mountain]
+    [auth.users, mountain]
   );
 
   return mountains != null ? (
@@ -101,7 +101,7 @@ export default function AddAscentForm() {
           <Form.Group>
             <Form.Label>Privacy</Form.Label>
             <Form.Select
-              defaultValue={auth.dbUser?.defaultAscentPrivacy}
+              defaultValue={auth.users?.db?.defaultAscentPrivacy}
               ref={privacySelect}
             >
               <option value="PUBLIC">Public</option>

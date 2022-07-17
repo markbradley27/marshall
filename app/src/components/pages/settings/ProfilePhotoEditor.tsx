@@ -15,11 +15,11 @@ export default function ProfilePhotoEditor() {
   const auth = useAuth();
 
   const refreshAvatar = useCallback(async () => {
-    const avatarUrl = await fetchAvatar(auth.fbUser?.uid as string);
+    const avatarUrl = await fetchAvatar(auth.users?.fb?.uid as string);
     if (avatarUrl != null) {
       setImage(avatarUrl);
     }
-  }, [auth.fbUser]);
+  }, [auth.users]);
 
   useEffect(() => {
     async function fetchData() {
@@ -70,12 +70,12 @@ export default function ProfilePhotoEditor() {
     }
     const blob = new Blob([byteArray], { type: "image/png" });
 
-    await putAvatar((await auth.fbUser?.getIdToken()) as string, blob);
+    await putAvatar((await auth.users?.fb?.getIdToken()) as string, blob);
 
     await refreshAvatar();
     setEditing(false);
     setSaving(false);
-  }, [auth.fbUser, refreshAvatar, setSaving]);
+  }, [auth.users, refreshAvatar, setSaving]);
 
   const onCancel = useCallback(async () => {
     setEditing(false);

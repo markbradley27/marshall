@@ -1,4 +1,3 @@
-
 import {
   fetchActivities,
   fetchAscents,
@@ -43,22 +42,22 @@ export default function Dashboard() {
 
   useEffect(() => {
     async function fetchData() {
-      if (!googleMapsLoaded || initialLoadAttempted || auth.fbUser == null)
+      if (!googleMapsLoaded || initialLoadAttempted || auth.users?.fb == null)
         return;
 
-      const idToken = (await auth.fbUser.getIdToken()) as string;
+      const idToken = (await auth.users?.fb?.getIdToken()) as string;
       await refreshAscents(idToken);
       await refreshActivities(idToken, onlyActivitiesWithAscents);
       setInitialLoadAttempted(true);
     }
     fetchData();
   }, [
-    auth.fbUser,
     initialLoadAttempted,
     googleMapsLoaded,
     refreshAscents,
     refreshActivities,
     onlyActivitiesWithAscents,
+    auth.users,
   ]);
 
   const toggleOnlyActivitiesWithAscents = useCallback(async () => {
@@ -67,11 +66,11 @@ export default function Dashboard() {
       onlyActivitiesWithAscents
     );
     setOnlyActivitiesWithAscents(!onlyActivitiesWithAscents);
-    const idToken = (await auth.fbUser?.getIdToken()) as string;
+    const idToken = (await auth.users?.fb?.getIdToken()) as string;
     // TODO: Figure out why I need to pass in onlyActivities.. (if I don't it
     // does the opposite each time).
     refreshActivities(idToken, !onlyActivitiesWithAscents);
-  }, [onlyActivitiesWithAscents, auth.fbUser, refreshActivities]);
+  }, [onlyActivitiesWithAscents, auth.users, refreshActivities]);
 
   return (
     <>

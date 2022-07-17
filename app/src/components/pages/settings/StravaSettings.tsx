@@ -1,29 +1,29 @@
-import { apiFetch, UserState } from "api_client";
+import { apiFetch } from "api_client";
 import { useAuth } from "contexts/auth";
 import { useCallback } from "react";
 import { Button, Image } from "react-bootstrap";
 
-interface StravaSettingsProps {
-  user: UserState;
-}
-
-export default function StravaSettings(props: StravaSettingsProps) {
+export default function StravaSettings() {
   const auth = useAuth();
 
   const deauthorizeStrava = useCallback(async () => {
-    await apiFetch("/api/strava/deauthorize", await auth.fbUser?.getIdToken());
+    await apiFetch(
+      "/api/strava/deauthorize",
+      await auth.users?.fb?.getIdToken()
+    );
     auth.refreshDbUser();
   }, [auth]);
 
   return (
     <>
-      {props.user.stravaAthleteId != null ? (
+      {auth.users?.db?.stravaAthleteId != null ? (
         <>
           <span className="align-middle">
             Synced to{" "}
             <a
               href={
-                "http://www.strava.com/athletes/" + props.user.stravaAthleteId
+                "http://www.strava.com/athletes/" +
+                auth.users.db.stravaAthleteId
               }
             >
               strava account
@@ -36,7 +36,7 @@ export default function StravaSettings(props: StravaSettingsProps) {
         </>
       ) : (
         <Button
-          href={`http://www.strava.com/oauth/authorize?client_id=${process.env.REACT_APP_STRAVA_CLIENT_ID}&redirect_uri=http://${process.env.REACT_APP_HOST}:${process.env.REACT_APP_PORT}/api/strava/authorize_callback&response_type=code&scope=activity:read,activity:read_all&state=${auth.fbUser?.uid}`}
+          href={`http://www.strava.com/oauth/authorize?client_id=${process.env.REACT_APP_STRAVA_CLIENT_ID}&redirect_uri=http://${process.env.REACT_APP_HOST}:${process.env.REACT_APP_PORT}/api/strava/authorize_callback&response_type=code&scope=activity:read,activity:read_all&state=${auth.users?.fb?.uid}`}
           style={{
             backgroundColor: "#fc4c02",
             borderColor: "#fc4c02",

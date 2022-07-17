@@ -13,7 +13,7 @@ export default function PrivacySettings() {
   const onDefaultActivityPrivacyChange = useCallback(
     async (e) => {
       setSavingDefaultActivityPrivacy(true);
-      await auth.updateUser({
+      await auth.updateDbUser({
         defaultActivityPrivacy: e.target.value,
       });
       setSavingDefaultActivityPrivacy(false);
@@ -24,7 +24,7 @@ export default function PrivacySettings() {
   const onDefaultAscentPrivacyChange = useCallback(
     async (e) => {
       setSavingDefaultAscentPrivacy(true);
-      await auth.updateUser({
+      await auth.updateDbUser({
         defaultAscentPrivacy: e.target.value,
       });
       setSavingDefaultAscentPrivacy(false);
@@ -42,7 +42,7 @@ export default function PrivacySettings() {
             </Form.Label>
             <Col>
               <Form.Select
-                defaultValue={auth.dbUser?.defaultActivityPrivacy}
+                defaultValue={auth.users?.db?.defaultActivityPrivacy}
                 disabled={savingDefaultActivityPrivacy}
                 onChange={onDefaultActivityPrivacyChange}
               >
@@ -58,7 +58,7 @@ export default function PrivacySettings() {
             </Form.Label>
             <Col>
               <Form.Select
-                defaultValue={auth.dbUser?.defaultAscentPrivacy}
+                defaultValue={auth.users?.db?.defaultAscentPrivacy}
                 disabled={savingDefaultAscentPrivacy}
                 onChange={onDefaultAscentPrivacyChange}
               >

@@ -25,7 +25,7 @@ function Mountain(props: MountainProps) {
       const mountain = await fetchMountain(
         Number(props.match.params.mountainId),
         {
-          idToken: await auth.fbUser?.getIdToken(),
+          idToken: await auth.users?.fb?.getIdToken(),
           includeNearby: true,
           includeAscents: true,
         }

@@ -25,7 +25,7 @@ function Navbar() {
         {location.pathname !== "/login" && (
           <BsNavbar.Collapse className="justify-content-end">
             <Nav>
-              {auth.fbUser && (
+              {auth.users?.fb && (
                 <Nav.Item>
                   <AddSomethingDropdown />
                 </Nav.Item>

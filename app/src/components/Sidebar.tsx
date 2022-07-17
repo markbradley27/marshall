@@ -5,9 +5,9 @@ import { useAuth } from "../contexts/auth";
 export default function Sidebar() {
   const auth = useAuth();
 
-  return auth.fbUser != null ? (
+  return auth.users?.fb != null ? (
     <>
-      <h3>{auth.fbUser?.displayName}</h3>
+      <h3>{auth.users.fb.displayName}</h3>
       <Nav className="flex-md-column">
         <Nav.Link className="px-md-0" href="/ascents">
           Ascents
