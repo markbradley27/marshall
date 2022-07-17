@@ -99,7 +99,7 @@ export default function AddAscentForm() {
             <Form.Control ref={timeControl} type="time" />
           </Form.Group>
           <Form.Group>
-            <Form.Label>Privacy</Form.Label>
+            <Form.Label>Visibility</Form.Label>
             <Form.Select
               defaultValue={auth.users?.db?.defaultAscentPrivacy}
               ref={privacySelect}
