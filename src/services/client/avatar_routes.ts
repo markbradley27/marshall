@@ -45,7 +45,6 @@ export class AvatarRoutes {
     try {
       const files = await fsPromises.readdir(AVATARS_DIR);
       for (const file of files) {
-        logger.info(`file: ${file}`);
         if (file.startsWith(req.params.userId)) {
           res.sendFile(path.join(AVATARS_DIR, file));
           return;
