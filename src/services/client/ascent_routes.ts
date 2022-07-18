@@ -185,6 +185,6 @@ export class AscentRoutes {
       mountain: { id: Number(req.query.mountainId) },
     });
     // Returns id of inserted ascent.
-    res.status(200).json({ data: { id: insertResult.identifiers[0] } });
+    res.status(200).json({ data: { id: insertResult.identifiers[0].id } });
   }
 }

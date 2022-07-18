@@ -5,7 +5,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Button, Form, Stack } from "react-bootstrap";
 import { Typeahead } from "react-bootstrap-typeahead";
 
-export default function AddAscentForm() {
+interface AddAscentFormProps {
+  reportAdded: (id: number) => void;
+}
+
+export default function AddAscentForm(props: AddAscentFormProps) {
   const auth = useAuth();
 
   const [mountains, setMountains] = useState<MountainState[] | null>(null);
@@ -58,15 +62,16 @@ export default function AddAscentForm() {
         dateToPost += "T" + timeControl?.current?.value;
       }
       setSubmitting(true);
-      await postAscent(
+      const res = await postAscent(
         (await auth.users?.fb?.getIdToken()) as string,
         privacySelect?.current?.value as string,
         dateToPost as string,
         mountain?.id as number
       );
       setSubmitting(false);
+      props.reportAdded(res.id);
     },
-    [auth.users, mountain]
+    [auth.users?.fb, mountain, props]
   );
 
   return mountains != null ? (

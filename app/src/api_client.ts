@@ -201,6 +201,18 @@ function ascentApiToState(apiAscent: any): AscentState {
   };
 }
 
+interface FetchAscentOptions {
+  idToken?: string;
+  includeMountain?: boolean;
+}
+async function fetchAscent(id: number, options?: FetchAscentOptions) {
+  const url = new URL(`ascent/${id}`, BASE_URL);
+  if (options?.includeMountain) {
+    url.searchParams.set("includeMountain", "true");
+  }
+  return await apiFetch(url, options?.idToken);
+}
+
 interface FetchAscentsOptions {
   idToken?: string;
   ascentId?: number;
@@ -385,6 +397,7 @@ export {
   apiFetch,
   fetchActivities,
   fetchActivity,
+  fetchAscent,
   fetchAscents,
   postAscent,
   fetchAvatar,
