@@ -1,18 +1,19 @@
 import {
   fetchActivities,
-  fetchAscents,
+  //fetchAscents,
   ActivityState,
-  AscentState,
+  //AscentState,
 } from "api_client";
 import ActivityList from "components/ActivityList";
 import UserStats from "components/UserStats";
-import AscentList from "components/shared/ascent/AscentList";
 import { useAuth } from "contexts/auth";
 import useGoogleMaps from "hooks/loadGoogleMaps";
 import { useCallback, useEffect, useState } from "react";
 
+//import AscentList from "./shared/ascent/AscentList";
+
 export default function Dashboard() {
-  const [ascents, setAscents] = useState<AscentState[] | null>(null);
+  //  const [ascents, setAscents] = useState<AscentState[] | null>(null);
   const [onlyActivitiesWithAscents, setOnlyActivitiesWithAscents] =
     useState(true);
   const [activities, setActivities] = useState<ActivityState[] | null>(null);
@@ -21,13 +22,15 @@ export default function Dashboard() {
   const auth = useAuth();
   const googleMapsLoaded = useGoogleMaps();
 
+  /*
   const refreshAscents = useCallback(async (idToken: string) => {
     const ascents = await fetchAscents({
       idToken,
       includeMountains: true,
     });
-    setAscents(ascents);
+    setAscents(ascents.ascents);
   }, []);
+  */
 
   const refreshActivities = useCallback(
     async (idToken: string, onlyWithAscents: boolean) => {
@@ -46,7 +49,7 @@ export default function Dashboard() {
         return;
 
       const idToken = (await auth.users?.fb?.getIdToken()) as string;
-      await refreshAscents(idToken);
+      //      await refreshAscents(idToken);
       await refreshActivities(idToken, onlyActivitiesWithAscents);
       setInitialLoadAttempted(true);
     }
@@ -54,7 +57,6 @@ export default function Dashboard() {
   }, [
     initialLoadAttempted,
     googleMapsLoaded,
-    refreshAscents,
     refreshActivities,
     onlyActivitiesWithAscents,
     auth.users,
@@ -75,7 +77,9 @@ export default function Dashboard() {
   return (
     <>
       <UserStats />
-      {ascents && <AscentList title="Your ascents:" ascents={ascents} />}
+      {/*
+      {ascents && <AscentList ascents={ascents} />}
+      */}
       {activities && (
         <ActivityList
           title="Your activities:"

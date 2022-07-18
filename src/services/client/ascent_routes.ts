@@ -40,7 +40,7 @@ export class AscentRoutes {
       query("ascentId").optional().isNumeric(),
       query("mountainId").optional().isNumeric(),
       query("userId").optional().isString(),
-      query("includeMountains").optional().isBoolean(),
+      query("includeMountains").default(false).isBoolean(),
       query("page").default(0).isNumeric(),
       checkValidation,
       maybeVerifyIdToken,
@@ -104,11 +104,13 @@ export class AscentRoutes {
 
   // TODO: Support FOLLOWERS_ONLY.
   async getAscents(req: express.Request, res: express.Response) {
+    const page = Number(req.query.page);
+
     const ascentsQuery = this.#dbConn
       .getRepository(Ascent)
       .createQueryBuilder("ascent")
       .take(PAGE_SIZE)
-      .skip(Number(req.query.page) * PAGE_SIZE)
+      .skip(page * PAGE_SIZE)
       .orderBy("ascent.date", "DESC");
 
     if (req.uid) {
@@ -135,16 +137,19 @@ export class AscentRoutes {
         userId: req.query.userId,
       });
     }
-    if (
-      req.query.includeMountains &&
-      (req.query.includeMountains as string).toLowerCase() == "true"
-    ) {
+    if (req.query.includeMountains) {
       ascentsQuery.leftJoinAndSelect("ascent.mountain", "mountain");
     }
 
-    const ascents = await ascentsQuery.getMany();
+    const [ascents, count] = await ascentsQuery.getManyAndCount();
 
-    res.json({ data: ascents.map(ascentModelToApi) });
+    res.json({
+      data: {
+        ascents: ascents.map(ascentModelToApi),
+        count: count,
+        page: page,
+      },
+    });
   }
 
   async postAscent(req: express.Request, res: express.Response) {

@@ -203,19 +203,35 @@ function ascentApiToState(apiAscent: any): AscentState {
 
 interface FetchAscentsOptions {
   idToken?: string;
+  ascentId?: number;
   mountainId?: number;
+  userId?: string;
   includeMountains?: boolean;
+  page?: number;
 }
 async function fetchAscents(options?: FetchAscentsOptions) {
   const url = new URL("ascents", BASE_URL);
+  if (options?.ascentId != null) {
+    url.searchParams.set("ascentId", options.ascentId.toString());
+  }
   if (options?.mountainId != null) {
-    url.pathname += "/" + options.mountainId.toString();
+    url.searchParams.set("mountainId", options.mountainId.toString());
+  }
+  if (options?.userId != null) {
+    url.searchParams.set("userId", options.userId);
   }
   if (options?.includeMountains) {
-    url.searchParams.set("include_mountains", "true");
+    url.searchParams.set("includeMountains", "true");
   }
-  const ascentsJson = await apiFetch(url, options?.idToken);
-  return ascentsJson.map(ascentApiToState);
+  if (options?.page) {
+    url.searchParams.set("page", options.page.toString());
+  }
+  const data = await apiFetch(url, options?.idToken);
+  return {
+    ascents: data.ascents.map(ascentApiToState),
+    count: data.count,
+    page: data.page,
+  };
 }
 
 async function postAscent(

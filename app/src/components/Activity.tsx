@@ -59,7 +59,12 @@ function Activity(props: ActivityProps) {
             </h4>
           )}
           {activity.ascents && (
-            <AscentList title="Ascents" ascents={activity.ascents} />
+            <AscentList
+              ascents={activity.ascents as Array<AscentState | undefined>}
+              count={Number(activity.ascents?.length)}
+              fetchMoreAscents={() => {}}
+              pageLength={99}
+            />
           )}
         </Col>
         <Col xs={5}>
