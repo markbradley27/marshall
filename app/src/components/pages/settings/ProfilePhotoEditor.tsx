@@ -1,4 +1,4 @@
-import { fetchAvatar, putAvatar } from "api_client";
+import { fetchAvatar, putAvatar } from "api/avatar_endpoints";
 import { useAuth } from "contexts/auth";
 import { useCallback, useEffect, useRef, useState } from "react";
 import AvatarEditor from "react-avatar-editor";

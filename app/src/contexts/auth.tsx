@@ -1,3 +1,4 @@
+import { fetchUser, postUser, UserState } from "api/user_endpoints";
 import {
   createUserWithEmailAndPassword,
   deleteUser,
@@ -14,7 +15,6 @@ import React, {
   useState,
 } from "react";
 
-import { fetchUser, postUser, UserState } from "../api_client";
 
 interface AuthUsers {
   fb: User | null;

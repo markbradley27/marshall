@@ -1,4 +1,4 @@
-import { AscentState, fetchAscents } from "api_client";
+import { AscentState, fetchAscents } from "api/ascent_endpoints";
 import AscentList from "components/shared/ascent/AscentList";
 import { useAuth } from "contexts/auth";
 import { useCallback, useEffect, useState } from "react";

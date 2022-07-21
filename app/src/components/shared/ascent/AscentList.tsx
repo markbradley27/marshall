@@ -1,4 +1,4 @@
-import { AscentState } from "api_client";
+import { AscentState } from "api/ascent_endpoints";
 import SmartPagination from "components/shared/SmartPagination";
 import AscentListItem from "components/shared/ascent/AscentListItem";
 import { useEffect, useState } from "react";

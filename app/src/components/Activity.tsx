@@ -1,4 +1,5 @@
-import { fetchActivity, ActivityState, AscentState } from "api_client";
+import { fetchActivity, ActivityState } from "api/activity_endpoints";
+import { AscentState } from "api/ascent_endpoints";
 import { ActivityMap } from "components/ActivityMap";
 import AscentList from "components/shared/ascent/AscentList";
 import { useAuth } from "contexts/auth";
@@ -33,9 +34,11 @@ function Activity(props: ActivityProps) {
 
       // TODO: Come up with some way of sorting the ascents by the order in
       // which they happend during the activity.
+      /*
       activity.ascents?.forEach((ascent: AscentState, idx: number) => {
         ascent.n = idx + 1;
       });
+      */
 
       setActivity(activity);
     }

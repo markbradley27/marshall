@@ -1,4 +1,5 @@
-import { fetchMountains, MountainState, postAscent } from "api_client";
+import { postAscent } from "api/ascent_endpoints";
+import { fetchMountains, MountainState } from "api/mountain_endpoints";
 import { useAuth } from "contexts/auth";
 import useGoogleMaps from "hooks/loadGoogleMaps";
 import { useCallback, useEffect, useRef, useState } from "react";

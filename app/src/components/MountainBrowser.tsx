@@ -1,7 +1,7 @@
+import { fetchMountains, MountainState } from "api/mountain_endpoints";
 import { useCallback, useEffect, useState } from "react";
 import { Ratio } from "react-bootstrap";
 
-import { fetchMountains, MountainState } from "../api_client";
 import useGoogleMaps from "../hooks/loadGoogleMaps";
 
 import MountainMap from "./MountainMap";

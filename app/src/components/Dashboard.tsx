@@ -3,7 +3,7 @@ import {
   //fetchAscents,
   ActivityState,
   //AscentState,
-} from "api_client";
+} from "api/activity_endpoints";
 import ActivityList from "components/ActivityList";
 import UserStats from "components/UserStats";
 import { useAuth } from "contexts/auth";

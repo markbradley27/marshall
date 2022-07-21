@@ -1,4 +1,4 @@
-import { AscentState } from "api_client";
+import { AscentState } from "api/ascent_endpoints";
 import Col from "react-bootstrap/Col";
 import ListGroup from "react-bootstrap/ListGroup";
 import Row from "react-bootstrap/Row";
@@ -10,7 +10,6 @@ function AscentListItem(props: AscentListItemProps) {
   return (
     <ListGroup.Item>
       <Row>
-        {props.ascent.n && <Col>{props.ascent.n}</Col>}
         {props.ascent.mountain && (
           <Col>
             <a href={"/mountain/" + props.ascent.mountain.id}>

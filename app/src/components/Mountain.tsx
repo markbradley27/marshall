@@ -1,4 +1,4 @@
-import { fetchMountain, MountainState } from "api_client";
+import { fetchMountain, MountainState } from "api/mountain_endpoints";
 import MountainList from "components/MountainList";
 import MountainMap from "components/MountainMap";
 import { useAuth } from "contexts/auth";

@@ -1,7 +1,6 @@
 import { GoogleMap, Polyline } from "@react-google-maps/api";
+import { AscentState } from "api/ascent_endpoints";
 import { useCallback, useState } from "react";
-
-import { AscentState } from "../api_client";
 
 import MountainMarker from "./MountainMarker";
 

@@ -1,17 +1,16 @@
 import { Marker } from "@react-google-maps/api";
 
-import { MountainUiState } from "../api_client";
-
 interface MountainMarkerProps {
   coords: google.maps.LatLng;
   label?: string;
-  state?: MountainUiState;
+  //  state?: MountainUiState;
   // Should be type Clusterer from react-google-maps, but that type isn't
   // exported.
   clusterer?: any;
 }
 export default function MountainMarker(props: MountainMarkerProps) {
   let zIndex = 2;
+  /*
   switch (props.state) {
     case MountainUiState.NEUTRAL:
       break;
@@ -22,6 +21,7 @@ export default function MountainMarker(props: MountainMarkerProps) {
       zIndex = 3;
       break;
   }
+  */
 
   const image = {
     url: "/graphics/mountain_marker.svg",

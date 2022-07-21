@@ -1,7 +1,6 @@
 import { GoogleMap, MarkerClusterer } from "@react-google-maps/api";
+import { MountainState } from "api/mountain_endpoints";
 import { useCallback, useState } from "react";
-
-import { MountainState, MountainUiState } from "../api_client";
 
 import MountainMarker from "./MountainMarker";
 
@@ -55,7 +54,7 @@ export default function MountainMap(props: MountainMapProps) {
                 <MountainMarker
                   key={secondary.id}
                   coords={secondary.coords}
-                  state={MountainUiState.SECONDARY}
+                  //state={MountainUiState.SECONDARY}
                   clusterer={clusterer}
                 />
               );

@@ -1,4 +1,4 @@
-import { apiFetch } from "api_client";
+import { apiFetch } from "api/common";
 import { useAuth } from "contexts/auth";
 import { useCallback } from "react";
 import { Button, Image } from "react-bootstrap";

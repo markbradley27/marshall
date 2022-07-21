@@ -1,6 +1,5 @@
+import { ActivityState } from "api/activity_endpoints";
 import { Col, Form, ListGroup, Row } from "react-bootstrap";
-
-import { ActivityState } from "../api_client";
 
 import ActivityListItem from "./ActivityListItem";
 
