@@ -4,6 +4,7 @@ import { mountainApiToState, MountainState } from "api/mountain_endpoints";
 
 interface AscentState {
   id: number;
+  privacy: string;
   date: Date;
   activityId?: number;
   activity?: ActivityState;
@@ -15,6 +16,7 @@ interface AscentState {
 function ascentApiToState(apiAscent: any): AscentState {
   return {
     id: apiAscent.id,
+    privacy: apiAscent.privacy,
     date: new Date(apiAscent.date),
     activityId: apiAscent.activityId,
     activity:
