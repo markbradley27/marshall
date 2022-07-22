@@ -18,6 +18,7 @@ export default function AddAscentForm(props: AddAscentFormProps) {
   const [loaded, setLoaded] = useState(false);
 
   const [mountain, setMountain] = useState<MountainState | null>(null);
+  const mountainTypeahead = useRef<Typeahead<MountainState>>(null);
   const [mountainInvalid, setMountainInvalid] = useState(false);
   const dateControl = useRef<HTMLInputElement>(null);
   const [dateInvalid, setDateInvalid] = useState(false);
@@ -83,6 +84,8 @@ export default function AddAscentForm(props: AddAscentFormProps) {
         timeControl?.current?.value ? timeControl?.current?.value : undefined
       );
       setSubmitting(false);
+      mountainTypeahead?.current?.clear();
+      setMountain(null);
       props.reportAdded(res.id);
     },
     [auth.users?.fb, mountain, props]
@@ -102,6 +105,7 @@ export default function AddAscentForm(props: AddAscentFormProps) {
             onChange={(selected) => {
               setMountain(selected[0]);
             }}
+            ref={mountainTypeahead}
           />
         </Form.Group>
         <Stack direction="horizontal" gap={3}>
