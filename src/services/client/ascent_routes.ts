@@ -158,8 +158,8 @@ export class AscentRoutes {
     if (req.query.time) {
       dateTimeStr += "T" + req.query.time;
     }
-    const date = DateTime.fromISO(dateTimeStr, { zone: timeZone });
-    if (date > DateTime.now()) {
+    const dateTime = DateTime.fromISO(dateTimeStr, { zone: timeZone });
+    if (dateTime > DateTime.now()) {
       res
         .status(400)
         .json({ error: "ascent date/time cannot be in the future" });

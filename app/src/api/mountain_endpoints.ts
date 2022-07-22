@@ -7,7 +7,7 @@ interface MountainState {
   sourceId?: string;
   name: string;
   coords: google.maps.LatLng;
-  timezone: string;
+  timeZone: string;
   wikipediaLink?: string;
   abstract?: string;
 
@@ -27,7 +27,7 @@ function mountainApiToState(apiMountain: any): MountainState {
       lat: apiMountain.location.coordinates[1],
       lng: apiMountain.location.coordinates[0],
     }),
-    timezone: apiMountain.timezone,
+    timeZone: apiMountain.timeZone,
     wikipediaLink: apiMountain.wikipediaLink,
     abstract: apiMountain.abstract,
     ascents: apiMountain.ascents?.map(ascentApiToState),

@@ -128,7 +128,7 @@ export class MountainRoutes {
   async getMountains(_req: express.Request, res: express.Response) {
     const mountains = await this.#dbConn
       .getRepository(Mountain)
-      .find({ select: ["id", "name", "location"] });
+      .find({ select: ["id", "name", "location", "timeZone"] });
     res.json({ data: mountains.map(mountainModelToApi) });
   }
 }
