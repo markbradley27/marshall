@@ -177,6 +177,13 @@ export class AscentRoutes {
 
     const date = DateTime.fromISO(dateStr, dateTimeOpts);
 
+    if (date > DateTime.now()) {
+      res
+        .status(400)
+        .json({ error: "ascent date/time cannot be in the future" });
+      return;
+    }
+
     const insertResult = await this.#dbConn.getRepository(Ascent).insert({
       user: { id: req.uid },
       privacy: req.query.privacy as PrivacySetting,

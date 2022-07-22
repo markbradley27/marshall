@@ -22,7 +22,7 @@ function buildAuthHeader(idToken?: string): any {
 async function parseJsonResponse(res: Response) {
   const json = await res.json();
   if (json.error != null) {
-    console.log(json.error);
+    console.log("API Error:", json.error);
     throw new Error(`API Error: ${json.error}`);
   }
   return json.data;
