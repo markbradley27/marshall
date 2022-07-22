@@ -1,5 +1,3 @@
-import { find as findTz } from "geo-tz";
-
 import { Mountain } from "../../model/Mountain";
 
 import { ascentModelToApi } from "./ascent_api_model";
@@ -14,10 +12,7 @@ export function mountainModelToApi(mountain: MountainPlus): any {
     sourceId: mountain.sourceId,
     name: mountain.name,
     location: mountain.location,
-    timezone: findTz(
-      mountain.location.coordinates[1],
-      mountain.location.coordinates[0]
-    )[0],
+    timeZone: mountain.timeZone,
     wikipediaLink: mountain.wikipediaLink,
     abstract: mountain.abstract,
     ascents: mountain.ascents?.map(ascentModelToApi),

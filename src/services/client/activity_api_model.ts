@@ -10,6 +10,7 @@ export function activityModelToApi(activity: Activity): any {
     sourceId: activity.sourceId,
     name: activity.name,
     date: activity.date,
+    timeZone: activity.timeZone,
     path: activity.path,
     description: activity.description,
 

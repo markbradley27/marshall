@@ -5,7 +5,9 @@ import { mountainApiToState, MountainState } from "api/mountain_endpoints";
 interface AscentState {
   id: number;
   privacy: string;
-  date: Date;
+  date: string;
+  time?: string;
+  timeZone: string;
   activityId?: number;
   activity?: ActivityState;
   mountainId: number;
@@ -17,7 +19,9 @@ function ascentApiToState(apiAscent: any): AscentState {
   return {
     id: apiAscent.id,
     privacy: apiAscent.privacy,
-    date: new Date(apiAscent.date),
+    date: apiAscent.date,
+    time: apiAscent.time,
+    timeZone: apiAscent.timeZone,
     activityId: apiAscent.activityId,
     activity:
       apiAscent.activity != null
@@ -83,12 +87,16 @@ async function postAscent(
   idToken: string,
   privacy: string,
   date: string,
-  mountainId: number
+  mountainId: number,
+  time?: string
 ) {
   const url = new URL("ascent", BASE_URL);
   url.searchParams.set("privacy", privacy);
   url.searchParams.set("date", date);
   url.searchParams.set("mountainId", mountainId.toString());
+  if (time != null) {
+    url.searchParams.set("time", time);
+  }
   return await apiPost(url, idToken);
 }
 

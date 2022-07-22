@@ -1,6 +1,5 @@
 import express from "express";
 import { param, query } from "express-validator";
-import { find as findTz } from "geo-tz";
 import { DateTime } from "luxon";
 import { Connection, FindOneOptions } from "typeorm";
 
@@ -13,7 +12,6 @@ import { PrivacySetting } from "../../model/privacy_setting";
 import { ascentModelToApi } from "./ascent_api_model";
 
 const PAGE_SIZE = 20;
-const ISO_TIME_INCLUDES_TZ = /[+-]\d{2}:\d{2}|Z$/;
 
 export class AscentRoutes {
   router: express.Router;
@@ -34,7 +32,7 @@ export class AscentRoutes {
       this.getAscent.bind(this)
     );
 
-    // Default order is by date descending.
+    // Default order is by date, time descending.
     this.router.get(
       "/ascents",
       query("ascentId").optional().isNumeric(),
@@ -47,17 +45,15 @@ export class AscentRoutes {
       this.getAscents.bind(this)
     );
 
-    // date may be a simple date (YYYY-MM-DD) or a datetime
-    // (YYYY-MM-DDTHH:MM:SS). If a datetime is provided with a timezone offset
-    // (...+/-XX:XX), the provided offset will be used. If no timezone offset is
-    // provided, it will be assumed the timestamp is from the timezone of the
-    // mountain.
+    // It is always assumed that the provided time is specified in the time zone
+    // of the mountain.
     //
     // TODO: Better validation of date, privacy enum.
     this.router.post(
       "/ascent",
       query("privacy").isString(),
       query("date").isString(),
+      query("time").optional().isString(),
       query("mountainId").isNumeric(),
       checkValidation,
       verifyIdToken,
@@ -111,7 +107,7 @@ export class AscentRoutes {
       .createQueryBuilder("ascent")
       .take(PAGE_SIZE)
       .skip(page * PAGE_SIZE)
-      .orderBy("ascent.date", "DESC");
+      .orderBy({ "ascent.date": "DESC", "ascent.time": "DESC" });
 
     if (req.uid) {
       ascentsQuery.andWhere(
@@ -153,30 +149,16 @@ export class AscentRoutes {
   }
 
   async postAscent(req: express.Request, res: express.Response) {
-    const dateStr = req.query.date as string;
-    const dateOnly = !dateStr.includes("T");
-    const dateTimeOpts: any = {};
+    const mountain: Mountain = await this.#dbConn
+      .getRepository(Mountain)
+      .findOne(Number(req.query.mountainId));
+    const timeZone = mountain.timeZone;
 
-    // If it's a date-only, the time zone doesn't matter, so we set it to UTC
-    // just to be explicit and consistent.
-    if (dateOnly) {
-      dateTimeOpts.zone = "UTC";
+    let dateTimeStr = req.query.date as string;
+    if (req.query.time) {
+      dateTimeStr += "T" + req.query.time;
     }
-
-    if (!dateOnly && !ISO_TIME_INCLUDES_TZ.test(dateStr)) {
-      const mountain: Mountain = await this.#dbConn
-        .getRepository(Mountain)
-        .findOne(Number(req.query.mountainId));
-      const mountainTzs = findTz(
-        mountain.location.coordinates[1],
-        mountain.location.coordinates[0]
-      );
-      // Always assume the first timezone. Probably good enough.
-      dateTimeOpts.zone = mountainTzs[0];
-    }
-
-    const date = DateTime.fromISO(dateStr, dateTimeOpts);
-
+    const date = DateTime.fromISO(dateTimeStr, { zone: timeZone });
     if (date > DateTime.now()) {
       res
         .status(400)
@@ -187,8 +169,9 @@ export class AscentRoutes {
     const insertResult = await this.#dbConn.getRepository(Ascent).insert({
       user: { id: req.uid },
       privacy: req.query.privacy as PrivacySetting,
-      date: date.toUTC(),
-      dateOnly,
+      date: req.query.date as string,
+      time: req.query.time != null ? (req.query.time as string) : undefined,
+      timeZone,
       mountain: { id: Number(req.query.mountainId) },
     });
     // Returns id of inserted ascent.

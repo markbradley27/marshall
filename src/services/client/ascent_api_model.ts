@@ -5,15 +5,12 @@ import { mountainModelToApi } from "./mountain_api_model";
 import { userModelToApi } from "./user_api_model";
 
 export function ascentModelToApi(ascent: Ascent): any {
-  let dateStr = ascent.date.toISOString();
-  if (ascent.dateOnly) {
-    dateStr = dateStr.split("T")[0];
-  }
-
   return {
     id: ascent.id,
     privacy: ascent.privacy,
-    date: dateStr,
+    date: ascent.date,
+    time: ascent.time != null ? ascent.time : undefined,
+    timeZone: ascent.timeZone,
     activity:
       ascent.activity != null ? activityModelToApi(ascent.activity) : undefined,
     activityId: ascent.activityId,

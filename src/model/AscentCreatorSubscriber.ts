@@ -30,9 +30,11 @@ export class AscentCreatorSubscriber
     });
     await event.manager.getRepository(Ascent).insert(
       ascendedMountains.map((mountain) => {
+        // TODO: This doesn't handle time correctly.
         return {
-          date: event.entity.date,
+          date: event.entity.date.toUTCString(),
           dateOnly: false,
+          timeZone: mountain.timeZone,
           activity: {
             id: event.entity.id,
           },

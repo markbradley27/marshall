@@ -23,12 +23,14 @@ export class Ascent {
   })
   privacy: PrivacySetting;
 
-  @Column()
-  date: Date;
+  @Column("date")
+  date: string;
 
-  // Indicates the date only represents a day (time will be midnight UTC).
-  @Column({ default: false })
-  dateOnly: boolean;
+  @Column({ type: "time", nullable: true })
+  time: string;
+
+  @Column()
+  timeZone: string;
 
   @ManyToOne(() => Activity, (activity) => activity.ascents, {
     onDelete: "CASCADE",

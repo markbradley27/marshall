@@ -58,16 +58,13 @@ export default function AddAscentForm(props: AddAscentFormProps) {
         return;
       }
 
-      let dateToPost = dateControl?.current?.value;
-      if (timeControl?.current?.value) {
-        dateToPost += "T" + timeControl?.current?.value;
-      }
       setSubmitting(true);
       const res = await postAscent(
         (await auth.users?.fb?.getIdToken()) as string,
         privacySelect?.current?.value as string,
-        dateToPost as string,
-        mountain?.id as number
+        dateControl?.current?.value as string,
+        mountain?.id as number,
+        timeControl?.current?.value
       );
       setSubmitting(false);
       props.reportAdded(res.id);

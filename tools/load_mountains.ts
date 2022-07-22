@@ -5,6 +5,7 @@ import * as readline from "readline";
 
 import * as asyncMutex from "async-mutex";
 import * as dotenv from "dotenv";
+import { find as findTz } from "geo-tz";
 import { Point } from "geojson";
 
 import { Mountain, MountainSource } from "../src/model/Mountain";
@@ -37,12 +38,17 @@ async function main() {
         mountainJson.location.elevation,
       ],
     };
+    const timeZone = findTz(
+      mountainJson.location.lat,
+      mountainJson.location.long
+    )[0];
 
     const mountain = new Mountain();
     mountain.source = MountainSource.dbpedia;
     mountain.sourceId = mountainJson.uri;
     mountain.name = mountainJson.name;
     mountain.location = location;
+    mountain.timeZone = timeZone;
     mountain.wikipediaLink = mountainJson.wikipedia_link;
     mountain.abstract = mountainJson.abstract;
     await connection.manager.save(mountain);

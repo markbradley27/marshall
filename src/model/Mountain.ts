@@ -36,6 +36,9 @@ export class Mountain {
   })
   location: Point;
 
+  @Column()
+  timeZone: string;
+
   @Column({ nullable: true })
   wikipediaLink: string;
 

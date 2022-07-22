@@ -1,4 +1,5 @@
 import { AscentState } from "api/ascent_endpoints";
+import { DateTime } from "luxon";
 import Col from "react-bootstrap/Col";
 import ListGroup from "react-bootstrap/ListGroup";
 import Row from "react-bootstrap/Row";
@@ -7,6 +8,18 @@ interface AscentListItemProps {
   ascent: AscentState;
 }
 function AscentListItem(props: AscentListItemProps) {
+  const dateTime = DateTime.fromISO(
+    props.ascent.time != null
+      ? props.ascent.date + "T" + props.ascent.time
+      : props.ascent.date,
+    { zone: props.ascent.timeZone }
+  );
+  const dateTimeDisplay = dateTime.toLocaleString(
+    props.ascent.time != null
+      ? DateTime.DATETIME_MED_WITH_WEEKDAY
+      : DateTime.DATE_MED_WITH_WEEKDAY
+  );
+
   return (
     <ListGroup.Item>
       <Row>
@@ -20,12 +33,10 @@ function AscentListItem(props: AscentListItemProps) {
         <Col>
           {props.ascent.activityId != null ? (
             <a href={"/activity/" + props.ascent.activityId}>
-              {props.ascent.date.toLocaleString()}
+              {dateTimeDisplay}
             </a>
           ) : (
-            <span className="text-muted">
-              {props.ascent.date.toLocaleString()}
-            </span>
+            <span className="text-muted">{dateTimeDisplay}</span>
           )}
         </Col>
       </Row>

@@ -46,6 +46,9 @@ export class Activity {
   @Column()
   date: Date;
 
+  @Column()
+  timeZone: string;
+
   @Column({
     type: "geography",
     spatialFeatureType: "LineString",
