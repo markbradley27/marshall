@@ -19,3 +19,15 @@ $font-family-sans-serif: 'Quicksand', sans-serif;
 
 @import "~bootstrap/scss/bootstrap";
 
+// TODO: Figure out why this doesn't work.
+.tooltip-arrow::before {
+  border-bottom-color: $danger;
+}
+.tooltip-inner {
+  background-color: $white;
+  border-color: $danger;
+  border-style: solid;
+  border-width: 1px;
+  color: $danger;
+}
+

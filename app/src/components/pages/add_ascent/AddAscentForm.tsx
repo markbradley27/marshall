@@ -1,6 +1,8 @@
 import { postAscent } from "api/ascent_endpoints";
 import { fetchMountains, MountainState } from "api/mountain_endpoints";
+import { InvalidTooltip } from "components/shared/InvalidTooltip";
 import { useAuth } from "contexts/auth";
+import { Formik } from "formik";
 import useGoogleMaps from "hooks/loadGoogleMaps";
 import { DateTime } from "luxon";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -15,136 +17,196 @@ export default function AddAscentForm(props: AddAscentFormProps) {
   const auth = useAuth();
 
   const [mountains, setMountains] = useState<MountainState[] | null>(null);
-  const [loaded, setLoaded] = useState(false);
 
-  const [mountain, setMountain] = useState<MountainState | null>(null);
-  const mountainTypeahead = useRef<Typeahead<MountainState>>(null);
-  const [mountainInvalid, setMountainInvalid] = useState(false);
+  const [typeaheadFocused, setTypeaheadFocused] = useState(false);
+  const mountainTypeahead = useRef<Typeahead<MountainState> | null>(null);
+  const mountainTypeaheadWrapper = useRef<HTMLElement | null>(null);
   const dateControl = useRef<HTMLInputElement>(null);
-  const [dateInvalid, setDateInvalid] = useState(false);
   const timeControl = useRef<HTMLInputElement>(null);
-  const [timeInvalid, setTimeInvalid] = useState(false);
   const privacySelect = useRef<HTMLSelectElement>(null);
-
-  const [submitting, setSubmitting] = useState(false);
 
   const googleMapsLoaded = useGoogleMaps();
 
   useEffect(() => {
     async function fetchData() {
-      setLoaded(true);
       setMountains(await fetchMountains());
     }
-
-    if (!loaded && googleMapsLoaded) {
+    if (googleMapsLoaded) {
       fetchData();
     }
-  });
+  }, [googleMapsLoaded]);
 
-  const submitAscent = useCallback(
-    async (e) => {
-      e.preventDefault();
+  const validate = useCallback((values) => {
+    const errors = {} as any;
 
-      // Validate input
-      if (mountain == null) {
-        setMountainInvalid(true);
-        return;
-      } else {
-        setMountainInvalid(false);
-      }
-      if (!dateControl?.current?.value) {
-        setDateInvalid(true);
-        return;
-      } else {
-        const dateTime = DateTime.fromISO(
-          timeControl?.current?.value
-            ? dateControl?.current?.value + "T" + timeControl?.current?.value
-            : dateControl?.current?.value,
-          { zone: mountain?.timeZone }
-        );
-        if (dateTime > DateTime.now()) {
-          setDateInvalid(true);
-          if (timeControl?.current?.value) {
-            setTimeInvalid(true);
-          }
-          return;
+    // Empty checks.
+    if (values.mountain == null) {
+      errors.mountain = "Mountain required";
+    }
+    if (!values.date) {
+      errors.date = "Date required";
+    }
+
+    // Date/time in the future
+    if (values.mountain != null && values.date) {
+      const dateTime = DateTime.fromISO(
+        values.time ? values.date + "T" + values.time : values.date,
+        { zone: values.mountain.timeZone }
+      );
+      if (dateTime > DateTime.now()) {
+        if (values.time) {
+          errors.date = "";
+          errors.time = "Time must be in the past";
         } else {
-          setDateInvalid(false);
-          setTimeInvalid(false);
+          errors.date = "Date must be in the past";
         }
       }
+    }
 
-      // Submit
-      setSubmitting(true);
+    return errors;
+  }, []);
+
+  const submitAscent = useCallback(
+    async (values, bag) => {
       const res = await postAscent(
         (await auth.users?.fb?.getIdToken()) as string,
-        privacySelect?.current?.value as string,
-        dateControl?.current?.value as string,
-        mountain?.id as number,
-        timeControl?.current?.value ? timeControl?.current?.value : undefined
+        values.privacy,
+        values.date,
+        values.mountain.id,
+        values.time !== "" ? values.time : undefined
       );
-      setSubmitting(false);
       mountainTypeahead?.current?.clear();
-      setMountain(null);
+      bag.resetForm();
       props.reportAdded(res.id);
     },
-    [auth.users?.fb, mountain, props]
+    [auth.users?.fb, props]
   );
 
   return mountains != null ? (
-    <Form onSubmit={submitAscent}>
-      <Stack gap={3}>
-        <Form.Group controlId="mountain">
-          <Form.Label>Mountain</Form.Label>
-          <Typeahead
-            id="mountain"
-            isInvalid={mountainInvalid}
-            labelKey="name"
-            options={mountains}
-            placeholder="Search by mountain name..."
-            onChange={(selected) => {
-              setMountain(selected[0]);
-            }}
-            ref={mountainTypeahead}
-          />
-        </Form.Group>
-        <Stack direction="horizontal" gap={3}>
-          <Form.Group controlId="date">
-            <Form.Label>Date</Form.Label>
-            <Form.Control
-              isInvalid={dateInvalid}
-              ref={dateControl}
-              type="date"
-            />
-          </Form.Group>
-          <Form.Group>
-            <Form.Label>Time</Form.Label>
-            <Form.Control
-              isInvalid={timeInvalid}
-              ref={timeControl}
-              type="time"
-            />
-          </Form.Group>
-          <Form.Group>
-            <Form.Label>Visibility</Form.Label>
-            <Form.Select
-              defaultValue={auth.users?.db?.defaultAscentPrivacy}
-              ref={privacySelect}
-            >
-              <option value="PUBLIC">Public</option>
-              <option value="FOLLOWERS_ONLY">Followers Only</option>
-              <option value="PRIVATE">Private</option>
-            </Form.Select>
-          </Form.Group>
-        </Stack>
-        <Button
-          className={"w-100" + (submitting ? " disabled" : "")}
-          type="submit"
+    <Formik
+      initialValues={{
+        mountain: undefined,
+        date: "",
+        time: "",
+        privacy: auth.users?.db?.defaultAscentPrivacy,
+      }}
+      onSubmit={submitAscent}
+      validate={validate}
+    >
+      {({
+        errors,
+        getFieldProps,
+        handleSubmit,
+        isSubmitting,
+        setFieldTouched,
+        setFieldValue,
+        touched,
+      }) => (
+        <Form
+          noValidate
+          onSubmit={(...args) => {
+            handleSubmit(...args);
+            // Bit of a hack; without this, touched.mountain will be
+            // undefined if the mountain typeahead has been touched but then
+            // cleared. Don't know why, but this works around it.
+            setFieldTouched("mountain");
+          }}
         >
-          {submitting ? "Submitting..." : "Submit"}
-        </Button>
-      </Stack>
-    </Form>
+          <Stack gap={3}>
+            <Form.Group controlId="mountain">
+              <Form.Label>Mountain</Form.Label>
+              <span ref={mountainTypeaheadWrapper}>
+                <Typeahead
+                  id="mountain"
+                  isInvalid={
+                    !typeaheadFocused &&
+                    touched.mountain &&
+                    errors.mountain != null
+                  }
+                  labelKey="name"
+                  onBlur={() => {
+                    setTypeaheadFocused(false);
+                    // handleBlur doesn't seem to handle mountain being an
+                    // object well, so I just set the field touched directly.
+                    setFieldTouched("mountain");
+                  }}
+                  onChange={(selected) => {
+                    setFieldValue(
+                      "mountain",
+                      selected[0] != null ? selected[0] : undefined
+                    );
+                  }}
+                  onFocus={() => {
+                    setTypeaheadFocused(true);
+                  }}
+                  options={mountains}
+                  placeholder="Search by mountain name..."
+                  ref={mountainTypeahead}
+                />
+              </span>
+              {!typeaheadFocused && (
+                <InvalidTooltip
+                  error={errors.mountain}
+                  target={mountainTypeaheadWrapper.current}
+                  touched={touched.mountain}
+                />
+              )}
+            </Form.Group>
+            <Stack direction="horizontal" gap={3}>
+              <Form.Group className="position-relative" controlId="date">
+                <Form.Label>Date</Form.Label>
+                <Form.Control
+                  isInvalid={touched.date && errors.date != null}
+                  ref={dateControl}
+                  type="date"
+                  {...getFieldProps("date")}
+                />
+                {!typeaheadFocused && (
+                  <InvalidTooltip
+                    error={errors.date}
+                    target={dateControl.current}
+                    touched={touched.date}
+                  />
+                )}
+              </Form.Group>
+              <Form.Group>
+                <Form.Label>Time</Form.Label>
+                <Form.Control
+                  isInvalid={touched.time && errors.time != null}
+                  ref={timeControl}
+                  type="time"
+                  {...getFieldProps("time")}
+                />
+                {!typeaheadFocused && (
+                  <InvalidTooltip
+                    error={errors.time}
+                    target={timeControl.current}
+                    touched={touched.time}
+                  />
+                )}
+              </Form.Group>
+              <Form.Group>
+                <Form.Label>Visibility</Form.Label>
+                <Form.Select
+                  defaultValue={auth.users?.db?.defaultAscentPrivacy}
+                  ref={privacySelect}
+                >
+                  <option value="PUBLIC">Public</option>
+                  <option value="FOLLOWERS_ONLY">Followers Only</option>
+                  <option value="PRIVATE">Private</option>
+                </Form.Select>
+              </Form.Group>
+            </Stack>
+            <Button
+              className={"w-100" + (isSubmitting ? " disabled" : "")}
+              type="submit"
+            >
+              {isSubmitting ? "Submitting..." : "Submit"}
+            </Button>
+          </Stack>
+        </Form>
+      )}
+    </Formik>
   ) : (
     <></>
   );
