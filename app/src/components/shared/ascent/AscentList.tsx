@@ -2,10 +2,12 @@ import { AscentState } from "api/ascent_endpoints";
 import SmartPagination from "components/shared/SmartPagination";
 import AscentListItem from "components/shared/ascent/AscentListItem";
 import { useEffect, useState } from "react";
-import { Col, ListGroup, Row, Stack } from "react-bootstrap";
+import { Col, ListGroup, Row, Spinner, Stack } from "react-bootstrap";
 
 interface AscentListProps {
-  ascents: Array<AscentState | undefined>;
+  // If ascents is null, will display loading indicator.
+  // If ascents is empty, will display "no ascents message.
+  ascents: Array<AscentState | undefined> | null;
   count: number;
   fetchMoreAscents: (min: number, max: number) => void;
   pageLength: number;
@@ -14,6 +16,9 @@ export default function AscentList(props: AscentListProps) {
   const [page, setPage] = useState(0);
 
   useEffect(() => {
+    if (props.ascents == null) {
+      return;
+    }
     for (
       let i = page * props.pageLength;
       i < Math.min((page + 1) * props.pageLength, props.count);
@@ -32,19 +37,27 @@ export default function AscentList(props: AscentListProps) {
   return (
     <Stack gap={3}>
       <ListGroup as={Row}>
-        {props.ascents.length > 0 ? (
-          props.ascents
-            .slice(page * props.pageLength, (page + 1) * props.pageLength)
-            .map((ascent) => {
-              return ascent ? (
-                <AscentListItem key={ascent.id} ascent={ascent} />
-              ) : (
-                <></>
-              );
-            })
+        {props.ascents != null ? (
+          props.ascents.length > 0 ? (
+            props.ascents
+              .slice(page * props.pageLength, (page + 1) * props.pageLength)
+              .map((ascent) => {
+                return ascent ? (
+                  <AscentListItem key={ascent.id} ascent={ascent} />
+                ) : (
+                  <></>
+                );
+              })
+          ) : (
+            <ListGroup.Item as={Row} className={"text-center text-muted"}>
+              No ascents yet, get out there!
+            </ListGroup.Item>
+          )
         ) : (
           <ListGroup.Item as={Row} className={"text-center text-muted"}>
-            No ascents yet, get out there!
+            <Spinner animation="border">
+              <span className="visually-hidden">Loading...</span>
+            </Spinner>
           </ListGroup.Item>
         )}
       </ListGroup>

@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 
 const API_PAGE_LENGTH = 20;
 
-interface State {
+interface AscentsState {
   ascents: Array<AscentState | undefined>;
   count: number;
 }
@@ -13,11 +13,11 @@ interface State {
 export default function RecentAscents() {
   const auth = useAuth();
 
-  const [state, setState] = useState<State | null>(null);
+  const [ascentsState, setAscentsState] = useState<AscentsState | null>(null);
 
   useEffect(() => {
     const fetchInitialAscents = async () => {
-      setState(
+      setAscentsState(
         await fetchAscents({
           idToken: (await auth.users?.fb?.getIdToken()) as string,
           userId: auth.users?.fb?.uid,
@@ -32,7 +32,11 @@ export default function RecentAscents() {
   const fetchMoreAscents = useCallback(
     async (min: number, max: number) => {
       // TODO: Handle these errors.
-      if (state == null || min > state.count || max > state.count) {
+      if (
+        ascentsState == null ||
+        min > ascentsState.count ||
+        max > ascentsState.count
+      ) {
         return;
       }
 
@@ -47,34 +51,32 @@ export default function RecentAscents() {
           includeMountains: true,
           page,
         });
-        while (state.ascents.length < page * API_PAGE_LENGTH) {
-          state.ascents.push(undefined);
+        while (ascentsState.ascents.length < page * API_PAGE_LENGTH) {
+          ascentsState.ascents.push(undefined);
         }
         const firstFetchedIndex = page * API_PAGE_LENGTH;
         for (let i = 0; i < fetched.ascents.length; ++i) {
-          if (state.ascents.length === firstFetchedIndex + i) {
-            state.ascents.push(fetched.ascents[i]);
+          if (ascentsState.ascents.length === firstFetchedIndex + i) {
+            ascentsState.ascents.push(fetched.ascents[i]);
           } else {
-            state.ascents[firstFetchedIndex + i] = fetched.ascents[i];
+            ascentsState.ascents[firstFetchedIndex + i] = fetched.ascents[i];
           }
         }
       }
-      setState({
-        ascents: state.ascents,
-        count: state.count,
+      setAscentsState({
+        ascents: ascentsState.ascents,
+        count: ascentsState.count,
       });
     },
-    [auth.users, state]
+    [auth.users, ascentsState]
   );
 
-  return state != null ? (
+  return (
     <AscentList
-      ascents={state.ascents}
-      count={state.count}
+      ascents={ascentsState?.ascents || null}
+      count={ascentsState?.count || 0}
       fetchMoreAscents={fetchMoreAscents}
       pageLength={5}
     />
-  ) : (
-    <></>
   );
 }
