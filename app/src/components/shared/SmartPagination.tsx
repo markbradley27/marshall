@@ -51,7 +51,7 @@ export default function SmartPagination(props: SmartPaginationProps) {
       </Pagination.Item>
     );
   }
-  if (props.page < pages - PAGES_BEFORE_ELLIPSIS) {
+  if (props.page < pages - PAGES_BEFORE_ELLIPSIS - 1) {
     items.push(<Pagination.Ellipsis disabled={true} key={"nextEllipsis"} />);
   }
   if (props.page < pages - 1) {
@@ -64,7 +64,7 @@ export default function SmartPagination(props: SmartPaginationProps) {
       />
     );
   }
-  if (props.page < pages - PAGES_BEFORE_ELLIPSIS) {
+  if (props.page < pages - PAGES_BEFORE_ELLIPSIS - 1) {
     items.push(
       <Pagination.Last
         key={"last"}
