@@ -6,8 +6,10 @@ import { userModelToApi } from "./user_api_model";
 export function activityModelToApi(activity: Activity): any {
   return {
     id: activity.id,
+    privacy: activity.privacy,
     source: activity.source,
     sourceId: activity.sourceId,
+    sourceUserId: activity.sourceUserId,
     name: activity.name,
     date: activity.date,
     timeZone: activity.timeZone,
