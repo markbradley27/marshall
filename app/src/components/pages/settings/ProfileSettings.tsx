@@ -1,3 +1,4 @@
+import { InvalidTooltip } from "components/shared/InvalidTooltip";
 import { useAuth } from "contexts/auth";
 import { FormEvent, useCallback, useRef, useState } from "react";
 import { Button, Col, Form, Row } from "react-bootstrap";
@@ -8,7 +9,7 @@ export default function ProfileSettings() {
   const [saving, setSaving] = useState(false);
   const [nameModified, setNameModified] = useState(false);
   const nameControl = useRef<HTMLInputElement>(null);
-  const [nameInvalid, setNameInvalid] = useState(false);
+  const [nameInvalid, setNameInvalid] = useState("");
   const [locationModified, setLocationModified] = useState(false);
   const locationControl = useRef<HTMLInputElement>(null);
   const [genderModified, setGenderModified] = useState(false);
@@ -23,10 +24,10 @@ export default function ProfileSettings() {
 
         var invalid = false;
         if (!nameControl?.current?.value) {
-          setNameInvalid(true);
+          setNameInvalid("Name required");
           invalid = true;
         } else {
-          setNameInvalid(false);
+          setNameInvalid("");
         }
         if (invalid) {
           return;
@@ -68,7 +69,7 @@ export default function ProfileSettings() {
           <Col>
             <Form.Control
               defaultValue={auth.users?.db?.name}
-              isInvalid={nameInvalid}
+              isInvalid={nameInvalid !== ""}
               onChange={() => {
                 setNameModified(true);
               }}
@@ -76,6 +77,11 @@ export default function ProfileSettings() {
               type="text"
             />
           </Col>
+          <InvalidTooltip
+            error={nameInvalid}
+            target={nameControl.current}
+            touched={nameModified}
+          />
         </Form.Group>
         <Form.Group as={Row} className="mb-3">
           <Form.Label column xs="4">
