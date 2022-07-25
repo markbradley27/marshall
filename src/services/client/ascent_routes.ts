@@ -78,19 +78,13 @@ export class AscentRoutes {
 
     if (!ascent) {
       res.status(404).json({
-        error: {
-          code: 404,
-          message: `Ascent ${req.params.ascentId} not found.`,
-        },
+        error: `ascent ${req.params.ascentId} not found.`,
       });
       return;
     }
     if (ascent.privacy !== PrivacySetting.PUBLIC && ascent.userId != req.uid) {
       res.status(403).json({
-        error: {
-          code: 403,
-          message: `You don't have permission to view ascent ${req.params.ascentId}`,
-        },
+        error: `insufficient permission to view ascent ${req.params.ascentId}`,
       });
       return;
     }

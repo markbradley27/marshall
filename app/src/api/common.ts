@@ -15,15 +15,30 @@ function buildAuthHeader(idToken?: string): any {
   }
 }
 
-// Deserializes a JSON API response.
+// Deserializes a JSON API response, if present.
+//
+// If the response doesn't have serializable JSON but the status is 200, returns
+// an empty object.
 //
 // If the response includes an error, it will be thrown.
 // Otherwise, the data portion of the response is returned.
-async function parseJsonResponse(res: Response) {
-  const json = await res.json();
+async function maybeParseJsonResponse(res: Response) {
+  let json: any;
+  try {
+    json = await res.json();
+  } catch {
+    if (res.status === 200) {
+      return {};
+    } else {
+      const errorStr = `API Error (${res.status}): No JSON error context provided.`;
+      console.log(errorStr);
+      throw new Error(errorStr);
+    }
+  }
   if (json.error != null) {
-    console.log("API Error:", json.error);
-    throw new Error(`API Error: ${json.error}`);
+    const errorStr = `API Error ${res.status}): ${json.error}`;
+    console.log(errorStr);
+    throw new Error(errorStr);
   }
   return json.data;
 }
@@ -33,7 +48,7 @@ async function apiFetch(url: URL | string, idToken?: string) {
   const res = await fetch(url.toString(), {
     headers: buildAuthHeader(idToken),
   });
-  return parseJsonResponse(res);
+  return maybeParseJsonResponse(res);
 }
 
 // Fetches the given URL and returns an object URL pointing to the fetched blob.
@@ -52,7 +67,7 @@ async function apiPost(url: URL | string, idToken?: string) {
     headers: buildAuthHeader(idToken),
     method: "POST",
   });
-  return parseJsonResponse(res);
+  return maybeParseJsonResponse(res);
 }
 
 // Posts the given JSON to the given URL and returns the data response or throws
@@ -66,7 +81,7 @@ async function apiPostJson(url: URL | string, data: any, idToken?: string) {
     method: "POST",
     body: JSON.stringify(data),
   });
-  return parseJsonResponse(res);
+  return maybeParseJsonResponse(res);
 }
 
 // Puts the given blob to the given URL and returns the data response or throws
@@ -84,7 +99,7 @@ async function apiPutBlob(
     method: "PUT",
     body: formData,
   });
-  return parseJsonResponse(res);
+  return maybeParseJsonResponse(res);
 }
 
 export { apiFetch, apiFetchBlob, apiPost, apiPostJson, apiPutBlob, BASE_URL };

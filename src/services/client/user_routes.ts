@@ -74,7 +74,9 @@ export class UserRoutes {
 
     // Users can only be modified by that authenticated user.
     if (uid != req.uid) {
-      res.sendStatus(500);
+      res.status(403).json({
+        error: "must authenticate as user to modify user",
+      });
       return;
     }
 
@@ -104,7 +106,9 @@ export class UserRoutes {
 
     // Allow deletion iff the user being deleted is also the authenticated user.
     if (uid != req.uid) {
-      res.sendStatus(500);
+      res
+        .status(403)
+        .json({ error: "must authenticate as user to delete user" });
       return;
     }
 
