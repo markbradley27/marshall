@@ -1,6 +1,6 @@
 import express from "express";
 import { oneOf, param, query } from "express-validator";
-import { Connection, Raw } from "typeorm";
+import { DataSource, Raw } from "typeorm";
 
 import { maybeVerifyIdToken } from "../../middleware/auth";
 import { checkValidation } from "../../middleware/validation";
@@ -13,10 +13,10 @@ import { mountainModelToApi } from "./mountain_api_model";
 export class MountainRoutes {
   router: express.Router;
 
-  #dbConn: Connection;
+  #db: DataSource;
 
-  constructor(dbConn: Connection) {
-    this.#dbConn = dbConn;
+  constructor(db: DataSource) {
+    this.#db = db;
 
     this.router = express.Router();
     this.router.get(
@@ -41,6 +41,8 @@ export class MountainRoutes {
   }
 
   async getMountain(req: express.Request, res: express.Response) {
+    const mountainId = Number(req.params.mountainId);
+
     if (req.query.include_ascents === "true" && req.uid === undefined) {
       res.status(403).json({
         error: {
@@ -59,9 +61,9 @@ export class MountainRoutes {
       includeRadius = parseInt(includeNearby as string, 10);
     }
 
-    const mountain = await this.#dbConn
+    const mountain = await this.#db
       .getRepository(Mountain)
-      .findOne(req.params.mountainId);
+      .findOne({ where: { id: mountainId } });
     const resJson = mountainModelToApi(mountain);
 
     if (includeRadius) {
@@ -84,7 +86,7 @@ export class MountainRoutes {
         }
       );
       */
-      const nearby = await this.#dbConn
+      const nearby = await this.#db
         .getRepository(Mountain)
         .createQueryBuilder("mountain")
         .select("mountain.*")
@@ -112,7 +114,7 @@ export class MountainRoutes {
     }
 
     if (req.query.include_ascents === "true") {
-      const ascents = await this.#dbConn.getRepository(Ascent).find({
+      const ascents = await this.#db.getRepository(Ascent).find({
         where: {
           user: { id: req.uid },
           mountain: { id: Number(req.params.mountainId) },
@@ -126,7 +128,7 @@ export class MountainRoutes {
   }
 
   async getMountains(_req: express.Request, res: express.Response) {
-    const mountains = await this.#dbConn
+    const mountains = await this.#db
       .getRepository(Mountain)
       .find({ select: ["id", "name", "location", "timeZone"] });
     res.json({ data: mountains.map(mountainModelToApi) });

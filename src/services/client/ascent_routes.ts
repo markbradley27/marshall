@@ -1,7 +1,7 @@
 import express from "express";
 import { param, query } from "express-validator";
 import { DateTime } from "luxon";
-import { Connection, FindOneOptions } from "typeorm";
+import { DataSource, FindOneOptions } from "typeorm";
 
 import { maybeVerifyIdToken, verifyIdToken } from "../../middleware/auth";
 import { checkValidation } from "../../middleware/validation";
@@ -16,10 +16,10 @@ const PAGE_SIZE = 20;
 export class AscentRoutes {
   router: express.Router;
 
-  #dbConn: Connection;
+  #db: DataSource;
 
-  constructor(dbConn: Connection) {
-    this.#dbConn = dbConn;
+  constructor(db: DataSource) {
+    this.#db = db;
 
     this.router = express.Router();
 
@@ -63,8 +63,9 @@ export class AscentRoutes {
 
   // TODO: Support followers only.
   async getAscent(req: express.Request, res: express.Response) {
+    const ascentId = Number(req.params.ascentId);
     const findOptions: FindOneOptions<Ascent> = {
-      where: { id: req.params.ascentId },
+      where: { id: ascentId },
     };
     if (
       req.query.includeMountain &&
@@ -72,9 +73,7 @@ export class AscentRoutes {
     ) {
       findOptions.relations = ["mountain"];
     }
-    const ascent = await this.#dbConn
-      .getRepository(Ascent)
-      .findOne(findOptions);
+    const ascent = await this.#db.getRepository(Ascent).findOne(findOptions);
 
     if (!ascent) {
       res.status(404).json({
@@ -96,7 +95,7 @@ export class AscentRoutes {
   async getAscents(req: express.Request, res: express.Response) {
     const page = Number(req.query.page);
 
-    const ascentsQuery = this.#dbConn
+    const ascentsQuery = this.#db
       .getRepository(Ascent)
       .createQueryBuilder("ascent")
       .take(PAGE_SIZE)
@@ -143,9 +142,10 @@ export class AscentRoutes {
   }
 
   async postAscent(req: express.Request, res: express.Response) {
-    const mountain: Mountain = await this.#dbConn
+    const mountainId = Number(req.query.mountainId);
+    const mountain: Mountain = await this.#db
       .getRepository(Mountain)
-      .findOne(Number(req.query.mountainId));
+      .findOne({ where: { id: mountainId } });
     const timeZone = mountain.timeZone;
 
     let dateTimeStr = req.query.date as string;
@@ -160,7 +160,7 @@ export class AscentRoutes {
       return;
     }
 
-    const insertResult = await this.#dbConn.getRepository(Ascent).insert({
+    const insertResult = await this.#db.getRepository(Ascent).insert({
       user: { id: req.uid },
       privacy: req.query.privacy as PrivacySetting,
       date: req.query.date as string,

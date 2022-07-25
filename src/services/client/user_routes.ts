@@ -2,7 +2,7 @@ import express from "express";
 import { body, param } from "express-validator";
 import admin from "firebase-admin";
 import { auth } from "firebase-admin";
-import { Connection } from "typeorm";
+import { DataSource } from "typeorm";
 
 import { verifyIdToken } from "../../middleware/auth";
 import { checkValidation } from "../../middleware/validation";
@@ -13,10 +13,10 @@ import { userModelToApi } from "./user_api_model";
 export class UserRoutes {
   router: express.Router;
 
-  #dbConn: Connection;
+  #db: DataSource;
 
-  constructor(dbConn: Connection) {
-    this.#dbConn = dbConn;
+  constructor(db: DataSource) {
+    this.#db = db;
 
     this.router = express.Router();
     this.router.get(
@@ -51,7 +51,7 @@ export class UserRoutes {
 
   // TODO: Allow getting info about other users.
   async getUser(req: express.Request, res: express.Response) {
-    const user = await this.#dbConn
+    const user = await this.#db
       .getRepository(User)
       .createQueryBuilder("user")
       .select('"user".*')
@@ -86,7 +86,7 @@ export class UserRoutes {
     }
 
     // Update local DB.
-    const userRepo = this.#dbConn.getRepository(User);
+    const userRepo = this.#db.getRepository(User);
     const user = new User();
     user.id = uid;
     user.name = req.body.name;
@@ -112,7 +112,7 @@ export class UserRoutes {
       return;
     }
 
-    const userRepo = this.#dbConn.getRepository(User);
+    const userRepo = this.#db.getRepository(User);
     try {
       await userRepo.delete({ id: uid });
       await admin.auth().deleteUser(uid);

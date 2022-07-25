@@ -1,5 +1,5 @@
 import express from "express";
-import { Connection } from "typeorm";
+import { DataSource } from "typeorm";
 
 import { logApiRequest } from "../../middleware/debug";
 
@@ -14,14 +14,14 @@ import { UserRoutes } from "./user_routes";
 export class ClientService {
   router: express.Router;
 
-  constructor(dbConn: Connection) {
-    const activityRoutes = new ActivityRoutes(dbConn);
-    const ascentRoutes = new AscentRoutes(dbConn);
+  constructor(db: DataSource) {
+    const activityRoutes = new ActivityRoutes(db);
+    const ascentRoutes = new AscentRoutes(db);
     const avatarRoutes = new AvatarRoutes();
-    const gpxRoutes = new GpxRoutes(dbConn);
-    const listRoutes = new ListRoutes(dbConn);
-    const mountainRoutes = new MountainRoutes(dbConn);
-    const userRoutes = new UserRoutes(dbConn);
+    const gpxRoutes = new GpxRoutes(db);
+    const listRoutes = new ListRoutes(db);
+    const mountainRoutes = new MountainRoutes(db);
+    const userRoutes = new UserRoutes(db);
 
     this.router = express.Router();
     this.router.use(logApiRequest);

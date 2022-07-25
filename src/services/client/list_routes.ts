@@ -1,6 +1,6 @@
 import express from "express";
 import { param } from "express-validator";
-import { Connection } from "typeorm";
+import { DataSource } from "typeorm";
 
 import { maybeVerifyIdToken, verifyIdToken } from "../../middleware/auth";
 import { checkValidation } from "../../middleware/validation";
@@ -19,10 +19,10 @@ interface NewList {
 export class ListRoutes {
   router: express.Router;
 
-  #dbConn: Connection;
+  #db: DataSource;
 
-  constructor(dbConn: Connection) {
-    this.#dbConn = dbConn;
+  constructor(db: DataSource) {
+    this.#db = db;
 
     this.router = express.Router();
     this.router.get(
@@ -43,7 +43,7 @@ export class ListRoutes {
   }
 
   async getList(req: express.Request, res: express.Response) {
-    const list = await this.#dbConn.getRepository(List).findOne({
+    const list = await this.#db.getRepository(List).findOne({
       where: { id: Number(req.params.listId) },
       relations: ["mountains"],
     });
@@ -79,7 +79,7 @@ export class ListRoutes {
       mountain.id = mountainId;
       return mountain;
     });
-    await this.#dbConn.getRepository(List).save(list);
+    await this.#db.getRepository(List).save(list);
     res.sendStatus(200);
   }
 }

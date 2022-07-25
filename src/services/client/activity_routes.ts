@@ -1,6 +1,6 @@
 import express from "express";
 import { param, query } from "express-validator";
-import { Connection } from "typeorm";
+import { DataSource } from "typeorm";
 
 import { verifyIdToken } from "../../middleware/auth";
 import { checkValidation } from "../../middleware/validation";
@@ -13,10 +13,10 @@ const PAGE_SIZE = 20;
 export class ActivityRoutes {
   router: express.Router;
 
-  #dbConn: Connection;
+  #db: DataSource;
 
-  constructor(dbConn: Connection) {
-    this.#dbConn = dbConn;
+  constructor(db: DataSource) {
+    this.#db = db;
 
     this.router = express.Router();
     this.router.get(
@@ -32,7 +32,7 @@ export class ActivityRoutes {
   }
 
   async getActivities(req: express.Request, res: express.Response) {
-    const activityRepo = this.#dbConn.getRepository(Activity);
+    const activityRepo = this.#db.getRepository(Activity);
     const qb = activityRepo
       .createQueryBuilder("activity")
       .where("activity.userId = :userId", { userId: req.uid })

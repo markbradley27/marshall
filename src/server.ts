@@ -1,7 +1,7 @@
 import express from "express";
 import admin from "firebase-admin";
 import { Logger } from "tslog";
-import { Connection } from "typeorm";
+import { DataSource } from "typeorm";
 
 import gpx from "./middleware/gpx";
 import { ClientService } from "./services/client/client_service";
@@ -13,25 +13,25 @@ class Server {
   #app: express.Application;
   #port: number;
 
-  #dbConn: Connection;
+  #db: DataSource;
 
   #stravaService: StravaService;
   #clientService: ClientService;
 
-  constructor(dbConn: Connection) {
+  constructor(db: DataSource) {
     this.#app = express();
     this.#port = parseInt(process.env.PORT, 10);
-    this.#dbConn = dbConn;
+    this.#db = db;
 
     admin.initializeApp({
       credential: admin.credential.applicationDefault(),
     });
 
-    this.#clientService = new ClientService(this.#dbConn);
+    this.#clientService = new ClientService(this.#db);
     this.#stravaService = new StravaService(
       parseInt(process.env.STRAVA_CLIENT_ID, 10),
       process.env.STRAVA_CLIENT_SECRET,
-      this.#dbConn
+      this.#db
     );
 
     this.middlewares();

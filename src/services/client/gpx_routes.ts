@@ -1,7 +1,7 @@
 import express from "express";
 import togeojson from "togeojson";
 import { Logger } from "tslog";
-import { Connection } from "typeorm";
+import { DataSource } from "typeorm";
 
 import { verifyIdToken } from "../../middleware/auth";
 import { Activity, ActivitySource } from "../../model/Activity";
@@ -11,10 +11,10 @@ const logger = new Logger();
 export class GpxRoutes {
   router: express.Router;
 
-  #dbConn: Connection;
+  #db: DataSource;
 
-  constructor(dbConn: Connection) {
-    this.#dbConn = dbConn;
+  constructor(db: DataSource) {
+    this.#db = db;
 
     this.router = express.Router();
     this.router.post("/gpx", verifyIdToken, this.postGpx.bind(this));
@@ -42,7 +42,7 @@ export class GpxRoutes {
       }
     }
 
-    this.#dbConn.getRepository(Activity).create({
+    this.#db.getRepository(Activity).create({
       user: { id: req.uid },
       source: ActivitySource.gpx,
       name: geoJson.features[0].properties.name,
