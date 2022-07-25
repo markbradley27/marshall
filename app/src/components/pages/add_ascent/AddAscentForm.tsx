@@ -24,7 +24,6 @@ export default function AddAscentForm(props: AddAscentFormProps) {
   const mountainTypeaheadWrapper = useRef<HTMLElement | null>(null);
   const dateControl = useRef<HTMLInputElement>(null);
   const timeControl = useRef<HTMLInputElement>(null);
-  const privacySelect = useRef<HTMLSelectElement>(null);
 
   const googleMapsLoaded = useGoogleMaps();
 
@@ -210,10 +209,7 @@ export default function AddAscentForm(props: AddAscentFormProps) {
                 </Form.Group>
                 <Form.Group>
                   <Form.Label>Visibility</Form.Label>
-                  <Form.Select
-                    defaultValue={auth.users?.db?.defaultAscentPrivacy}
-                    ref={privacySelect}
-                  >
+                  <Form.Select {...getFieldProps("privacy")}>
                     <option value="PUBLIC">Public</option>
                     <option value="FOLLOWERS_ONLY">Followers Only</option>
                     <option value="PRIVATE">Private</option>
