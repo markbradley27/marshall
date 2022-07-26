@@ -1,3 +1,4 @@
 export const API_PAGE_SIZE = 20;
+export const JSON_MIDDLEWARE_SIZE_LIMIT = "10mb";
 
 export const SUMMIT_PATH_PROXIMITY_THRESHOLD_M = 50;

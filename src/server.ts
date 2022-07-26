@@ -3,6 +3,7 @@ import admin from "firebase-admin";
 import { Logger } from "tslog";
 import { DataSource } from "typeorm";
 
+import { JSON_MIDDLEWARE_SIZE_LIMIT } from "./consts";
 import gpx from "./middleware/gpx";
 import { ClientService } from "./services/client/client_service";
 import StravaService from "./services/strava";
@@ -41,7 +42,7 @@ class Server {
   }
 
   middlewares() {
-    this.#app.use(express.json());
+    this.#app.use(express.json({ limit: JSON_MIDDLEWARE_SIZE_LIMIT }));
     this.#app.use(gpx);
   }
 

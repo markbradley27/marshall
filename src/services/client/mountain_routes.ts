@@ -1,14 +1,15 @@
 import express from "express";
-import { oneOf, param, query } from "express-validator";
+import { body, oneOf, param, query } from "express-validator";
 import { DataSource } from "typeorm";
 
+import { SUMMIT_PATH_PROXIMITY_THRESHOLD_M } from "../../consts";
 import { maybeVerifyIdToken } from "../../middleware/auth";
 import { checkValidation } from "../../middleware/validation";
 import { Mountain } from "../../model/Mountain";
 
 import { mountainModelToApi } from "./mountain_api_model";
 
-const DEFAULT_NEARBY_RADIUS = 30000; // m
+const DEFAULT_NEARBY_MOUNTAINS_RADIUS = 30000; // m
 
 export class MountainRoutes {
   router: express.Router;
@@ -41,10 +42,15 @@ export class MountainRoutes {
       maybeVerifyIdToken,
       this.getMountain.bind(this)
     );
+    // Mountains are returned in alphabetical order, unless an option overrides
+    // that.
+    //
+    // alongPath: only returns mountains near enough to the path, should valid
+    //            geoJSON.
     this.router.get(
       "/mountains",
-      // TODO: Write a custom validator for this.
-      query("bounding_box").optional().isString(),
+      // TODO: Validate that this is geoJSON.
+      body("alongPath").optional().isObject(),
       checkValidation,
       this.getMountains.bind(this)
     );
@@ -91,7 +97,7 @@ export class MountainRoutes {
     if (req.query.includeNearby != null && req.query.nearbyRadius !== "false") {
       const nearbyRadius =
         req.query.includeNearby === "true"
-          ? DEFAULT_NEARBY_RADIUS
+          ? DEFAULT_NEARBY_MOUNTAINS_RADIUS
           : Number(req.query.includeNearby);
 
       const nearbyQuery = this.#db
@@ -124,10 +130,23 @@ export class MountainRoutes {
     });
   }
 
-  async getMountains(_req: express.Request, res: express.Response) {
-    const mountains = await this.#db
+  async getMountains(req: express.Request, res: express.Response) {
+    const query = this.#db
       .getRepository(Mountain)
-      .find({ select: ["id", "name", "location", "timeZone"] });
+      .createQueryBuilder("mountain")
+      .orderBy("mountain.name", "ASC");
+
+    if (req.body.alongPath != null) {
+      query.andWhere(
+        "ST_DWithin(mountain.location, ST_GeomFromGeoJSON(:alongPath), :threshold)",
+        {
+          alongPath: req.body.alongPath,
+          threshold: SUMMIT_PATH_PROXIMITY_THRESHOLD_M,
+        }
+      );
+    }
+
+    const mountains = await query.getMany();
     res.json({ data: mountains.map(mountainModelToApi) });
   }
 }
