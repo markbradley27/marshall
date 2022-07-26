@@ -1,0 +1,3 @@
+export const API_PAGE_SIZE = 20;
+
+export const SUMMIT_PATH_PROXIMITY_THRESHOLD_M = 50;

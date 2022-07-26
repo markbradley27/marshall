@@ -3,6 +3,7 @@ import { param, query } from "express-validator";
 import { DateTime } from "luxon";
 import { DataSource, FindOneOptions } from "typeorm";
 
+import { API_PAGE_SIZE } from "../../consts";
 import { maybeVerifyIdToken, verifyIdToken } from "../../middleware/auth";
 import { checkValidation } from "../../middleware/validation";
 import { Ascent } from "../../model/Ascent";
@@ -10,8 +11,6 @@ import { Mountain } from "../../model/Mountain";
 import { PrivacySetting } from "../../model/privacy_setting";
 
 import { ascentModelToApi } from "./ascent_api_model";
-
-const PAGE_SIZE = 20;
 
 export class AscentRoutes {
   router: express.Router;
@@ -98,8 +97,8 @@ export class AscentRoutes {
     const ascentsQuery = this.#db
       .getRepository(Ascent)
       .createQueryBuilder("ascent")
-      .take(PAGE_SIZE)
-      .skip(page * PAGE_SIZE)
+      .take(API_PAGE_SIZE)
+      .skip(page * API_PAGE_SIZE)
       .orderBy({ "ascent.date": "DESC", "ascent.time": "DESC" });
 
     if (req.uid) {

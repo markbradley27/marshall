@@ -5,6 +5,8 @@ import {
   Raw,
 } from "typeorm";
 
+import { SUMMIT_PATH_PROXIMITY_THRESHOLD_M } from "../consts";
+
 import { Activity } from "./Activity";
 import { Ascent } from "./Ascent";
 import { Mountain } from "./Mountain";
@@ -23,8 +25,11 @@ export class AscentCreatorSubscriber
       where: {
         location: Raw(
           (location) =>
-            `ST_DWithin(${location}, ST_GeomFromGeoJSON(:path), 50)`,
-          { path: event.entity.path }
+            `ST_DWithin(${location}, ST_GeomFromGeoJSON(:path), :threshold)`,
+          {
+            path: event.entity.path,
+            threshold: SUMMIT_PATH_PROXIMITY_THRESHOLD_M,
+          }
         ),
       },
     });
