@@ -7,6 +7,7 @@ import Mountain from "components/Mountain";
 import MountainBrowser from "components/MountainBrowser";
 import PageFrame from "components/PageFrame";
 import SignUp from "components/SignUp";
+import AddActivity from "components/pages/add_activity/AddActivity";
 import AddAscent from "components/pages/add_ascent/AddAscent";
 import Settings from "components/pages/settings/Settings";
 import { useAuth } from "contexts/auth";
@@ -49,6 +50,13 @@ function App() {
           </Route>
           <Route path="/add_ascent">
             {auth.users?.fb == null ? <Redirect to="/login" /> : <AddAscent />}
+          </Route>
+          <Route path="/add_activity">
+            {auth.users?.fb == null ? (
+              <Redirect to="/login" />
+            ) : (
+              <AddActivity />
+            )}
           </Route>
         </Switch>
       </PageFrame>
