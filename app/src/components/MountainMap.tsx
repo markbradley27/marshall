@@ -1,5 +1,6 @@
 import { GoogleMap, MarkerClusterer } from "@react-google-maps/api";
 import { MountainState } from "api/mountain_endpoints";
+import { geoJsonToCoords } from "api/util";
 import { useCallback, useState } from "react";
 
 import MountainMarker from "./MountainMarker";
@@ -40,12 +41,18 @@ export default function MountainMap(props: MountainMapProps) {
         streetViewControl: false,
         mapTypeId: google.maps.MapTypeId.TERRAIN,
       }}
-      center={props.primary?.coords || { lat: 0, lng: 0 }}
+      center={
+        props.primary != null
+          ? geoJsonToCoords(props.primary.location)
+          : { lat: 0, lng: 0 }
+      }
       zoom={props.zoom != null ? props.zoom : 12}
       onLoad={onLoad}
       onUnmount={onUnmount}
     >
-      {props.primary && <MountainMarker coords={props.primary.coords} />}
+      {props.primary && (
+        <MountainMarker coords={geoJsonToCoords(props.primary.location)} />
+      )}
       {props.secondaries && (
         <MarkerClusterer>
           {(clusterer) => {
@@ -53,7 +60,7 @@ export default function MountainMap(props: MountainMapProps) {
               return (
                 <MountainMarker
                   key={secondary.id}
-                  coords={secondary.coords}
+                  coords={geoJsonToCoords(secondary.location)}
                   //state={MountainUiState.SECONDARY}
                   clusterer={clusterer}
                 />

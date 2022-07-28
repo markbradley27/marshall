@@ -3,7 +3,6 @@ import { fetchMountains, MountainState } from "api/mountain_endpoints";
 import { InvalidTooltip } from "components/shared/InvalidTooltip";
 import { useAuth } from "contexts/auth";
 import { Formik } from "formik";
-import useGoogleMaps from "hooks/loadGoogleMaps";
 import { DateTime } from "luxon";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Alert, Button, Form, Stack } from "react-bootstrap";
@@ -25,16 +24,12 @@ export default function AddAscentForm(props: AddAscentFormProps) {
   const dateControl = useRef<HTMLInputElement>(null);
   const timeControl = useRef<HTMLInputElement>(null);
 
-  const googleMapsLoaded = useGoogleMaps();
-
   useEffect(() => {
     async function fetchData() {
       setMountains(await fetchMountains());
     }
-    if (googleMapsLoaded) {
-      fetchData();
-    }
-  }, [googleMapsLoaded]);
+    fetchData();
+  }, []);
 
   const validate = useCallback((values) => {
     const errors = {} as any;

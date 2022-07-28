@@ -1,12 +1,13 @@
 import { ascentApiToState, AscentState } from "api/ascent_endpoints";
 import { apiFetch, BASE_URL } from "api/common";
+import { Point } from "geojson";
 
 interface MountainState {
   id: number;
   source?: string;
   sourceId?: string;
   name: string;
-  coords: google.maps.LatLng;
+  location: Point;
   timeZone: string;
   wikipediaLink?: string;
   abstract?: string;
@@ -23,10 +24,7 @@ function mountainApiToState(apiMountain: any): MountainState {
     source: apiMountain.source,
     sourceId: apiMountain.sourceId,
     name: apiMountain.name,
-    coords: new google.maps.LatLng({
-      lat: apiMountain.location.coordinates[1],
-      lng: apiMountain.location.coordinates[0],
-    }),
+    location: apiMountain.location,
     timeZone: apiMountain.timeZone,
     wikipediaLink: apiMountain.wikipediaLink,
     abstract: apiMountain.abstract,
