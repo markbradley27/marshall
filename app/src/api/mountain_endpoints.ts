@@ -53,14 +53,8 @@ async function fetchMountain(id: number, options?: FetchMountainOptions) {
   return mountainApiToState(mountainJson);
 }
 
-interface FetchMountainsOptions {
-  boundingBox?: string;
-}
-async function fetchMountains(options?: FetchMountainsOptions) {
+async function fetchMountains() {
   const url = new URL("mountains", BASE_URL);
-  if (options?.boundingBox != null) {
-    url.searchParams.set("bounding_box", options.boundingBox);
-  }
   const mountainsJson = await apiFetch(url);
   return mountainsJson.map(mountainApiToState);
 }

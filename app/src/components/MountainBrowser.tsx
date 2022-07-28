@@ -12,7 +12,7 @@ export default function MountainBrowser() {
   const googleMapsLoaded = useGoogleMaps();
 
   const refreshMountains = useCallback(async () => {
-    const mountains = await fetchMountains({});
+    const mountains = await fetchMountains();
     setMountains(mountains);
   }, []);
 
