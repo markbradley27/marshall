@@ -44,10 +44,10 @@ export class MountainRoutes {
     );
     // Mountains are returned in alphabetical order, unless an option overrides
     // that.
-    //
+    this.router.get("/mountains", this.getMountains.bind(this));
     // alongPath: only returns mountains near enough to the path, should valid
     //            geoJSON.
-    this.router.get(
+    this.router.post(
       "/mountains",
       // TODO: Validate that this is geoJSON.
       body("alongPath").optional().isObject(),
