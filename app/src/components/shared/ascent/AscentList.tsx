@@ -11,8 +11,11 @@ interface AscentListProps {
   count: number;
   fetchMoreAscents: (min: number, max: number) => void;
   pageLength: number;
+  emptyPlaceholder?: string;
 }
 export default function AscentList(props: AscentListProps) {
+  const { emptyPlaceholder = "Ascents list is empty." } = props;
+
   const [page, setPage] = useState(0);
 
   useEffect(() => {
@@ -36,7 +39,7 @@ export default function AscentList(props: AscentListProps) {
 
   return (
     <Stack gap={3}>
-      <ListGroup as={Row}>
+      <ListGroup>
         {props.ascents != null ? (
           props.ascents.length > 0 ? (
             props.ascents
@@ -49,12 +52,12 @@ export default function AscentList(props: AscentListProps) {
                 );
               })
           ) : (
-            <ListGroup.Item as={Row} className={"text-center text-muted"}>
-              No ascents yet, get out there!
+            <ListGroup.Item className={"text-center"} disabled>
+              {emptyPlaceholder}
             </ListGroup.Item>
           )
         ) : (
-          <ListGroup.Item as={Row} className={"text-center text-muted"}>
+          <ListGroup.Item className={"text-center"} disabled>
             <Spinner animation="border">
               <span className="visually-hidden">Loading...</span>
             </Spinner>

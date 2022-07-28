@@ -75,6 +75,7 @@ export default function RecentAscents() {
     <AscentList
       ascents={ascentsState?.ascents || null}
       count={ascentsState?.count || 0}
+      emptyPlaceholder="No ascents yet, get out there!"
       fetchMoreAscents={fetchMoreAscents}
       pageLength={5}
     />
