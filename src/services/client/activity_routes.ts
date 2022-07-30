@@ -5,8 +5,16 @@ import { DataSource } from "typeorm";
 
 import { verifyIdToken } from "../../middleware/auth";
 import { checkValidation } from "../../middleware/validation";
-import { Activity } from "../../model/Activity";
+import { Activity, ActivitySource } from "../../model/Activity";
 import { Ascent } from "../../model/Ascent";
+import { PrivacySetting } from "../../model/privacy_setting";
+import {
+  isArrayOfNumbers,
+  isIsoDate,
+  isIsoTime,
+  isLineStringGeometry,
+  isTimeZone,
+} from "../../validators";
 
 import { activityModelToApi } from "./activity_api_model";
 
@@ -34,15 +42,15 @@ export class ActivityRoutes {
     );
     this.router.post(
       "/activity",
-      body("privacy").isString(),
-      body("source").isString(),
-      body("name").isString(),
-      body("date").isString(),
-      body("time").optional().isString(),
-      body("timeZone").isString(),
-      body("path").optional().isObject(),
+      body("privacy").isIn(Object.values(PrivacySetting)),
+      body("source").isIn(Object.values(ActivitySource)),
+      body("name").isString().notEmpty(),
+      body("date").custom(isIsoDate),
+      body("time").optional().custom(isIsoTime),
+      body("timeZone").custom(isTimeZone),
+      body("path").optional().custom(isLineStringGeometry),
       body("description").optional().isString(),
-      body("ascendedMountainIds").isArray(),
+      body("ascendedMountainIds").custom(isArrayOfNumbers),
       checkValidation,
       verifyIdToken,
       this.postActivity.bind(this)

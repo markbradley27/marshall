@@ -63,9 +63,11 @@
     "multer": "^1.4.5-lts.1",
     "pg": "^8.7.1",
     "prettier": "^2.4.1",
+    "pure-geojson-validation": "^0.3.0",
     "togeojson": "^0.16.0",
     "tslog": "^3.2.2",
     "typeorm": "^0.3.7",
+    "validator.js": "^2.0.4",
     "xmldom": "^0.6.0"
   },
   "eslintConfig": {
