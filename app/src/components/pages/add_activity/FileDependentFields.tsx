@@ -2,6 +2,7 @@ import { gpx as gpxToGeoJson } from "@tmcw/togeojson";
 import { fetchMountains, MountainState } from "api/mountain_endpoints";
 import { InvalidTooltip } from "components/shared/InvalidTooltip";
 import { FormikContextType, useFormikContext } from "formik";
+import { LineString } from "geojson";
 import { DateTime } from "luxon";
 import { useEffect, useRef } from "react";
 import { Form, Stack } from "react-bootstrap";
@@ -9,10 +10,12 @@ import { Form, Stack } from "react-bootstrap";
 import { Values } from "./FormikValues";
 
 interface FileDependentFieldsProps {
+  setPath: (path: LineString) => void;
   suggestMountains: (suggested: MountainState[]) => void;
 }
 export default function FileDependentFields(props: FileDependentFieldsProps) {
-  const { suggestMountains } = props;
+  const { setPath, suggestMountains } = props;
+
   const {
     errors,
     getFieldProps,
@@ -49,6 +52,8 @@ export default function FileDependentFields(props: FileDependentFieldsProps) {
           continue;
         }
 
+        setPath(feature.geometry);
+
         if (feature.properties?.name) {
           setFieldValue("name", feature.properties?.name);
         }
@@ -66,7 +71,7 @@ export default function FileDependentFields(props: FileDependentFieldsProps) {
       }
     };
     gpxFr.readAsText(values.file);
-  }, [suggestMountains, setFieldValue, values.file]);
+  }, [setFieldValue, setPath, suggestMountains, values.file]);
 
   return (
     <>

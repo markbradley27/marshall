@@ -1,5 +1,6 @@
 import { ascentApiToState, AscentState } from "api/ascent_endpoints";
-import { apiFetch, BASE_URL } from "api/common";
+import { apiFetch, apiPostJson, BASE_URL } from "api/common";
+import { LineString } from "geojson";
 import toBBox from "geojson-bounding-box";
 
 interface ActivityState {
@@ -91,5 +92,35 @@ async function fetchActivity(id: number, options?: FetchActivityOptions) {
   return fetchActivities(pluralOptions);
 }
 
+interface PostActivityOptions {
+  idToken: string;
+  privacy: string;
+  name: string;
+  date: string;
+  time?: string;
+  timeZone: string;
+  path?: LineString;
+  description?: string;
+  ascendedMountainIds: number[];
+}
+async function postActivity(options: PostActivityOptions) {
+  const url = new URL("activity", BASE_URL);
+  return await apiPostJson(
+    url,
+    {
+      privacy: options.privacy,
+      source: "WEB_APP_UPLOAD",
+      name: options.name,
+      date: options.date,
+      time: options.time,
+      timeZone: options.timeZone,
+      path: options.path,
+      description: options.description,
+      ascendedMountainIds: options.ascendedMountainIds,
+    },
+    options.idToken
+  );
+}
+
 export type { ActivityState };
-export { activityApiToState, fetchActivities, fetchActivity };
+export { activityApiToState, fetchActivities, fetchActivity, postActivity };
