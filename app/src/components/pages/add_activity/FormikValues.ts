@@ -4,4 +4,5 @@ export interface Values {
   date: string;
   time: string;
   privacy: string;
+  description: string;
 }

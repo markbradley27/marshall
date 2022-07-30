@@ -1,4 +1,5 @@
 import { gpx as gpxToGeoJson } from "@tmcw/togeojson";
+import { fetchMountains, MountainState } from "api/mountain_endpoints";
 import { InvalidTooltip } from "components/shared/InvalidTooltip";
 import { FormikContextType, useFormikContext } from "formik";
 import { DateTime } from "luxon";
@@ -7,7 +8,11 @@ import { Form, Stack } from "react-bootstrap";
 
 import { Values } from "./FormikValues";
 
-export default function FileDependentFields() {
+interface FileDependentFieldsProps {
+  suggestMountains: (suggested: MountainState[]) => void;
+}
+export default function FileDependentFields(props: FileDependentFieldsProps) {
+  const { suggestMountains } = props;
   const {
     errors,
     getFieldProps,
@@ -26,31 +31,42 @@ export default function FileDependentFields() {
     }
 
     const gpxFr = new FileReader();
-    gpxFr.onload = () => {
+    gpxFr.onload = async () => {
       const geoJson = gpxToGeoJson(
         new DOMParser().parseFromString(gpxFr.result as string, "text/xml")
       );
-      // TODO: This might be too brittle, need to see what gpx format supports.
-      if (geoJson.features.length !== 1) {
-        console.error(
-          `unexpected number of features: ${geoJson.features.length}`
-        );
+
+      if (geoJson.features.length === 0) {
+        console.warn("No geoJson features found.");
         return;
       }
-
-      const feature = geoJson.features[0];
-      if (feature.properties?.name) {
-        setFieldValue("name", feature.properties?.name);
+      if (geoJson.features.length > 1) {
+        console.warn("More than one geoJson feature found.");
       }
-      if (feature.properties?.time) {
-        // TODO: Handle timezone.
-        const dateTime = DateTime.fromISO(feature.properties.time);
-        setFieldValue("date", dateTime.toFormat("yyyy-MM-dd"));
-        setFieldValue("time", dateTime.toFormat("HH:mm"));
+
+      for (const feature of geoJson.features) {
+        if (feature.geometry.type !== "LineString") {
+          continue;
+        }
+
+        if (feature.properties?.name) {
+          setFieldValue("name", feature.properties?.name);
+        }
+        if (feature.properties?.time) {
+          // TODO: Handle timezone.
+          const dateTime = DateTime.fromISO(feature.properties.time);
+          setFieldValue("date", dateTime.toFormat("yyyy-MM-dd"));
+          setFieldValue("time", dateTime.toFormat("HH:mm"));
+        }
+
+        const mountainsAlongPath = await fetchMountains({
+          alongPath: feature.geometry,
+        });
+        suggestMountains(mountainsAlongPath);
       }
     };
     gpxFr.readAsText(values.file);
-  }, [setFieldValue, values.file]);
+  }, [suggestMountains, setFieldValue, values.file]);
 
   return (
     <>

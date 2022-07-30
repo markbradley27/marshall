@@ -1,6 +1,6 @@
 import { Row } from "react-bootstrap";
 
-import AddActivityForm from "./Form";
+import AddActivityForm from "./AddActivityForm";
 
 export default function AddActivity() {
   return (
