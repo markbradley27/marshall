@@ -44,7 +44,7 @@ export class GpxRoutes {
 
     this.#db.getRepository(Activity).create({
       user: { id: req.uid },
-      source: ActivitySource.gpx,
+      source: ActivitySource.GPX,
       name: geoJson.features[0].properties.name,
       date: geoJson.features[0].properties.time,
       path: geoJson.features[0].geometry,

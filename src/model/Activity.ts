@@ -14,9 +14,9 @@ import { User } from "./User";
 import { PrivacySetting } from "./privacy_setting";
 
 export enum ActivitySource {
-  strava = "strava",
+  STRAVA = "STRAVA",
   // TODO: Remove this.
-  gpx = "gpx",
+  GPX = "GPX",
 }
 
 @Entity()

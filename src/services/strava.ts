@@ -207,7 +207,7 @@ class StravaService {
 
     const dbActivity = new Activity();
     dbActivity.user = user;
-    dbActivity.source = ActivitySource.strava;
+    dbActivity.source = ActivitySource.STRAVA;
     dbActivity.sourceId = activity.id.toString();
     dbActivity.sourceUserId = activity.athlete.id.toString();
     dbActivity.name = activity.name;
@@ -379,7 +379,7 @@ class StravaService {
 
     await this.#db.getRepository(Activity).delete({
       userId: user.id,
-      source: ActivitySource.strava,
+      source: ActivitySource.STRAVA,
       sourceUserId: user.stravaAthleteId.toString(),
     });
 
@@ -429,7 +429,7 @@ class StravaService {
       } else {
         const activity = await activityRepo.findOne({
           where: {
-            source: ActivitySource.strava,
+            source: ActivitySource.STRAVA,
             sourceId: req.params.activityId.toString(),
           },
         });
@@ -498,7 +498,7 @@ class StravaService {
       } else if (event.aspect_type === "delete") {
         logger.info(`Deleting activity; id: ${event.object_id}`);
         await this.#db.getRepository(Activity).delete({
-          source: ActivitySource.strava,
+          source: ActivitySource.STRAVA,
           sourceId: event.object_id.toString(),
         });
       }
