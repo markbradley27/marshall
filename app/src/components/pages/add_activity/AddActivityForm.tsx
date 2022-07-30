@@ -148,6 +148,7 @@ export default function AddActivityForm() {
               <Form.Group>
                 <Form.Label>Track file</Form.Label>
                 <Form.Control
+                  disabled={isSubmitting}
                   isInvalid={touched.file && errors.file != null}
                   name="file"
                   onBlur={handleBlur}
@@ -174,13 +175,17 @@ export default function AddActivityForm() {
                 <Form.Label>
                   Description <span className="text-muted">(optional)</span>
                 </Form.Label>
-                <Form.Control as="textarea" {...getFieldProps("description")} />
+                <Form.Control
+                  as="textarea"
+                  disabled={isSubmitting}
+                  {...getFieldProps("description")}
+                />
               </Form.Group>
               <Form.Group>
                 <Form.Label>Ascents</Form.Label>
                 <Stack gap={3}>
                   <Typeahead
-                    disabled={mountains.length === 0}
+                    disabled={mountains.length === 0 || isSubmitting}
                     id="mountain"
                     labelKey="name"
                     onChange={(selected) => {

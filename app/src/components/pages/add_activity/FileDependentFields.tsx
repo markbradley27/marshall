@@ -19,6 +19,7 @@ export default function FileDependentFields(props: FileDependentFieldsProps) {
   const {
     errors,
     getFieldProps,
+    isSubmitting,
     setFieldValue,
     touched,
     values,
@@ -78,6 +79,7 @@ export default function FileDependentFields(props: FileDependentFieldsProps) {
       <Form.Group>
         <Form.Label>Name</Form.Label>
         <Form.Control
+          disabled={isSubmitting}
           isInvalid={touched.name && errors.name != null}
           ref={nameControl}
           type="text"
@@ -93,6 +95,7 @@ export default function FileDependentFields(props: FileDependentFieldsProps) {
         <Form.Group className="position-relative" controlId="date">
           <Form.Label>Date</Form.Label>
           <Form.Control
+            disabled={isSubmitting}
             isInvalid={touched.date && errors.date != null}
             ref={dateControl}
             type="date"
@@ -109,6 +112,7 @@ export default function FileDependentFields(props: FileDependentFieldsProps) {
             Time <span className="text-muted">(optional)</span>
           </Form.Label>
           <Form.Control
+            disabled={isSubmitting}
             isInvalid={touched.time && errors.time != null}
             ref={timeControl}
             type="time"
@@ -122,7 +126,7 @@ export default function FileDependentFields(props: FileDependentFieldsProps) {
         </Form.Group>
         <Form.Group>
           <Form.Label>Visibility</Form.Label>
-          <Form.Select {...getFieldProps("privacy")}>
+          <Form.Select disabled={isSubmitting} {...getFieldProps("privacy")}>
             <option value="PUBLIC">Public</option>
             <option value="FOLLOWERS_ONLY">Followers Only</option>
             <option value="PRIVATE">Private</option>

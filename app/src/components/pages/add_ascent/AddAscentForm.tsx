@@ -129,7 +129,7 @@ export default function AddAscentForm(props: AddAscentFormProps) {
                 <Form.Label>Mountain</Form.Label>
                 <span ref={mountainTypeaheadWrapper}>
                   <Typeahead
-                    disabled={mountains.length === 0}
+                    disabled={mountains.length === 0 || isSubmitting}
                     id="mountain"
                     isInvalid={
                       !typeaheadFocused &&
@@ -173,6 +173,7 @@ export default function AddAscentForm(props: AddAscentFormProps) {
                 <Form.Group className="position-relative" controlId="date">
                   <Form.Label>Date</Form.Label>
                   <Form.Control
+                    disabled={isSubmitting}
                     isInvalid={touched.date && errors.date != null}
                     ref={dateControl}
                     type="date"
@@ -191,6 +192,7 @@ export default function AddAscentForm(props: AddAscentFormProps) {
                     Time <span className="text-muted">(optional)</span>
                   </Form.Label>
                   <Form.Control
+                    disabled={isSubmitting}
                     isInvalid={touched.time && errors.time != null}
                     ref={timeControl}
                     type="time"
@@ -206,7 +208,10 @@ export default function AddAscentForm(props: AddAscentFormProps) {
                 </Form.Group>
                 <Form.Group>
                   <Form.Label>Visibility</Form.Label>
-                  <Form.Select {...getFieldProps("privacy")}>
+                  <Form.Select
+                    disabled={isSubmitting}
+                    {...getFieldProps("privacy")}
+                  >
                     <option value="PUBLIC">Public</option>
                     <option value="FOLLOWERS_ONLY">Followers Only</option>
                     <option value="PRIVATE">Private</option>
