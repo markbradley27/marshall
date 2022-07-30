@@ -1,8 +1,8 @@
 import { Command } from "commander";
 import dotenv from "dotenv";
-import { ConnectionOptions } from "typeorm";
+import { PostgresConnectionOptions } from "typeorm/driver/postgres/PostgresConnectionOptions";
 
-import { createConnection } from "../src/model/connection";
+import { connectToDb } from "../src/model/connection";
 
 dotenv.config();
 
@@ -16,10 +16,10 @@ async function main() {
   const options = program.opts();
 
   if (options.sync) {
-    await createConnection({
+    await connectToDb({
       synchronize: true,
       installExtensions: true,
-    } as ConnectionOptions);
+    } as PostgresConnectionOptions);
   }
 }
 

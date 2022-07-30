@@ -1,5 +1,6 @@
 import dotenv from "dotenv";
-import { DataSource, DataSourceOptions } from "typeorm";
+import { DataSource } from "typeorm";
+import { PostgresConnectionOptions } from "typeorm/driver/postgres/PostgresConnectionOptions";
 
 dotenv.config();
 
@@ -10,7 +11,7 @@ import { List } from "./List";
 import { Mountain } from "./Mountain";
 import { User } from "./User";
 
-const BASE_CONFIG: DataSourceOptions = {
+const BASE_CONFIG: PostgresConnectionOptions = {
   type: "postgres",
   entities: [Activity, Ascent, List, Mountain, User],
   subscribers: [AscentCreatorSubscriber],
@@ -22,8 +23,8 @@ const BASE_CONFIG: DataSourceOptions = {
   database: process.env.PG_DATABASE,
 };
 
-export async function connectToDb() {
-  const db = new DataSource(BASE_CONFIG);
+export async function connectToDb(options: PostgresConnectionOptions) {
+  const db = new DataSource({ ...BASE_CONFIG, ...options });
   await db.initialize();
   return db;
 }
