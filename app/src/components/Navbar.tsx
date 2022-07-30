@@ -11,7 +11,7 @@ function Navbar() {
   const location = useLocation();
 
   return (
-    <BsNavbar className="mb-3 bg-light">
+    <BsNavbar className="bg-light">
       <Container>
         <BsNavbar.Brand href="/">
           <Image src="/graphics/logo_full.svg" />

@@ -7,20 +7,33 @@ import SidebarAd from "./SidebarAd";
 
 export default function PageFrame(props: PropsWithChildren<{}>) {
   return (
-    <Container>
-      <Navbar />
-      <Row>
-        <Col md={{ span: 2, order: 1 }} xs={{ order: 2 }}>
-          <Sidebar />
-        </Col>
-        <Col md={{ span: 8, order: 2 }} xs={{ order: 3 }}>
-          {props.children}
-        </Col>
-        {/* TODO: Handle narrow windows better.*/}
-        <Col md={{ span: 2, order: 3 }} xs={{ order: 1 }}>
-          <SidebarAd />
-        </Col>
-      </Row>
-    </Container>
+    <>
+      <header>
+        <Navbar />
+      </header>
+      <main className="flex-shrink-0 my-3">
+        <Container>
+          <Row>
+            <Col md={{ span: 2, order: 1 }} xs={{ order: 2 }}>
+              <Sidebar />
+            </Col>
+            <Col md={{ span: 8, order: 2 }} xs={{ order: 3 }}>
+              {props.children}
+            </Col>
+            {/* TODO: Handle narrow windows better.*/}
+            <Col md={{ span: 2, order: 3 }} xs={{ order: 1 }}>
+              <SidebarAd />
+            </Col>
+          </Row>
+        </Container>
+      </main>
+      <footer className="footer mt-auto py-3 bg-light">
+        <Container>
+          <span className="text-muted">
+            Beyond mountains, there are mountains.
+          </span>
+        </Container>
+      </footer>
+    </>
   );
 }
