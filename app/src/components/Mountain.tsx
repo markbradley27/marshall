@@ -1,6 +1,6 @@
 import { fetchMountain, MountainState } from "api/mountain_endpoints";
-import MountainList from "components/MountainList";
 import MountainMap from "components/MountainMap";
+import MountainList from "components/shared/mountain/MountainList";
 import { useAuth } from "contexts/auth";
 import useGoogleMaps from "hooks/loadGoogleMaps";
 import { useEffect, useState } from "react";
@@ -46,7 +46,10 @@ function Mountain(props: MountainProps) {
           </h2>
           {mountain.abstract && <p>{mountain.abstract}</p>}
           {mountain.nearby && (
-            <MountainList title="Nearby peaks:" mountains={mountain.nearby} />
+            <>
+              <h3>Nearby peaks:</h3>
+              <MountainList mountains={mountain.nearby} />
+            </>
           )}
           {/*
           {mountain.ascents && <AscentList ascents={mountain.ascents} />}
