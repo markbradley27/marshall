@@ -21,7 +21,7 @@ const BASE_CONFIG: PostgresConnectionOptions = {
   database: process.env.PG_DATABASE,
 };
 
-export async function connectToDb(options: PostgresConnectionOptions) {
+export async function connectToDb(options?: PostgresConnectionOptions) {
   const db = new DataSource({ ...BASE_CONFIG, ...options });
   await db.initialize();
   return db;
