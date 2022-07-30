@@ -14,6 +14,7 @@ import { User } from "./User";
 import { PrivacySetting } from "./privacy_setting";
 
 export enum ActivitySource {
+  WEB_APP_UPLOAD = "WEB_APP_UPLOAD",
   STRAVA = "STRAVA",
   // TODO: Remove this.
   GPX = "GPX",
@@ -51,15 +52,18 @@ export class Activity {
   @Column()
   name: string;
 
-  @Column()
-  date: Date;
+  @Column("date")
+  date: string;
+
+  @Column({ nullable: true, type: "time" })
+  time: string;
 
   @Column()
   timeZone: string;
 
   @Column({
     nullable: true,
-    spatialFeatureType: "LineString",
+    spatialFeatureType: "LineStringZ",
     type: "geography",
   })
   path: LineString;

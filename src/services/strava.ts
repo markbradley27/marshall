@@ -211,7 +211,9 @@ class StravaService {
     dbActivity.sourceId = activity.id.toString();
     dbActivity.sourceUserId = activity.athlete.id.toString();
     dbActivity.name = activity.name;
-    dbActivity.date = new Date(activity.start_date);
+    // TODO: This is broken, eventually need to handle date, time, and timezone
+    // correctly.
+    dbActivity.date = activity.start_date;
     dbActivity.path = pathJson;
     this.#db.getRepository(Activity).save(dbActivity);
   }
