@@ -15,6 +15,7 @@ import { PrivacySetting } from "./privacy_setting";
 
 export enum ActivitySource {
   strava = "strava",
+  // TODO: Remove this.
   gpx = "gpx",
 }
 
@@ -25,9 +26,9 @@ export class Activity {
   id: number;
 
   @Column({
-    type: "enum",
-    enum: PrivacySetting,
     default: PrivacySetting.PRIVATE,
+    enum: PrivacySetting,
+    type: "enum",
   })
   privacy: PrivacySetting;
 
@@ -37,6 +38,13 @@ export class Activity {
   @Column({ nullable: true })
   sourceId: string;
 
+  // Used for de-auth of 3rd party services. If a user:
+  // * Auths with a 3rd party account
+  // * De-auths but keeps synced activities
+  // * Auths with a different 3rd party account from the same services
+  // * De-auths and chooses to delete synced activities
+  // this makes sure the activities synced from the first account don't also get
+  // deleted.
   @Column({ nullable: true })
   sourceUserId: string;
 
@@ -50,8 +58,9 @@ export class Activity {
   timeZone: string;
 
   @Column({
-    type: "geography",
+    nullable: true,
     spatialFeatureType: "LineString",
+    type: "geography",
   })
   path: LineString;
 
