@@ -149,6 +149,7 @@ export default function AddActivityForm() {
                       namesAreLinks={false}
                       removeMountain={removeSuggested}
                       confirmMountain={confirmSuggested}
+                      mountainVariant={() => "warning"}
                     />
                   </>
                 )}

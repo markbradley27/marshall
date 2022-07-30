@@ -5,10 +5,11 @@ import MountainListItem from "./MountainListItem";
 
 interface MountainListProps {
   mountains: MountainState[];
+  confirmMountain?: (mountain: MountainState) => void;
   emptyPlaceholder?: string;
+  mountainVariant?: (mountain: MountainState) => string;
   namesAreLinks?: boolean;
   removeMountain?: (mountain: MountainState) => void;
-  confirmMountain?: (mountain: MountainState) => void;
 }
 export default function MountainList(props: MountainListProps) {
   const { emptyPlaceholder = "Mountains list is empty." } = props;
@@ -21,6 +22,11 @@ export default function MountainList(props: MountainListProps) {
           <MountainListItem
             key={mountain.id}
             mountain={mountain}
+            variant={
+              props.mountainVariant != null
+                ? props.mountainVariant(mountain)
+                : undefined
+            }
             namesAreLinks={props.namesAreLinks}
             onConfirm={props.confirmMountain?.bind(null, mountain)}
             onRemove={props.removeMountain?.bind(null, mountain)}

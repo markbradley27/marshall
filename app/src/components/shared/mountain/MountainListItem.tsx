@@ -8,13 +8,14 @@ interface MountainListItemProps {
   namesAreLinks?: boolean;
   onConfirm?: () => void;
   onRemove?: () => void;
+  variant?: string;
 }
 
 export default function MountainListItem(props: MountainListItemProps) {
   const { namesAreLinks = true } = props;
 
   return (
-    <ListGroup.Item>
+    <ListGroup.Item variant={props.variant}>
       <Row>
         <Col>
           {namesAreLinks ? (
