@@ -6,7 +6,6 @@ dotenv.config();
 
 import { Activity } from "./Activity";
 import { Ascent } from "./Ascent";
-import { AscentCreatorSubscriber } from "./AscentCreatorSubscriber";
 import { List } from "./List";
 import { Mountain } from "./Mountain";
 import { User } from "./User";
@@ -14,7 +13,6 @@ import { User } from "./User";
 const BASE_CONFIG: PostgresConnectionOptions = {
   type: "postgres",
   entities: [Activity, Ascent, List, Mountain, User],
-  subscribers: [AscentCreatorSubscriber],
   logging: true,
   host: process.env.PG_HOST,
   port: Number(process.env.PG_PORT),
