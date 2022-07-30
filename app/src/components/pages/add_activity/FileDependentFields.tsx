@@ -100,7 +100,9 @@ export default function FileDependentFields(props: FileDependentFieldsProps) {
           />
         </Form.Group>
         <Form.Group>
-          <Form.Label>Time</Form.Label>
+          <Form.Label>
+            Time <span className="text-muted">(optional)</span>
+          </Form.Label>
           <Form.Control
             isInvalid={touched.time && errors.time != null}
             ref={timeControl}

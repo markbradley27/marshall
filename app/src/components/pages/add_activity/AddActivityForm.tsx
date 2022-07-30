@@ -119,7 +119,9 @@ export default function AddActivityForm() {
             </Form.Group>
             <FileDependentFields suggestMountains={setSuggested} />
             <Form.Group>
-              <Form.Label>Description</Form.Label>
+              <Form.Label>
+                Description <span className="text-muted">(optional)</span>
+              </Form.Label>
               <Form.Control as="textarea" {...getFieldProps("description")} />
             </Form.Group>
             <Form.Group>
