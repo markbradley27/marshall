@@ -1,21 +1,25 @@
 import express from "express";
-import { validationResult } from "express-validator";
-import { Logger } from "tslog";
+import { ValidationError, validationResult } from "express-validator";
 
-const logger: Logger = new Logger();
+import { ApiError } from "../error";
 
 export function checkValidation(
   req: express.Request,
-  res: express.Response,
+  _res: express.Response,
   next: express.NextFunction
 ) {
   try {
     validationResult(req).throw();
   } catch (error) {
-    logger.error(error);
-    res.status(400);
-    next(error);
-    return;
+    throw new ApiError(
+      400,
+      error.errors
+        .map(
+          (e: ValidationError) =>
+            `${e.param}: ${JSON.stringify(e.value)} is invalid`
+        )
+        .join("; ")
+    );
   }
   next();
 }

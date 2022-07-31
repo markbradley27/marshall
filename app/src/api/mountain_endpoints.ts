@@ -1,5 +1,5 @@
 import { ascentApiToState, AscentState } from "api/ascent_endpoints";
-import { apiFetch, apiPostJson, BASE_URL } from "api/common";
+import { apiFetchJson, apiPostJson, BASE_URL } from "api/common";
 import { LineString, Point } from "geojson";
 
 interface MountainState {
@@ -47,7 +47,7 @@ async function fetchMountain(id: number, options?: FetchMountainOptions) {
   if (options?.includeAscents) {
     url.searchParams.set("include_ascents", "true");
   }
-  const mountainJson = await apiFetch(url, options?.idToken);
+  const mountainJson = await apiFetchJson(url, options?.idToken);
   return mountainApiToState(mountainJson);
 }
 
@@ -60,7 +60,7 @@ async function fetchMountains(options?: FetchMountainsOptions) {
   if (options?.alongPath != null) {
     mountainsJson = await apiPostJson(url, { alongPath: options.alongPath });
   } else {
-    mountainsJson = await apiFetch(url);
+    mountainsJson = await apiFetchJson(url);
   }
   return mountainsJson.map(mountainApiToState);
 }

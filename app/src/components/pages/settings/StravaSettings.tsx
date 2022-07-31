@@ -1,4 +1,4 @@
-import { apiFetch } from "api/common";
+import { apiFetchJson } from "api/common";
 import { useAuth } from "contexts/auth";
 import { useCallback } from "react";
 import { Button, Image } from "react-bootstrap";
@@ -7,7 +7,7 @@ export default function StravaSettings() {
   const auth = useAuth();
 
   const deauthorizeStrava = useCallback(async () => {
-    await apiFetch(
+    await apiFetchJson(
       "/api/strava/deauthorize",
       await auth.users?.fb?.getIdToken()
     );

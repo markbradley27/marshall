@@ -1,5 +1,5 @@
 import { ascentApiToState, AscentState } from "api/ascent_endpoints";
-import { apiFetch, apiPostJson, BASE_URL } from "api/common";
+import { apiFetchJson, apiPostJson, BASE_URL } from "api/common";
 import { LineString } from "geojson";
 import toBBox from "geojson-bounding-box";
 
@@ -67,7 +67,7 @@ async function fetchActivities(options?: FetchActivitiesOptions) {
     url.searchParams.set("only_with_ascents", "true");
   }
 
-  const activitiesJson = await apiFetch(url, options?.idToken);
+  const activitiesJson = await apiFetchJson(url, options?.idToken);
 
   if (options?.activityId != null) {
     return activityApiToState(activitiesJson, {

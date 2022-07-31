@@ -2,6 +2,7 @@ import express from "express";
 import { param } from "express-validator";
 import { DataSource } from "typeorm";
 
+import { ApiError } from "../../error";
 import { maybeVerifyIdToken, verifyIdToken } from "../../middleware/auth";
 import { checkValidation } from "../../middleware/validation";
 import { List } from "../../model/List";
@@ -42,27 +43,29 @@ export class ListRoutes {
     );
   }
 
-  async getList(req: express.Request, res: express.Response) {
+  async getList(
+    req: express.Request,
+    res: express.Response,
+    next: express.NextFunction
+  ) {
     const list = await this.#db.getRepository(List).findOne({
       where: { id: Number(req.params.listId) },
       relations: ["mountains"],
     });
 
     if (list == null) {
-      res.sendStatus(404);
-      return;
+      return next(new ApiError(404, `list ${req.params.listId} not found`));
     }
     if (list.private && (req.uid == null || req.uid !== list.owner.id)) {
-      res.status(403).json({
-        error: {
-          code: 403,
-          message: "You don't have permission to view this list.",
-        },
-      });
-      return;
+      return next(
+        new ApiError(
+          403,
+          `insufficient permission to view list ${req.params.listId}`
+        )
+      );
     }
 
-    return res.json({ data: listModelToApi(list) });
+    return res.json(listModelToApi(list));
   }
 
   // TODO: Suggest user use identical (or similar?) public list instead.

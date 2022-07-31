@@ -1,4 +1,4 @@
-import { apiFetch, apiPostJson, BASE_URL } from "api/common";
+import { apiFetchJson, apiPostJson, BASE_URL } from "api/common";
 
 interface UserState {
   id: string;
@@ -32,7 +32,7 @@ interface FetchUserOptions {
 }
 async function fetchUser(id: string, options?: FetchUserOptions) {
   const url = new URL("user/" + id, BASE_URL);
-  const userJson = await apiFetch(url, options?.idToken);
+  const userJson = await apiFetchJson(url, options?.idToken);
   return userApiToState(userJson);
 }
 

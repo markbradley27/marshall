@@ -4,6 +4,7 @@ import { DateTime } from "luxon";
 import { DataSource, FindOneOptions } from "typeorm";
 
 import { API_PAGE_SIZE } from "../../consts";
+import { ApiError } from "../../error";
 import { maybeVerifyIdToken, verifyIdToken } from "../../middleware/auth";
 import { checkValidation } from "../../middleware/validation";
 import { Ascent } from "../../model/Ascent";
@@ -61,7 +62,11 @@ export class AscentRoutes {
   }
 
   // TODO: Support followers only.
-  async getAscent(req: express.Request, res: express.Response) {
+  async getAscent(
+    req: express.Request,
+    res: express.Response,
+    next: express.NextFunction
+  ) {
     const ascentId = Number(req.params.ascentId);
     const findOptions: FindOneOptions<Ascent> = {
       where: { id: ascentId },
@@ -75,19 +80,18 @@ export class AscentRoutes {
     const ascent = await this.#db.getRepository(Ascent).findOne(findOptions);
 
     if (!ascent) {
-      res.status(404).json({
-        error: `ascent ${req.params.ascentId} not found.`,
-      });
-      return;
+      return next(new ApiError(404, `ascent ${req.params.ascentId} not found`));
     }
     if (ascent.privacy !== PrivacySetting.PUBLIC && ascent.userId != req.uid) {
-      res.status(403).json({
-        error: `insufficient permission to view ascent ${req.params.ascentId}`,
-      });
-      return;
+      return next(
+        new ApiError(
+          403,
+          `insufficient permission to view ascent ${req.params.ascentId}`
+        )
+      );
     }
 
-    res.json({ data: ascentModelToApi(ascent) });
+    res.json(ascentModelToApi(ascent));
   }
 
   // TODO: Support FOLLOWERS_ONLY.
@@ -132,15 +136,17 @@ export class AscentRoutes {
     const [ascents, count] = await ascentsQuery.getManyAndCount();
 
     res.json({
-      data: {
-        ascents: ascents.map(ascentModelToApi),
-        count: count,
-        page: page,
-      },
+      ascents: ascents.map(ascentModelToApi),
+      count: count,
+      page: page,
     });
   }
 
-  async postAscent(req: express.Request, res: express.Response) {
+  async postAscent(
+    req: express.Request,
+    res: express.Response,
+    next: express.NextFunction
+  ) {
     const mountainId = Number(req.query.mountainId);
     const mountain: Mountain = await this.#db
       .getRepository(Mountain)
@@ -153,10 +159,9 @@ export class AscentRoutes {
     }
     const dateTime = DateTime.fromISO(dateTimeStr, { zone: timeZone });
     if (dateTime > DateTime.now()) {
-      res
-        .status(400)
-        .json({ error: "ascent date/time cannot be in the future" });
-      return;
+      return next(
+        new ApiError(400, "ascent date/time cannot be in the future")
+      );
     }
 
     const insertResult = await this.#db.getRepository(Ascent).insert({
@@ -168,6 +173,6 @@ export class AscentRoutes {
       mountain: { id: Number(req.query.mountainId) },
     });
     // Returns id of inserted ascent.
-    res.status(200).json({ data: { id: insertResult.identifiers[0].id } });
+    res.json({ id: insertResult.identifiers[0].id });
   }
 }

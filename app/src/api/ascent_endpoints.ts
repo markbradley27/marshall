@@ -1,5 +1,5 @@
 import { activityApiToState, ActivityState } from "api/activity_endpoints";
-import { apiFetch, apiPost, BASE_URL } from "api/common";
+import { apiFetchJson, apiPost, BASE_URL } from "api/common";
 import { mountainApiToState, MountainState } from "api/mountain_endpoints";
 
 interface AscentState {
@@ -47,7 +47,7 @@ async function fetchAscent(id: number, options?: FetchAscentOptions) {
   if (options?.includeMountain) {
     url.searchParams.set("includeMountain", "true");
   }
-  return await apiFetch(url, options?.idToken);
+  return await apiFetchJson(url, options?.idToken);
 }
 
 interface FetchAscentsOptions {
@@ -75,7 +75,7 @@ async function fetchAscents(options?: FetchAscentsOptions) {
   if (options?.page) {
     url.searchParams.set("page", options.page.toString());
   }
-  const data = await apiFetch(url, options?.idToken);
+  const data = await apiFetchJson(url, options?.idToken);
   return {
     ascents: data.ascents.map(ascentApiToState),
     count: data.count,

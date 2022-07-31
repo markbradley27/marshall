@@ -16,44 +16,38 @@ function buildAuthHeader(idToken?: string): any {
 }
 
 // Deserializes a JSON API response, if present.
-//
-// If the response doesn't have serializable JSON but the status is 200, returns
-// an empty object.
-//
-// If the response includes an error, it will be thrown.
-// Otherwise, the data portion of the response is returned.
 async function maybeParseJsonResponse(res: Response) {
-  let json: any;
   try {
-    json = await res.json();
+    return await res.json();
   } catch {
-    if (res.status === 200) {
-      return {};
-    } else {
-      const errorStr = `API Error (${res.status}): No JSON error context provided.`;
-      console.log(errorStr);
-      throw new Error(errorStr);
-    }
+    return {};
   }
-  if (json.error != null) {
-    const errorStr = `API Error ${res.status}): ${json.error}`;
-    console.log(errorStr);
-    throw new Error(errorStr);
-  }
-  return json.data;
 }
 
-// Fetches the given URL and returns the data response or throws an error.
-async function apiFetch(url: URL | string, idToken?: string) {
-  const res = await fetch(url.toString(), {
+// Internal fetch method all other methods should use to hit API endpoints.
+//
+// Throws an error if the response is ever not 200.
+async function apiFetch(url: URL | string, options?: any): Promise<Response> {
+  const res = await fetch(url.toString(), options);
+  if (res.status !== 200) {
+    throw new Error(`API fetch failed: ${res.status} ${res.statusText}`);
+  }
+  return res;
+}
+
+// Fetches the given URL and returns the JSON response.
+//
+// Throws error if response is not JSON.
+async function apiFetchJson(url: URL | string, idToken?: string) {
+  const res = await apiFetch(url.toString(), {
     headers: buildAuthHeader(idToken),
   });
-  return maybeParseJsonResponse(res);
+  return res.json();
 }
 
 // Fetches the given URL and returns an object URL pointing to the fetched blob.
 async function apiFetchBlob(url: URL | string) {
-  const res = await fetch(url.toString());
+  const res = await apiFetch(url.toString());
   if (res.status === 404) {
     return null;
   }
@@ -61,19 +55,19 @@ async function apiFetchBlob(url: URL | string) {
   return URL.createObjectURL(blob);
 }
 
-// Posts to the given URL and returns the data response or throws an error.
+// Posts to the given URL and returns the JSON data response if present.
 async function apiPost(url: URL | string, idToken?: string) {
-  const res = await fetch(url.toString(), {
+  const res = await apiFetch(url.toString(), {
     headers: buildAuthHeader(idToken),
     method: "POST",
   });
   return maybeParseJsonResponse(res);
 }
 
-// Posts the given JSON to the given URL and returns the data response or throws
-// an error.
+// Posts the given JSON to the given URL and returns the JSON data response if
+// present.
 async function apiPostJson(url: URL | string, data: any, idToken?: string) {
-  const res = await fetch(url.toString(), {
+  const res = await apiFetch(url.toString(), {
     headers: {
       ...buildAuthHeader(idToken),
       "content-type": "application/json",
@@ -84,8 +78,8 @@ async function apiPostJson(url: URL | string, data: any, idToken?: string) {
   return maybeParseJsonResponse(res);
 }
 
-// Puts the given blob to the given URL and returns the data response or throws
-// an error.
+// Puts the given blob to the given URL and returns the JSON data response if
+// present.
 async function apiPutBlob(
   url: URL | string,
   identifier: string,
@@ -94,7 +88,7 @@ async function apiPutBlob(
 ) {
   const formData = new FormData();
   formData.append(identifier, blob);
-  const res = await fetch(url.toString(), {
+  const res = await apiFetch(url.toString(), {
     headers: buildAuthHeader(idToken),
     method: "PUT",
     body: formData,
@@ -102,4 +96,11 @@ async function apiPutBlob(
   return maybeParseJsonResponse(res);
 }
 
-export { apiFetch, apiFetchBlob, apiPost, apiPostJson, apiPutBlob, BASE_URL };
+export {
+  apiFetchJson,
+  apiFetchBlob,
+  apiPost,
+  apiPostJson,
+  apiPutBlob,
+  BASE_URL,
+};

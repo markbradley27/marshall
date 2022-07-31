@@ -3,6 +3,7 @@ import { body, param, query } from "express-validator";
 import { DateTime } from "luxon";
 import { DataSource } from "typeorm";
 
+import { ApiError } from "../../error";
 import { verifyIdToken } from "../../middleware/auth";
 import { checkValidation } from "../../middleware/validation";
 import { Activity, ActivitySource } from "../../model/Activity";
@@ -57,7 +58,11 @@ export class ActivityRoutes {
     );
   }
 
-  async getActivities(req: express.Request, res: express.Response) {
+  async getActivities(
+    req: express.Request,
+    res: express.Response,
+    next: express.NextFunction
+  ) {
     const activityRepo = this.#db.getRepository(Activity);
     const qb = activityRepo
       .createQueryBuilder("activity")
@@ -78,20 +83,21 @@ export class ActivityRoutes {
     const activities = await qb.getMany();
 
     if (!activities) {
-      res
-        .status(404)
-        .json({ error: { code: 404, message: "No activities found." } });
-      return;
+      return next(new ApiError(404, "no activities found"));
     }
 
     if (activities.length === 1) {
-      res.json({ data: activityModelToApi(activities[0]) });
+      res.json(activityModelToApi(activities[0]));
       return;
     }
-    res.json({ data: activities.map(activityModelToApi) });
+    res.json(activities.map(activityModelToApi));
   }
 
-  async postActivity(req: express.Request, res: express.Response) {
+  async postActivity(
+    req: express.Request,
+    res: express.Response,
+    next: express.NextFunction
+  ) {
     let dateTimeStr = req.query.date as string;
     if (req.query.time) {
       dateTimeStr += "T" + req.query.time;
@@ -100,10 +106,9 @@ export class ActivityRoutes {
       zone: req.query.timeZone as string,
     });
     if (dateTime > DateTime.now()) {
-      res
-        .status(400)
-        .json({ error: "activity date/time cannot be in the future" });
-      return;
+      return next(
+        new ApiError(400, "activity date/time cannot be in the future")
+      );
     }
 
     await this.#db.transaction(async (transactionalEntityManager) => {
@@ -143,7 +148,7 @@ export class ActivityRoutes {
           user: { id: req.uid },
         });
       }
-      res.status(200).json({ data: { id: insertedActivityId } });
+      res.json({ id: insertedActivityId });
     });
   }
 }

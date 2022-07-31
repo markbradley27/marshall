@@ -6,6 +6,7 @@ import { param } from "express-validator";
 import multer from "multer";
 import { Logger } from "tslog";
 
+import { ApiError } from "../../error";
 import { verifyIdToken } from "../../middleware/auth";
 import { checkValidation } from "../../middleware/validation";
 
@@ -41,25 +42,21 @@ export class AvatarRoutes {
       this.putAvatar.bind(this)
     );
   }
-  async getAvatar(req: express.Request, res: express.Response) {
-    try {
-      const files = await fsPromises.readdir(AVATARS_DIR);
-      for (const file of files) {
-        if (file.startsWith(req.params.userId)) {
-          res.sendFile(path.join(AVATARS_DIR, file));
-          return;
-        }
+  async getAvatar(
+    req: express.Request,
+    res: express.Response,
+    next: express.NextFunction
+  ) {
+    const files = await fsPromises.readdir(AVATARS_DIR);
+    for (const file of files) {
+      if (file.startsWith(req.params.userId)) {
+        res.sendFile(path.join(AVATARS_DIR, file));
+        return;
       }
-      res.status(404).json({
-        error: {
-          code: 404,
-          message: `Avatar for ${req.params.userId} not found.`,
-        },
-      });
-    } catch (error) {
-      res.status(400).json({ error: { code: 400, message: error } });
-      return;
     }
+    return next(
+      new ApiError(404, `avatar for user ${req.params.userId} not found`)
+    );
   }
 
   // TODO: Do some file type/size checking/transcoding.

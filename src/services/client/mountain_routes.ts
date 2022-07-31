@@ -120,13 +120,11 @@ export class MountainRoutes {
     }
 
     res.json({
-      data: {
-        ...mountainModelToApi(mountain),
-        nearby:
-          req.query.includeNearby != null
-            ? nearby.map(mountainModelToApi)
-            : undefined,
-      },
+      ...mountainModelToApi(mountain),
+      nearby:
+        req.query.includeNearby != null
+          ? nearby.map(mountainModelToApi)
+          : undefined,
     });
   }
 
@@ -147,6 +145,6 @@ export class MountainRoutes {
     }
 
     const mountains = await query.getMany();
-    res.json({ data: mountains.map(mountainModelToApi) });
+    res.json(mountains.map(mountainModelToApi));
   }
 }

@@ -4,6 +4,7 @@ import admin from "firebase-admin";
 import { auth } from "firebase-admin";
 import { DataSource } from "typeorm";
 
+import { ApiError } from "../../error";
 import { verifyIdToken } from "../../middleware/auth";
 import { checkValidation } from "../../middleware/validation";
 import { User } from "../../model/User";
@@ -62,22 +63,25 @@ export class UserRoutes {
       .where({ id: req.uid })
       .groupBy("user.id")
       .getRawOne();
-    res.json({ data: userModelToApi(user) });
+    res.json(userModelToApi(user));
   }
 
   // Creates or updates the given user.
   //
   // The user must already exist in firebase.
   // The user will be created or updated in the local db.
-  async postUser(req: express.Request, res: express.Response) {
+  async postUser(
+    req: express.Request,
+    res: express.Response,
+    next: express.NextFunction
+  ) {
     const uid = req.params.userId as string;
 
     // Users can only be modified by that authenticated user.
     if (uid != req.uid) {
-      res.status(403).json({
-        error: "must authenticate as user to modify user",
-      });
-      return;
+      return next(
+        new ApiError(403, "must authenticate as user to modify user")
+      );
     }
 
     // Update firebase.
@@ -101,25 +105,23 @@ export class UserRoutes {
   }
 
   // Deletes a user from both firebase and the local DB.
-  async deleteUser(req: express.Request, res: express.Response) {
+  async deleteUser(
+    req: express.Request,
+    res: express.Response,
+    next: express.NextFunction
+  ) {
     const uid = req.params.userId as string;
 
     // Allow deletion iff the user being deleted is also the authenticated user.
     if (uid != req.uid) {
-      res
-        .status(403)
-        .json({ error: "must authenticate as user to delete user" });
-      return;
+      return next(
+        new ApiError(403, "must authenticate as user to delete user")
+      );
     }
 
     const userRepo = this.#db.getRepository(User);
-    try {
-      await userRepo.delete({ id: uid });
-      await admin.auth().deleteUser(uid);
-    } catch (error) {
-      res.status(400).json({ error: { code: 400, message: error.name } });
-      return;
-    }
+    await userRepo.delete({ id: uid });
+    await admin.auth().deleteUser(uid);
 
     res.sendStatus(200);
   }

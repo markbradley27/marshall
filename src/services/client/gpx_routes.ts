@@ -3,6 +3,7 @@ import togeojson from "togeojson";
 import { Logger } from "tslog";
 import { DataSource } from "typeorm";
 
+import { ApiError } from "../../error";
 import { verifyIdToken } from "../../middleware/auth";
 import { Activity, ActivitySource } from "../../model/Activity";
 
@@ -24,14 +25,15 @@ export class GpxRoutes {
   // curl --data "@/path/to/file.gpx" \
   //      -X POST localhost:3003/api/client/gpx?user="USERNAME" \
   //      -H "Content-Type: application/gpx"
-  async postGpx(req: express.Request, res: express.Response) {
+  async postGpx(
+    req: express.Request,
+    res: express.Response,
+    next: express.NextFunction
+  ) {
     const geoJson = togeojson.gpx(req.body);
 
     if (geoJson.features[0].geometry.type !== "LineString") {
-      res.status(400).json({
-        error: { code: 400, message: "Multi-track GPX files not supported" },
-      });
-      return;
+      return next(new ApiError(400, "multi-track GPX files not supported"));
     }
     if (geoJson.features[0].geometry.coordinates[0].length > 2) {
       logger.info("Trimming elevation data off of gpx upload.");
