@@ -19,6 +19,8 @@ export const isLineStringGeometry: CustomValidator = (value: object) => {
   return geometry.type === "LineString";
 };
 
+// Empty arrays will pass this validator. Use .notEmpty in addition if you want
+// a non-empty array of numbers.
 export const isArrayOfNumbers: CustomValidator = (value) =>
   Array.isArray(value) &&
   !value.some((element) => !validator.isNumeric(element));
