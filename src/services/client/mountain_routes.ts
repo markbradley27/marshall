@@ -10,8 +10,6 @@ import { isLineStringGeometry } from "../../validators";
 
 import { mountainModelToApi } from "./mountain_api_model";
 
-const DEFAULT_NEARBY_MOUNTAINS_RADIUS = 30000; // m
-
 export class MountainRoutes {
   router: express.Router;
 
@@ -112,7 +110,7 @@ export class MountainRoutes {
     res.json({
       ...mountainModelToApi(mountain),
       nearby:
-        req.query.includeNearby != null
+        req.query.includeNearbyWithin != null
           ? nearby.map(mountainModelToApi)
           : undefined,
     });
