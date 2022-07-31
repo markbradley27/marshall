@@ -31,7 +31,7 @@ export class AvatarRoutes {
     this.router = express.Router();
     this.router.get(
       "/avatar/:userId",
-      param("userId").isString(),
+      param("userId").isString().notEmpty(),
       checkValidation,
       this.getAvatar.bind(this)
     );

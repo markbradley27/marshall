@@ -10,6 +10,7 @@ import { checkValidation } from "../../middleware/validation";
 import { Ascent } from "../../model/Ascent";
 import { Mountain } from "../../model/Mountain";
 import { PrivacySetting } from "../../model/privacy_setting";
+import { isIsoDate, isIsoTime } from "../../validators";
 
 import { ascentModelToApi } from "./ascent_api_model";
 
@@ -26,7 +27,7 @@ export class AscentRoutes {
     this.router.get(
       "/ascent/:ascentId",
       param("ascentId").isNumeric(),
-      query("includeMountain").optional().isBoolean(),
+      query("includeMountain").optional().isBoolean().toBoolean(),
       checkValidation,
       maybeVerifyIdToken,
       this.getAscent.bind(this)
@@ -37,8 +38,8 @@ export class AscentRoutes {
       "/ascents",
       query("ascentId").optional().isNumeric(),
       query("mountainId").optional().isNumeric(),
-      query("userId").optional().isString(),
-      query("includeMountains").default(false).isBoolean(),
+      query("userId").optional().isString().notEmpty(),
+      query("includeMountains").optional().isBoolean().toBoolean(),
       query("page").default(0).isNumeric(),
       checkValidation,
       maybeVerifyIdToken,
@@ -51,9 +52,9 @@ export class AscentRoutes {
     // TODO: Better validation of date, privacy enum.
     this.router.post(
       "/ascent",
-      query("privacy").isString(),
-      query("date").isString(),
-      query("time").optional().isString(),
+      query("privacy").isIn(Object.values(PrivacySetting)),
+      query("date").custom(isIsoDate),
+      query("time").custom(isIsoTime),
       query("mountainId").isNumeric(),
       checkValidation,
       verifyIdToken,
@@ -71,10 +72,7 @@ export class AscentRoutes {
     const findOptions: FindOneOptions<Ascent> = {
       where: { id: ascentId },
     };
-    if (
-      req.query.includeMountain &&
-      (req.query.includeMountain as string).toLowerCase() === "true"
-    ) {
+    if (req.query.includeMountain) {
       findOptions.relations = ["mountain"];
     }
     const ascent = await this.#db.getRepository(Ascent).findOne(findOptions);

@@ -7,7 +7,8 @@ import { DataSource } from "typeorm";
 import { ApiError } from "../../error";
 import { verifyIdToken } from "../../middleware/auth";
 import { checkValidation } from "../../middleware/validation";
-import { User } from "../../model/User";
+import { Gender, User } from "../../model/User";
+import { PrivacySetting } from "../../model/privacy_setting";
 
 import { userModelToApi } from "./user_api_model";
 
@@ -22,28 +23,32 @@ export class UserRoutes {
     this.router = express.Router();
     this.router.get(
       "/user/:userId",
-      param("userId").isString(),
+      param("userId").isString().notEmpty(),
       checkValidation,
       verifyIdToken,
       this.getUser.bind(this)
     );
     this.router.post(
       "/user/:userId",
-      param("userId").isString(),
-      body("name").optional().isString(),
+      param("userId").isString().notEmpty(),
+      body("name").optional().isString().notEmpty(),
       body("location").optional().isString(),
       // TODO: Validate enum values.
-      body("gender").optional().isString(),
+      body("gender").optional().isIn(Object.values(Gender)),
       body("bio").optional().isString(),
-      body("defaultActivityPrivacy").optional().isString(),
-      body("defaultAscentPrivacy").optional().isString(),
+      body("defaultActivityPrivacy")
+        .optional()
+        .isIn(Object.values(PrivacySetting)),
+      body("defaultAscentPrivacy")
+        .optional()
+        .isIn(Object.values(PrivacySetting)),
       checkValidation,
       verifyIdToken,
       this.postUser.bind(this)
     );
     this.router.delete(
       "/user/:userId",
-      param("userId").isString(),
+      param("userId").isString().notEmpty(),
       checkValidation,
       verifyIdToken,
       this.deleteUser.bind(this)

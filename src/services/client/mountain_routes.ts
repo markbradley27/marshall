@@ -1,11 +1,12 @@
 import express from "express";
-import { body, oneOf, param, query } from "express-validator";
+import { body, param, query } from "express-validator";
 import { DataSource } from "typeorm";
 
 import { SUMMIT_PATH_PROXIMITY_THRESHOLD_M } from "../../consts";
 import { maybeVerifyIdToken } from "../../middleware/auth";
 import { checkValidation } from "../../middleware/validation";
 import { Mountain } from "../../model/Mountain";
+import { isLineStringGeometry } from "../../validators";
 
 import { mountainModelToApi } from "./mountain_api_model";
 
@@ -20,37 +21,32 @@ export class MountainRoutes {
     this.#db = db;
 
     this.router = express.Router();
-    // includeAscents (ordered in reverse chronological order):
-    //   true: will include all ascents the user is allowed to see
-    //   uid: will include all ascents by the given uid that the user is allowed
-    //        to see
-    // includeNearby (ordered by ascending distance):
-    //   true: will include nearby mountains within 30km
-    //   n: will include nearby mountains within n meters
+
+    // Ascents are ordered reverse chronologically.
+    // includeAscents=true: includes all ascents the user is allowed to see
+    // includeAscentsBy=uid: include all ascents the user is allowed to see by
+    //                       the given user
+    //
+    // Nearby mountains are ordered by ascending distance.
+    // includeNearbyWithin=N: includes nearby mountains within N meters
     this.router.get(
       "/mountain/:mountainId",
       param("mountainId").isNumeric(),
-      oneOf([
-        query("includeAscents").optional().isBoolean(),
-        query("includeAscents").optional().isString(),
-      ]),
-      oneOf([
-        query("includeNearby").optional().isBoolean(),
-        query("includeNearby").optional().isNumeric(),
-      ]),
+      query("includeAscents").optional().isBoolean().toBoolean(),
+      query("includeAscentsBy").optional().isString().notEmpty(),
+      query("includeNearbyWithin").optional().isNumeric().notEmpty(),
       checkValidation,
       maybeVerifyIdToken,
       this.getMountain.bind(this)
     );
+
     // Mountains are returned in alphabetical order, unless an option overrides
     // that.
     this.router.get("/mountains", this.getMountains.bind(this));
-    // alongPath: only returns mountains near enough to the path, should valid
-    //            geoJSON.
+    // alongPath: only returns mountains near enough to the path
     this.router.post(
       "/mountains",
-      // TODO: Validate that this is geoJSON.
-      body("alongPath").optional().isObject(),
+      body("alongPath").optional().custom(isLineStringGeometry),
       checkValidation,
       this.getMountains.bind(this)
     );
@@ -58,16 +54,16 @@ export class MountainRoutes {
 
   // TODO: Support FOLLOWERS_ONLY.
   async getMountain(req: express.Request, res: express.Response) {
-    const mountainId = Number(req.params.mountainId);
-
     const query = this.#db
       .getRepository(Mountain)
       .createQueryBuilder("mountain")
-      .where("mountain.id = :mountainId", { mountainId });
+      .where("mountain.id = :mountainId", {
+        mountainId: req.params.mountainId,
+      });
 
-    if (req.query.includeAscents != null) {
+    if (req.query.includeAscents || req.query.includeAscentsBy) {
       query.orderBy({ "ascent.date": "DESC", "ascent.time": "DESC" });
-      if (req.query.includeAscents === "true") {
+      if (req.query.includeAscents) {
         query.leftJoinAndSelect("mountain.ascents", "ascent");
         if (req.uid != null) {
           query.andWhere(
@@ -77,15 +73,14 @@ export class MountainRoutes {
         } else {
           query.andWhere("(ascent is NULL or ascent.privacy = 'PUBLIC')");
         }
-      } else if (req.query.includeAscents !== "false") {
-        const ascentsUid = req.query.includeAscents as string;
+      } else if (req.query.includeAscentsBy) {
         query.leftJoinAndSelect(
           "mountain.ascents",
           "ascent",
           "ascent.userId = :ascentsUid",
-          { ascentsUid }
+          { ascentsUid: req.query.includeAscentsBy }
         );
-        if (ascentsUid !== req.uid) {
+        if (req.query.includeAscentsBy !== req.uid) {
           query.andWhere("(ascent is NULL or ascent.privacy = 'PUBLIC')");
         }
       }
@@ -94,12 +89,7 @@ export class MountainRoutes {
     const mountain = await query.getOne();
 
     let nearby = [];
-    if (req.query.includeNearby != null && req.query.nearbyRadius !== "false") {
-      const nearbyRadius =
-        req.query.includeNearby === "true"
-          ? DEFAULT_NEARBY_MOUNTAINS_RADIUS
-          : Number(req.query.includeNearby);
-
+    if (req.query.includeNearbyWithin) {
       const nearbyQuery = this.#db
         .getRepository(Mountain)
         .createQueryBuilder("nearby")
@@ -110,7 +100,7 @@ export class MountainRoutes {
         )
         .where(
           "ST_DWithin(nearby.location, ST_GeomFromGeoJSON(:mountainLocation), :nearbyRadius)",
-          { nearbyRadius }
+          { nearbyRadius: req.query.includeNearbyWithin }
         )
         .setParameter("mountainLocation", mountain.location)
         .andWhere("nearby.id != :mountainId", { mountainId: mountain.id })
