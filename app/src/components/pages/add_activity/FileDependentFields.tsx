@@ -86,9 +86,9 @@ export default function FileDependentFields(props: FileDependentFieldsProps) {
           {...getFieldProps("name")}
         />
         <InvalidTooltip
-          error={errors.date}
-          target={dateControl.current}
-          touched={touched.date}
+          error={errors.name}
+          target={nameControl.current}
+          touched={touched.name}
         />
       </Form.Group>
       <Stack direction="horizontal" gap={3}>

@@ -8,6 +8,7 @@ import { LineString } from "geojson";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Alert, Button, Form, Stack } from "react-bootstrap";
 import { Typeahead } from "react-bootstrap-typeahead";
+import { dateTimeAreInFuture } from "validation";
 
 import FileDependentFields from "./FileDependentFields";
 import { Values } from "./FormikValues";
@@ -66,20 +67,40 @@ export default function AddActivityForm() {
     [setAscended]
   );
 
-  // TODO: More better validation.
-  const validate = useCallback((values) => {
+  const validate = useCallback((values: Values) => {
     const errors: FormikErrors<Values> = {};
     if (values.file != null && !values.file.name.endsWith("gpx")) {
       errors.file = "Only gpx files supported";
+    }
+    if (!values.name) {
+      errors.name = "Name required";
+    }
+    if (!values.date) {
+      errors.date = "Date required";
+    }
+
+    // Date/time in the future
+    // TODO: Revisit time zone.
+    if (
+      values.date &&
+      dateTimeAreInFuture(
+        Intl.DateTimeFormat().resolvedOptions().timeZone,
+        values.date,
+        values.time
+      )
+    ) {
+      if (values.time) {
+        errors.date = "";
+        errors.time = "Time must be in the past";
+      } else {
+        errors.date = "Date must be in the past";
+      }
     }
     return errors;
   }, []);
 
   const submit = useCallback(
     async (values) => {
-      console.log("values:", values);
-      console.log("path:", path);
-      console.log("ascended:", ascended);
       try {
         const res = await postActivity({
           idToken: (await auth.users?.fb?.getIdToken()) as string,

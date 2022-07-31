@@ -12,8 +12,8 @@ import { PrivacySetting } from "../../model/privacy_setting";
 import {
   isArrayOfNumbers,
   isIsoDate,
-  isIsoTime,
   isLineStringGeometry,
+  isOptionalIsoTime,
   isTimeZone,
 } from "../../validators";
 
@@ -47,7 +47,7 @@ export class ActivityRoutes {
       body("source").isIn(Object.values(ActivitySource)),
       body("name").isString().notEmpty(),
       body("date").custom(isIsoDate),
-      body("time").optional().custom(isIsoTime),
+      body("time").custom(isOptionalIsoTime),
       body("timeZone").custom(isTimeZone),
       body("path").optional().custom(isLineStringGeometry),
       body("description").optional().isString(),
@@ -119,7 +119,7 @@ export class ActivityRoutes {
           source: req.body.source,
           name: req.body.name,
           date: req.body.date,
-          time: req.body.time,
+          time: req.body.time || undefined,
           timeZone: req.body.timeZone,
           path: req.body.path,
           description: req.body.description,

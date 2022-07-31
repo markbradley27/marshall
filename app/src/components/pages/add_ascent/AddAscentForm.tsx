@@ -3,10 +3,10 @@ import { fetchMountains, MountainState } from "api/mountain_endpoints";
 import { InvalidTooltip } from "components/shared/InvalidTooltip";
 import { useAuth } from "contexts/auth";
 import { Formik } from "formik";
-import { DateTime } from "luxon";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Alert, Button, Form, Stack } from "react-bootstrap";
 import { Typeahead } from "react-bootstrap-typeahead";
+import { dateTimeAreInFuture } from "validation";
 
 interface AddAscentFormProps {
   reportAdded: (id: number) => void;
@@ -43,18 +43,16 @@ export default function AddAscentForm(props: AddAscentFormProps) {
     }
 
     // Date/time in the future
-    if (values.mountain != null && values.date) {
-      const dateTime = DateTime.fromISO(
-        values.time ? values.date + "T" + values.time : values.date,
-        { zone: values.mountain.timeZone }
-      );
-      if (dateTime > DateTime.now()) {
-        if (values.time) {
-          errors.date = "";
-          errors.time = "Time must be in the past";
-        } else {
-          errors.date = "Date must be in the past";
-        }
+    if (
+      values.mountain != null &&
+      values.date &&
+      dateTimeAreInFuture(values.mountain.timeZone, values.date, values.time)
+    ) {
+      if (values.time) {
+        errors.date = "";
+        errors.time = "Time must be in the past";
+      } else {
+        errors.date = "Date must be in the past";
       }
     }
 

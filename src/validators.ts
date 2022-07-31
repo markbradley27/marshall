@@ -1,4 +1,4 @@
-import { CustomValidator } from "express-validator";
+import { CustomValidator, Meta } from "express-validator";
 import { tryGeometry } from "pure-geojson-validation";
 import validator from "validator";
 
@@ -7,6 +7,13 @@ export const isIsoDate: CustomValidator = (value: string) =>
 
 export const isIsoTime: CustomValidator = (value: string) =>
   /^[0-2]\d:[0-5]\d$/.test(value);
+
+export const isOptionalIsoTime: CustomValidator = (
+  value: string,
+  meta: Meta
+) => {
+  return value === "" || isIsoTime(value, meta);
+};
 
 export const isTimeZone: CustomValidator = (value: string) => {
   // Raises an exception if value is not valid timeZone.
