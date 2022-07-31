@@ -188,6 +188,20 @@ export default function AddActivityForm() {
                   touched={touched.file}
                 />
               </Form.Group>
+              <Form.Group>
+                {suggestionsToDisplay.length !== 0 && (
+                  <>
+                    <Form.Label>Suggested ascents along route:</Form.Label>
+                    <MountainList
+                      mountains={suggestionsToDisplay}
+                      namesAreLinks={false}
+                      removeMountain={removeSuggested}
+                      confirmMountain={confirmSuggested}
+                      mountainVariant={() => "warning"}
+                    />
+                  </>
+                )}
+              </Form.Group>
               <FileDependentFields
                 setPath={setPath}
                 suggestMountains={setSuggested}
@@ -221,18 +235,6 @@ export default function AddActivityForm() {
                     }
                     ref={mountainTypeahead}
                   />
-                  {suggestionsToDisplay.length !== 0 && (
-                    <>
-                      <div>Suggested mountains along route:</div>
-                      <MountainList
-                        mountains={suggestionsToDisplay}
-                        namesAreLinks={false}
-                        removeMountain={removeSuggested}
-                        confirmMountain={confirmSuggested}
-                        mountainVariant={() => "warning"}
-                      />
-                    </>
-                  )}
                   <MountainList
                     emptyPlaceholder="Ascents list is empty."
                     mountains={ascended}
