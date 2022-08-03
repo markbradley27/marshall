@@ -17,12 +17,10 @@ $border-radius-lg: 0.85rem;
 $border-radius-sm: .5rem;
 $font-family-sans-serif: 'Quicksand', sans-serif;
 
+$tooltip-bg: $red;
+
 @import "~bootstrap/scss/bootstrap";
 
-// TODO: Figure out why this doesn't work.
-.tooltip-arrow::before {
-  border-bottom-color: $danger;
-}
 .tooltip-inner {
   background-color: $white;
   border-color: $danger;
@@ -30,4 +28,3 @@ $font-family-sans-serif: 'Quicksand', sans-serif;
   border-width: 1px;
   color: $danger;
 }
-
