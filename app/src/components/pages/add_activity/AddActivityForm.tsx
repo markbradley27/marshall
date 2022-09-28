@@ -167,7 +167,9 @@ export default function AddActivityForm() {
           <Form noValidate onSubmit={handleSubmit}>
             <Stack gap={3}>
               <Form.Group>
-                <Form.Label>Track file</Form.Label>
+                <Form.Label>
+                  Track File <span className="text-muted">(optional)</span>
+                </Form.Label>
                 <Form.Control
                   disabled={isSubmitting}
                   isInvalid={touched.file && errors.file != null}
