@@ -1,21 +1,14 @@
 import { gpx as gpxToGeoJson } from "@tmcw/togeojson";
-import { fetchMountains, MountainState } from "api/mountain_endpoints";
+import { fetchMountains } from "api/mountain_endpoints";
 import { InvalidTooltip } from "components/shared/InvalidTooltip";
 import { FormikContextType, useFormikContext } from "formik";
-import { LineString } from "geojson";
 import { DateTime } from "luxon";
 import { useEffect, useRef } from "react";
 import { Form, Stack } from "react-bootstrap";
 
 import { Values } from "./FormikValues";
 
-interface FileDependentFieldsProps {
-  setPath: (path: LineString) => void;
-  suggestMountains: (suggested: MountainState[]) => void;
-}
-export default function FileDependentFields(props: FileDependentFieldsProps) {
-  const { setPath, suggestMountains } = props;
-
+export default function FileDependentFields() {
   const {
     errors,
     getFieldProps,
@@ -53,7 +46,7 @@ export default function FileDependentFields(props: FileDependentFieldsProps) {
           continue;
         }
 
-        setPath(feature.geometry);
+        setFieldValue("path", feature.geometry);
 
         if (feature.properties?.name) {
           setFieldValue("name", feature.properties?.name);
@@ -68,11 +61,11 @@ export default function FileDependentFields(props: FileDependentFieldsProps) {
         const mountainsAlongPath = await fetchMountains({
           alongPath: feature.geometry,
         });
-        suggestMountains(mountainsAlongPath);
+        setFieldValue("suggested", mountainsAlongPath);
       }
     };
     gpxFr.readAsText(values.file);
-  }, [setFieldValue, setPath, suggestMountains, values.file]);
+  }, [setFieldValue, values.file]);
 
   return (
     <>

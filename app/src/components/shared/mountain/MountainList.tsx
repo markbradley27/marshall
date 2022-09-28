@@ -10,6 +10,7 @@ interface MountainListProps {
   mountainVariant?: (mountain: MountainState) => string;
   namesAreLinks?: boolean;
   removeMountain?: (mountain: MountainState) => void;
+  isInvalid?: boolean;
 }
 export default function MountainList(props: MountainListProps) {
   const { emptyPlaceholder = "Mountains list is empty." } = props;
@@ -21,6 +22,7 @@ export default function MountainList(props: MountainListProps) {
         props.mountains.map((mountain) => (
           <MountainListItem
             key={mountain.id}
+            isInvalid={props.isInvalid}
             mountain={mountain}
             variant={
               props.mountainVariant != null
@@ -33,7 +35,13 @@ export default function MountainList(props: MountainListProps) {
           />
         ))
       ) : (
-        <ListGroup.Item className={"text-center"} disabled>
+        <ListGroup.Item
+          className={
+            "text-center" +
+            (props.isInvalid === true ? " form-control is-invalid" : "")
+          }
+          style={{ backgroundColor: "$white" }}
+        >
           {emptyPlaceholder}
         </ListGroup.Item>
       )}

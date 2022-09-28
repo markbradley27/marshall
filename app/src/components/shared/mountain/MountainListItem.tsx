@@ -4,6 +4,7 @@ import { CheckLg, XLg } from "react-bootstrap-icons";
 import ListGroup from "react-bootstrap/ListGroup";
 
 interface MountainListItemProps {
+  isInvalid?: boolean;
   mountain: MountainState;
   namesAreLinks?: boolean;
   onConfirm?: () => void;
@@ -15,7 +16,10 @@ export default function MountainListItem(props: MountainListItemProps) {
   const { namesAreLinks = true } = props;
 
   return (
-    <ListGroup.Item variant={props.variant}>
+    <ListGroup.Item
+      className={props.isInvalid === true ? "form-control is-invalid" : ""}
+      variant={props.variant}
+    >
       <Row>
         <Col>
           {namesAreLinks ? (
