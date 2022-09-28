@@ -16,7 +16,6 @@ export default function AddActivityForm() {
   const auth = useAuth();
 
   const [mountains, setMountains] = useState<MountainState[]>([]);
-
   const [alertMessage, setAlertMessage] = useState("");
 
   const fileControl = useRef<HTMLInputElement>(null);

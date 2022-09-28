@@ -10,6 +10,7 @@ export default function AddSomethingDropdown() {
       <Dropdown.Menu>
         <Dropdown.Item href="/add_ascent">Ascent</Dropdown.Item>
         <Dropdown.Item href="/add_activity">Activity</Dropdown.Item>
+        <Dropdown.Item href="/add_list">List</Dropdown.Item>
       </Dropdown.Menu>
     </Dropdown>
   );

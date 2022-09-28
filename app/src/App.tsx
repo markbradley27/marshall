@@ -9,6 +9,7 @@ import PageFrame from "components/PageFrame";
 import SignUp from "components/SignUp";
 import AddActivity from "components/pages/add_activity/AddActivity";
 import AddAscent from "components/pages/add_ascent/AddAscent";
+import AddList from "components/pages/add_list/AddList";
 import Settings from "components/pages/settings/Settings";
 import { useAuth } from "contexts/auth";
 import { BrowserRouter, Redirect, Route, Switch } from "react-router-dom";
@@ -57,6 +58,9 @@ function App() {
             ) : (
               <AddActivity />
             )}
+          </Route>
+          <Route path="/add_list">
+            {auth.users?.fb == null ? <Redirect to="/login" /> : <AddList />}
           </Route>
         </Switch>
       </PageFrame>
