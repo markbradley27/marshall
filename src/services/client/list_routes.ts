@@ -1,21 +1,14 @@
 import express from "express";
-import { param } from "express-validator";
+import { body, param } from "express-validator";
 import { DataSource } from "typeorm";
 
 import { ApiError } from "../../error";
 import { maybeVerifyIdToken, verifyIdToken } from "../../middleware/auth";
 import { checkValidation } from "../../middleware/validation";
 import { List } from "../../model/List";
-import { Mountain } from "../../model/Mountain";
-import { User } from "../../model/User";
+import { isArrayOfNumbers } from "../../validators";
 
 import { listModelToApi } from "./list_api_model";
-
-interface NewList {
-  name: string;
-  private: boolean;
-  mountains: number[];
-}
 
 export class ListRoutes {
   router: express.Router;
@@ -26,6 +19,7 @@ export class ListRoutes {
     this.#db = db;
 
     this.router = express.Router();
+    // TODO: Revamp.
     this.router.get(
       "/list/:listId",
       param("listId").isNumeric(),
@@ -33,10 +27,14 @@ export class ListRoutes {
       maybeVerifyIdToken,
       this.getList.bind(this)
     );
-    // TODO: Validate json body too.
+    // TODO: Suggest user use identical (or similar?) public list instead.
+    // TODO: Some way to update lists, not just create.
     this.router.post(
-      "/list/:listId?",
-      param("listId").optional().isNumeric(),
+      "/list",
+      body("name").isString().notEmpty(),
+      body("isPrivate").isBoolean().toBoolean(),
+      body("description").optional().isString(),
+      body("mountainIds").custom(isArrayOfNumbers),
       checkValidation,
       verifyIdToken,
       this.postList.bind(this)
@@ -68,21 +66,26 @@ export class ListRoutes {
     return res.json(listModelToApi(list));
   }
 
-  // TODO: Suggest user use identical (or similar?) public list instead.
-  // TODO: Some way to update lists, not just create.
   async postList(req: express.Request, res: express.Response) {
-    const listJson = req.body as NewList;
-    const list = new List();
-    list.name = listJson.name;
-    list.private = listJson.private;
-    list.owner = new User();
-    list.owner.id = req.uid;
-    list.mountains = listJson.mountains.map((mountainId) => {
-      const mountain = new Mountain();
-      mountain.id = mountainId;
-      return mountain;
+    console.log("req.body:", req.body);
+    await this.#db.transaction(async (entityManager) => {
+      const insertionResult = await entityManager.getRepository(List).insert({
+        name: req.body.name,
+        private: req.body.isPrivate,
+        description: req.body.description,
+        owner: { id: req.uid },
+      });
+
+      const insertedListId = insertionResult.identifiers[0].id;
+      for (const mountainId of req.body.mountainIds) {
+        await entityManager
+          .createQueryBuilder()
+          .relation(List, "mountains")
+          .of(insertedListId)
+          .add(mountainId);
+      }
+
+      res.json({ id: insertedListId });
     });
-    await this.#db.getRepository(List).save(list);
-    res.sendStatus(200);
   }
 }

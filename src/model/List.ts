@@ -22,6 +22,9 @@ export class List {
   @Column({ default: false })
   private: boolean;
 
+  @Column({ nullable: true })
+  description: string;
+
   @ManyToMany(() => Mountain, (mountain) => mountain.lists)
   @JoinTable()
   mountains: Mountain[];
