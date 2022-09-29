@@ -2,13 +2,17 @@ import { Pagination } from "react-bootstrap";
 
 const PAGES_BEFORE_ELLIPSIS = 3;
 
-interface SmartPaginationProps {
+interface PageSelectorProps {
+  // Total number of elements.
   count: number;
+  // Current page.
   page: number;
+  // Number of elements per page.
   pageLength: number;
+  // Callback to move to a different page.
   setPage: (page: number) => void;
 }
-export default function SmartPagination(props: SmartPaginationProps) {
+export default function PageSelector(props: PageSelectorProps) {
   const pages = Math.ceil(props.count / props.pageLength);
   const items = [];
   if (props.page > PAGES_BEFORE_ELLIPSIS) {
