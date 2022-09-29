@@ -4,7 +4,7 @@ import { Ratio } from "react-bootstrap";
 
 import useGoogleMaps from "../hooks/loadGoogleMaps";
 
-import MountainMap from "./MountainMap";
+import MountainMap from "./shared/map/MountainMap";
 
 export default function MountainBrowser() {
   const [mountains, setMountains] = useState<MountainState[] | null>(null);

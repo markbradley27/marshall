@@ -2,7 +2,7 @@ import { GoogleMap, Polyline } from "@react-google-maps/api";
 import { AscentState } from "api/ascent_endpoints";
 import { useCallback, useState } from "react";
 
-import MountainMarker from "./MountainMarker";
+import MountainMarker from "./shared/map/MountainMarker";
 
 const MAP_CONTAINER_STYLE = {
   width: "100%",

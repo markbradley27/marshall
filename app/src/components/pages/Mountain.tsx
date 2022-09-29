@@ -1,10 +1,10 @@
 import { fetchMountain, MountainState } from "api/mountain_endpoints";
-import MountainMap from "components/MountainMap";
+import AscentList from "components/shared/ascent/AscentList";
+import MountainMap from "components/shared/map/MountainMap";
 import MountainList from "components/shared/mountain/MountainList";
 import { useAuth } from "contexts/auth";
-import useGoogleMaps from "hooks/loadGoogleMaps";
 import { useEffect, useState } from "react";
-import Col from "react-bootstrap/Col";
+import { Stack } from "react-bootstrap";
 import Container from "react-bootstrap/Container";
 import Ratio from "react-bootstrap/Ratio";
 import Row from "react-bootstrap/Row";
@@ -17,49 +17,54 @@ function Mountain(props: MountainProps) {
   const [mountain, setMountain] = useState<MountainState | null>(null);
 
   const auth = useAuth();
-  const googleMapsLoaded = useGoogleMaps();
 
   useEffect(() => {
     async function fetchData() {
-      const mountain = await fetchMountain(
-        Number(props.match.params.mountainId),
-        {
+      setMountain(
+        await fetchMountain(Number(props.match.params.mountainId), {
           idToken: await auth.users?.fb?.getIdToken(),
-          includeNearby: true,
           includeAscents: true,
-        }
+          includeNearbyWithin: 10000,
+        })
       );
-      setMountain(mountain);
     }
-
-    if (mountain == null && googleMapsLoaded) {
-      fetchData();
-    }
-  });
+    fetchData();
+  }, [auth.users?.fb, props.match.params.mountainId]);
 
   return mountain ? (
     <Container>
       <Row>
-        <Col xs={7}>
+        <Stack gap={3}>
+          <Ratio aspectRatio="21x9">
+            <MountainMap primary={mountain} />
+          </Ratio>
           <h2>
             <a href={mountain.wikipediaLink}>{mountain.name}</a>
           </h2>
           {mountain.abstract && <p>{mountain.abstract}</p>}
+          {mountain.ascents && (
+            <>
+              <h3>Recent ascents:</h3>
+              <AscentList
+                ascents={mountain.ascents}
+                count={mountain.ascents.length}
+                fetchMoreAscents={() => {}}
+                pageLength={8}
+                emptyPlaceholder={"No recorded ascents."}
+              />
+            </>
+          )}
           {mountain.nearby && (
             <>
               <h3>Nearby peaks:</h3>
-              <MountainList mountains={mountain.nearby} />
+              <MountainList
+                mountains={mountain.nearby}
+                namesAreLinks={true}
+                pageLength={8}
+              />
             </>
           )}
-          {/*
-          {mountain.ascents && <AscentList ascents={mountain.ascents} />}
-          */}
-        </Col>
-        <Col xs={5}>
-          <Ratio aspectRatio="4x3">
-            <MountainMap primary={mountain} secondaries={mountain.nearby} />
-          </Ratio>
-        </Col>
+        </Stack>
       </Row>
     </Container>
   ) : (

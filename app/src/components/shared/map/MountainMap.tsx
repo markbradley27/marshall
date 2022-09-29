@@ -1,6 +1,10 @@
-import { GoogleMap, MarkerClusterer } from "@react-google-maps/api";
+import {
+  GoogleMap as ReactGoogleMap,
+  MarkerClusterer,
+} from "@react-google-maps/api";
 import { MountainState } from "api/mountain_endpoints";
 import { geoJsonToCoords } from "api/util";
+import useGoogleMaps from "hooks/loadGoogleMaps";
 import { useCallback, useState } from "react";
 
 import MountainMarker from "./MountainMarker";
@@ -10,14 +14,19 @@ const MAP_CONTAINER_STYLE = {
   height: "100%",
 };
 
-interface MountainMapProps {
+interface GoogleMapProps {
+  // Main mountain that should be highlighted on the map.
   primary?: MountainState;
+  // Array of mountains that should also be displayed on the map but less
+  // prominently.
   secondaries?: MountainState[];
 
   initialBounds?: google.maps.LatLngBounds;
   zoom?: number;
 }
-export default function MountainMap(props: MountainMapProps) {
+export default function GoogleMap(props: GoogleMapProps) {
+  const googleMapsLoaded = useGoogleMaps();
+
   const [, setMap] = useState<google.maps.Map | null>(null);
 
   const onLoad = useCallback(
@@ -30,12 +39,12 @@ export default function MountainMap(props: MountainMapProps) {
     [props.initialBounds]
   );
 
-  const onUnmount = useCallback(function callback() {
+  const onUnmount = useCallback(() => {
     setMap(null);
   }, []);
 
-  return props.primary || props.secondaries ? (
-    <GoogleMap
+  return googleMapsLoaded && (props.primary || props.secondaries) ? (
+    <ReactGoogleMap
       mapContainerStyle={MAP_CONTAINER_STYLE}
       options={{
         streetViewControl: false,
@@ -69,7 +78,7 @@ export default function MountainMap(props: MountainMapProps) {
           }}
         </MarkerClusterer>
       )}
-    </GoogleMap>
+    </ReactGoogleMap>
   ) : (
     <></>
   );

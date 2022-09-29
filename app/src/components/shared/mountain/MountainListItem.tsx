@@ -13,8 +13,6 @@ interface MountainListItemProps {
 }
 
 export default function MountainListItem(props: MountainListItemProps) {
-  const { namesAreLinks = true } = props;
-
   return (
     <ListGroup.Item
       className={props.isInvalid === true ? "form-control is-invalid" : ""}
@@ -22,7 +20,7 @@ export default function MountainListItem(props: MountainListItemProps) {
     >
       <Row>
         <Col>
-          {namesAreLinks ? (
+          {props.namesAreLinks ? (
             <a href={"/mountain/" + props.mountain.id}>{props.mountain.name}</a>
           ) : (
             props.mountain.name
