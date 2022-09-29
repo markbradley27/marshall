@@ -92,6 +92,7 @@ export class MountainRoutes {
         .getRepository(Mountain)
         .createQueryBuilder("nearby")
         .select("nearby.*")
+        .addSelect("ST_AsGeoJSON(location)", "location")
         .addSelect(
           "ST_Distance(nearby.location, ST_GeomFromGeoJSON(:mountainLocation))",
           "distance"

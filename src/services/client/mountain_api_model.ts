@@ -1,3 +1,5 @@
+import { maybeGeometry } from "pure-geojson-validation";
+
 import { Mountain } from "../../model/Mountain";
 
 import { ascentModelToApi } from "./ascent_api_model";
@@ -11,7 +13,11 @@ export function mountainModelToApi(mountain: MountainPlus): any {
     source: mountain.source,
     sourceId: mountain.sourceId,
     name: mountain.name,
-    location: mountain.location,
+    // If the Mountain was retrieved using TypeORM's getRaw* then
+    // mountain.location might be a GeoJSON string rather than a GeoJSON object.
+    // Passing it to maybeGeometry handles both cases and always spits out an
+    // object.
+    location: maybeGeometry(mountain.location),
     timeZone: mountain.timeZone,
     wikipediaLink: mountain.wikipediaLink,
     abstract: mountain.abstract,
