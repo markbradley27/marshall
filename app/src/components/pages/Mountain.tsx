@@ -2,7 +2,6 @@ import { fetchMountain, MountainState } from "api/mountain_endpoints";
 import AscentList from "components/shared/ascent/AscentList";
 import MountainMap from "components/shared/map/MountainMap";
 import MountainList from "components/shared/mountain/MountainList";
-import { useAuth } from "contexts/auth";
 import { useEffect, useState } from "react";
 import { Stack } from "react-bootstrap";
 import Container from "react-bootstrap/Container";
@@ -16,20 +15,17 @@ type MountainProps = RouteComponentProps<{
 function Mountain(props: MountainProps) {
   const [mountain, setMountain] = useState<MountainState | null>(null);
 
-  const auth = useAuth();
-
   useEffect(() => {
     async function fetchData() {
       setMountain(
         await fetchMountain(Number(props.match.params.mountainId), {
-          idToken: await auth.users?.fb?.getIdToken(),
           includeAscents: true,
           includeNearbyWithin: 10000,
         })
       );
     }
     fetchData();
-  }, [auth.users?.fb, props.match.params.mountainId]);
+  }, [props.match.params.mountainId]);
 
   return mountain ? (
     <Container>
