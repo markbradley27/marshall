@@ -36,16 +36,23 @@ function mountainApiToState(apiMountain: any): MountainState {
 
 interface FetchMountainOptions {
   idToken?: string;
-  includeNearby?: boolean;
   includeAscents?: boolean;
+  includeAscentsBy?: string;
+  includeNearbyWithin?: number;
 }
 async function fetchMountain(id: number, options?: FetchMountainOptions) {
   const url = new URL("mountain/" + id, BASE_URL);
-  if (options?.includeNearby) {
-    url.searchParams.set("include_nearby", "true");
+  if (options?.includeAscents != null) {
+    url.searchParams.set("includeAscents", "true");
   }
-  if (options?.includeAscents) {
-    url.searchParams.set("include_ascents", "true");
+  if (options?.includeAscentsBy != null) {
+    url.searchParams.set("includeAscentsBy", options.includeAscentsBy);
+  }
+  if (options?.includeNearbyWithin != null) {
+    url.searchParams.set(
+      "includeNearbyWithin",
+      `${options.includeNearbyWithin}`
+    );
   }
   const mountainJson = await apiFetchJson(url, options?.idToken);
   return mountainApiToState(mountainJson);
