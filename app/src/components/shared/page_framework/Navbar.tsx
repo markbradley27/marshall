@@ -1,10 +1,9 @@
+import { useAuth } from "contexts/auth";
 import { Container, Image, Nav, Navbar as BsNavbar } from "react-bootstrap";
 import { useLocation } from "react-router-dom";
 
-import { useAuth } from "../contexts/auth";
-
 import AddSomethingDropdown from "./AddSomethingDropdown";
-import UserControl from "./UserControl";
+import UserDropdown from "./UserDropdown";
 
 function Navbar() {
   const auth = useAuth();
@@ -30,7 +29,7 @@ function Navbar() {
                   <AddSomethingDropdown />
                 </Nav.Item>
               )}
-              <UserControl />
+              <UserDropdown />
             </Nav>
           </BsNavbar.Collapse>
         )}

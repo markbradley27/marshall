@@ -1,6 +1,5 @@
+import { useAuth } from "contexts/auth";
 import Nav from "react-bootstrap/Nav";
-
-import { useAuth } from "../contexts/auth";
 
 export default function Sidebar() {
   const auth = useAuth();

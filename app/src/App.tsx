@@ -3,7 +3,6 @@ import Dashboard from "components/Dashboard";
 import Homepage from "components/Homepage";
 import Login from "components/Login";
 import MountainBrowser from "components/MountainBrowser";
-import PageFrame from "components/PageFrame";
 import SignUp from "components/SignUp";
 import Activity from "components/pages/Activity";
 import List from "components/pages/List";
@@ -12,6 +11,7 @@ import AddActivity from "components/pages/add_activity/AddActivity";
 import AddAscent from "components/pages/add_ascent/AddAscent";
 import AddList from "components/pages/add_list/AddList";
 import Settings from "components/pages/settings/Settings";
+import PageFrame from "components/shared/page_framework/PageFrame";
 import { useAuth } from "contexts/auth";
 import { BrowserRouter, Redirect, Route, Switch } from "react-router-dom";
 

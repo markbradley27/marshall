@@ -1,11 +1,10 @@
+import { useAuth } from "contexts/auth";
 import Button from "react-bootstrap/Button";
 import Dropdown from "react-bootstrap/Dropdown";
 import DropdownButton from "react-bootstrap/DropdownButton";
 import Nav from "react-bootstrap/Nav";
 
-import { useAuth } from "../contexts/auth";
-
-function UserControl() {
+function UserDropdown() {
   const auth = useAuth();
 
   return auth.users?.fb == null ? (
@@ -25,4 +24,4 @@ function UserControl() {
   );
 }
 
-export default UserControl;
+export default UserDropdown;
