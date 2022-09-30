@@ -19,7 +19,6 @@ export class ListRoutes {
     this.#db = db;
 
     this.router = express.Router();
-    // TODO: Revamp.
     this.router.get(
       "/list/:listId",
       param("listId").isNumeric(),
@@ -48,7 +47,7 @@ export class ListRoutes {
   ) {
     const list = await this.#db.getRepository(List).findOne({
       where: { id: Number(req.params.listId) },
-      relations: ["mountains"],
+      relations: { mountains: true },
     });
 
     if (list == null) {

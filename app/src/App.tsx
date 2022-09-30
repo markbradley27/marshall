@@ -6,6 +6,7 @@ import Login from "components/Login";
 import MountainBrowser from "components/MountainBrowser";
 import PageFrame from "components/PageFrame";
 import SignUp from "components/SignUp";
+import List from "components/pages/List";
 import Mountain from "components/pages/Mountain";
 import AddActivity from "components/pages/add_activity/AddActivity";
 import AddAscent from "components/pages/add_ascent/AddAscent";
@@ -42,6 +43,9 @@ function App() {
           </Route>
           <Route path="/activity/:activityId">
             <Activity />
+          </Route>
+          <Route path="/list/:listId">
+            <List />
           </Route>
           <Route path="/mountain/:mountainId">
             <Mountain />
