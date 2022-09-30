@@ -1,6 +1,6 @@
 import { fetchMountain, MountainState } from "api/mountain_endpoints";
 import AscentList from "components/shared/ascent/AscentList";
-import MountainMap from "components/shared/map/MountainMap";
+import GoogleMap from "components/shared/map/GoogleMap";
 import MountainList from "components/shared/mountain/MountainList";
 import { useEffect, useState } from "react";
 import { Stack } from "react-bootstrap";
@@ -28,7 +28,7 @@ function Mountain(props: MountainProps) {
   return mountain ? (
     <Stack gap={3}>
       <Ratio aspectRatio="21x9">
-        <MountainMap primary={mountain} />
+        <GoogleMap primary={mountain} />
       </Ratio>
       <h2>
         <a href={mountain.wikipediaLink}>{mountain.name}</a>

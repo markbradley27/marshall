@@ -4,7 +4,7 @@ import { Ratio } from "react-bootstrap";
 
 import useGoogleMaps from "../hooks/loadGoogleMaps";
 
-import MountainMap from "./shared/map/MountainMap";
+import GoogleMap from "./shared/map/GoogleMap";
 
 export default function MountainBrowser() {
   const [mountains, setMountains] = useState<MountainState[] | null>(null);
@@ -24,7 +24,7 @@ export default function MountainBrowser() {
 
   return mountains ? (
     <Ratio aspectRatio="16x9">
-      <MountainMap secondaries={mountains} zoom={2} />
+      <GoogleMap secondaries={mountains} />
     </Ratio>
   ) : (
     <></>
