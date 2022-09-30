@@ -4,7 +4,7 @@ import { DateTime } from "luxon";
 import { DataSource } from "typeorm";
 
 import { ApiError } from "../../error";
-import { verifyIdToken } from "../../middleware/auth";
+import { maybeVerifyIdToken, verifyIdToken } from "../../middleware/auth";
 import { checkValidation } from "../../middleware/validation";
 import { Activity, ActivitySource } from "../../model/Activity";
 import { Ascent } from "../../model/Ascent";
@@ -19,7 +19,8 @@ import {
 
 import { activityModelToApi } from "./activity_api_model";
 
-const PAGE_SIZE = 20;
+// TODO: Set this back to 20.
+const PAGE_SIZE = 5;
 
 export class ActivityRoutes {
   router: express.Router;
@@ -30,15 +31,25 @@ export class ActivityRoutes {
     this.#db = db;
 
     this.router = express.Router();
-    // TODO: Re-vamp.
+    // TODO: Support FOLLOWERS_ONLY.
     this.router.get(
-      "/activities/:activityId?",
-      param("activityId").optional().isNumeric(),
-      query("include_ascents").default(false).isBoolean(),
-      query("only_with_ascents").default(false).isBoolean(),
+      "/activity/:activityId",
+      param("activityId").isNumeric(),
+      query("includeAscents").optional().isBoolean(),
+      checkValidation,
+      maybeVerifyIdToken,
+      this.getActivity.bind(this)
+    );
+    // TODO: Finish re-vamping.
+    // TODO: Support FOLLOWERS_ONLY.
+    this.router.get(
+      "/activities",
+      query("userId").optional().isString(),
+      query("includeAscents").optional().isBoolean(),
+      query("onlyWithAscents").optional().isBoolean(),
       query("page").default(0).isNumeric(),
       checkValidation,
-      verifyIdToken,
+      maybeVerifyIdToken,
       this.getActivities.bind(this)
     );
     this.router.post(
@@ -58,38 +69,64 @@ export class ActivityRoutes {
     );
   }
 
-  async getActivities(
+  async getActivity(
     req: express.Request,
     res: express.Response,
     next: express.NextFunction
   ) {
+    const activity = await this.#db.getRepository(Activity).findOne({
+      where: { id: Number(req.params.activityId) },
+      relations: {
+        ascents:
+          req.query.includeAscents === "true" ? { mountain: true } : false,
+      },
+    });
+
+    if (activity == null) {
+      next(new ApiError(404, `no activity with id ${req.params.activityId}`));
+      return;
+    }
+
+    if (
+      activity.privacy === PrivacySetting.PRIVATE &&
+      req.uid != activity.userId
+    ) {
+      next(
+        new ApiError(
+          403,
+          `insufficient permission to view activity ${req.params.activityId}`
+        )
+      );
+      return;
+    }
+
+    res.json(activityModelToApi(activity));
+  }
+
+  async getActivities(
+    req: express.Request,
+    res: express.Response
+    //next: express.NextFunction
+  ) {
     const activityRepo = this.#db.getRepository(Activity);
     const qb = activityRepo
       .createQueryBuilder("activity")
-      .where("activity.userId = :userId", { userId: req.uid })
       .orderBy("activity.date", "DESC")
       .limit(PAGE_SIZE);
-    if (req.params.activityId != null) {
-      qb.andWhere("activity.id = :id", { id: req.params.activityId });
+    // TODO: Handle public or private with auth.
+    if (req.query.userId != null) {
+      qb.where("activity.userId = :userId", { userId: req.query.userId });
     }
-    if (req.query.include_ascents === "true") {
+    if (req.query.includeAscents === "true") {
       qb.leftJoinAndSelect("activity.ascents", "ascents");
       qb.leftJoinAndSelect("ascents.mountain", "mountain");
     }
-    if (req.query.only_with_ascents === "true") {
+    if (req.query.onlyWithAscents === "true") {
       qb.innerJoinAndSelect("activity.ascents", "ascent");
     }
 
     const activities = await qb.getMany();
 
-    if (!activities) {
-      return next(new ApiError(404, "no activities found"));
-    }
-
-    if (activities.length === 1) {
-      res.json(activityModelToApi(activities[0]));
-      return;
-    }
     res.json(activities.map(activityModelToApi));
   }
 

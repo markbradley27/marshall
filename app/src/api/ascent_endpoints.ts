@@ -25,9 +25,7 @@ function ascentApiToState(apiAscent: any): AscentState {
     activityId: apiAscent.activityId,
     activity:
       apiAscent.activity != null
-        ? activityApiToState(apiAscent.activity, {
-            includeBounds: false,
-          })
+        ? activityApiToState(apiAscent.activity)
         : undefined,
     mountainId: apiAscent.mountainId,
     mountain:

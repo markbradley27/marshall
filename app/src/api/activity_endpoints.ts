@@ -1,7 +1,6 @@
 import { ascentApiToState, AscentState } from "api/ascent_endpoints";
 import { apiFetchJson, apiPostJson, BASE_URL } from "api/common";
 import { LineString } from "geojson";
-import toBBox from "geojson-bounding-box";
 
 interface ActivityState {
   id: number;
@@ -9,43 +8,24 @@ interface ActivityState {
   sourceId?: string;
   name: string;
   date: Date;
-  path: google.maps.LatLng[];
+  path: LineString;
   description?: string;
-
   ascents?: AscentState[];
   userId?: number;
-
-  bounds?: google.maps.LatLngBounds;
 }
 
-interface ApiActivityToActivityStateOptions {
-  includeBounds: boolean;
-}
-function activityApiToState(
-  apiActivity: any,
-  options: ApiActivityToActivityStateOptions
-): ActivityState {
-  const res: ActivityState = {
+function activityApiToState(apiActivity: any): ActivityState {
+  return {
     id: apiActivity.id,
     source: apiActivity.source,
     sourceId: apiActivity.sourceId,
     name: apiActivity.name,
     date: new Date(apiActivity.date),
-    path: apiActivity.path.coordinates.map((coords: any) => {
-      return { lat: coords[1], lng: coords[0] };
-    }),
+    path: apiActivity.path,
     description: apiActivity.description,
     ascents: apiActivity.ascents?.map(ascentApiToState),
     userId: apiActivity.userId,
   };
-  if (options.includeBounds) {
-    const boundingBox = toBBox(apiActivity.path);
-    res.bounds = new google.maps.LatLngBounds(
-      { lat: boundingBox[1], lng: boundingBox[0] },
-      { lat: boundingBox[3], lng: boundingBox[2] }
-    );
-  }
-  return res;
 }
 
 interface FetchActivitiesOptions {
@@ -70,26 +50,23 @@ async function fetchActivities(options?: FetchActivitiesOptions) {
   const activitiesJson = await apiFetchJson(url, options?.idToken);
 
   if (options?.activityId != null) {
-    return activityApiToState(activitiesJson, {
-      includeBounds: options.includeBounds || false,
-    });
+    return activityApiToState(activitiesJson);
   }
   return activitiesJson.map((activityJson: any) => {
-    return activityApiToState(activityJson, {
-      includeBounds: options?.includeBounds || false,
-    });
+    return activityApiToState(activityJson);
   });
 }
 
 interface FetchActivityOptions {
   idToken?: string;
   includeAscents?: boolean;
-  includeBounds?: boolean;
 }
 async function fetchActivity(id: number, options?: FetchActivityOptions) {
-  const pluralOptions = options as FetchActivitiesOptions;
-  pluralOptions.activityId = id;
-  return fetchActivities(pluralOptions);
+  const url = new URL(`activity/${id}`, BASE_URL);
+  if (options?.includeAscents) {
+    url.searchParams.set("includeAscents", "true");
+  }
+  return await apiFetchJson(url, options?.idToken);
 }
 
 interface PostActivityOptions {

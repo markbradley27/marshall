@@ -1,11 +1,11 @@
 import "App.scss";
-import Activity from "components/Activity";
 import Dashboard from "components/Dashboard";
 import Homepage from "components/Homepage";
 import Login from "components/Login";
 import MountainBrowser from "components/MountainBrowser";
 import PageFrame from "components/PageFrame";
 import SignUp from "components/SignUp";
+import Activity from "components/pages/Activity";
 import List from "components/pages/List";
 import Mountain from "components/pages/Mountain";
 import AddActivity from "components/pages/add_activity/AddActivity";
