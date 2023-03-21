@@ -15,7 +15,6 @@ import React, {
   useState,
 } from "react";
 
-
 interface AuthUsers {
   fb: User | null;
   db: UserState | null;
@@ -49,11 +48,14 @@ export const AuthProvider: FunctionComponent = ({ children }) => {
   // Will be an AuthUsers object with null members if nobody is logged in.
   // Otherwise, both members will always be set.
   const [users, setUsers] = useState<AuthUsers | null>(null);
+  const [updatesDisabled, setUpdatesDisabled] = useState(false);
 
   async function signup(email: string, password: string, name: string) {
     // Avoids rendering until the signup has completed and the browser has
     // authenticated.
     setUsers(null);
+    // Disable updates until the signup flow is complete to avoid races.
+    setUpdatesDisabled(true);
     const auth = getAuth();
     await createUserWithEmailAndPassword(auth, email, password);
     try {
@@ -62,8 +64,11 @@ export const AuthProvider: FunctionComponent = ({ children }) => {
       await postUser(uid, idToken, { name });
       // Reload user to pick up any changes made by the above postUser call.
       await auth.currentUser?.reload();
+      await refreshDbUser();
     } catch (error) {
       auth.currentUser?.delete();
+    } finally {
+      setUpdatesDisabled(false);
     }
   }
 
@@ -112,6 +117,10 @@ export const AuthProvider: FunctionComponent = ({ children }) => {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(getAuth(), async (newFbUser) => {
+      if (updatesDisabled) {
+        return;
+      }
+
       // This gets called even when it appears the user has not changed. The
       // hack is to ignore the calls when they're not actually changes.
       if (users != null && newFbUser?.uid === users?.fb?.uid) {
