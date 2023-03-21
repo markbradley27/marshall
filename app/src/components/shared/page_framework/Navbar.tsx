@@ -13,7 +13,7 @@ function Navbar() {
     <BsNavbar className="bg-light">
       <Container>
         <BsNavbar.Brand href="/">
-          <Image src="/graphics/logo_full.svg" />
+          <Image src="/graphics/logo_full_fontless.svg" />
         </BsNavbar.Brand>
         <BsNavbar.Collapse>
           <Nav>
