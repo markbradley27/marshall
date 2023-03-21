@@ -8,27 +8,25 @@ export default function ProfilePhotoEditor() {
   const [editing, setEditing] = useState(false);
   const editor = useRef<AvatarEditor | null>(null);
   const [image, setImage] = useState("/graphics/default_avatar.png");
-  const [loadAttempted, setLoadAttempted] = useState(false);
   const [saving, setSaving] = useState(false);
   const [scale, setScale] = useState(1);
 
   const auth = useAuth();
 
   const refreshAvatar = useCallback(async () => {
-    const avatarUrl = await fetchAvatar(auth.users?.fb?.uid as string);
-    if (avatarUrl != null) {
-      setImage(avatarUrl);
+    try {
+      const avatarUrl = await fetchAvatar(auth.users?.fb?.uid as string);
+      if (avatarUrl != null) {
+        setImage(avatarUrl);
+      }
+    } catch (error) {
+      console.log("error loading avatar:", error);
     }
   }, [auth.users]);
 
   useEffect(() => {
-    async function fetchData() {
-      if (loadAttempted) return;
-      await refreshAvatar();
-      setLoadAttempted(true);
-    }
-    fetchData();
-  });
+    refreshAvatar();
+  }, [refreshAvatar]);
 
   const onChangeClick = useCallback(() => {
     setScale(1);

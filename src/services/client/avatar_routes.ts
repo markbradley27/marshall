@@ -12,7 +12,11 @@ import { checkValidation } from "../../middleware/validation";
 
 const logger = new Logger();
 
-const AVATARS_DIR = path.join(process.env.UPLOADS_DIR, "/avatars/");
+const AVATARS_DIR = path.join(
+  process.cwd(),
+  process.env.UPLOADS_DIR,
+  "/avatars/"
+);
 
 const avatarStorage = multer.diskStorage({
   destination: function (_req, _file, cb) {
