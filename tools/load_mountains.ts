@@ -9,7 +9,7 @@ import { find as findTz } from "geo-tz";
 import { Point } from "geojson";
 
 import { Mountain, MountainSource } from "../src/model/Mountain";
-import { createConnection } from "../src/model/connection";
+import { connectToDb } from "../src/model/connection";
 
 dotenv.config();
 
@@ -20,7 +20,7 @@ async function main() {
     terminal: false,
   });
 
-  const connection = await createConnection();
+  const connection = await connectToDb();
 
   // This is used to ensure the "close" event doesn't cause the script to exit
   // while a "line" event is still being processed.
