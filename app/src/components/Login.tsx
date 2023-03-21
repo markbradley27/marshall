@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Button, Form, Stack } from "react-bootstrap";
+import { Button, Form, Image, Stack } from "react-bootstrap";
 
 import { useAuth } from "../contexts/auth";
 
@@ -21,7 +21,8 @@ export default function Login() {
   return (
     <UserManagementContainer>
       <div className="p-3 border">
-        <h2>LOGO</h2>
+        <Image src={"/graphics/logo_full_fontless.svg"} className="w-100" />
+        <hr />
         <Form onSubmit={handleSubmit}>
           <Stack gap={3}>
             <Form.Group controlId="formBasicEmail">
@@ -52,14 +53,6 @@ export default function Login() {
             </Button>
           </Stack>
         </Form>
-        <hr />
-        <div style={{ textAlign: "center" }}>
-          <a href="/TODO">Forgot password?</a>
-        </div>
-        <hr />
-        <div style={{ textAlign: "center" }}>
-          Don't have an account yet? <a href="/signup">Sign up!</a>
-        </div>
       </div>
     </UserManagementContainer>
   );

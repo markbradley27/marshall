@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { Button, Form, Stack } from "react-bootstrap";
+import { Button, Form, Image, Stack } from "react-bootstrap";
 
 import { useAuth } from "../contexts/auth";
 
@@ -25,7 +25,8 @@ export default function SignUp() {
   return (
     <UserManagementContainer>
       <div className="p-3 border">
-        <h2>LOGO</h2>
+        <Image src={"/graphics/logo_full_fontless.svg"} className="w-100" />
+        <hr />
         <Form onSubmit={handleSubmit}>
           <Stack gap={3}>
             <Form.Group controlId="formBasicName">

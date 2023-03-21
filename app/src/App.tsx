@@ -1,17 +1,19 @@
 import "App.scss";
 import Dashboard from "components/Dashboard";
-import Homepage from "components/Homepage";
 import Login from "components/Login";
 import MountainBrowser from "components/MountainBrowser";
 import SignUp from "components/SignUp";
 import Activity from "components/pages/Activity";
+import LandingPage from "components/pages/LandingPage";
 import List from "components/pages/List";
 import Mountain from "components/pages/Mountain";
+import TODO from "components/pages/TODO";
 import AddActivity from "components/pages/add_activity/AddActivity";
 import AddAscent from "components/pages/add_ascent/AddAscent";
 import AddList from "components/pages/add_list/AddList";
 import Settings from "components/pages/settings/Settings";
 import PageFrame from "components/shared/page_framework/PageFrame";
+import UnAuthedPageFrame from "components/shared/page_framework/UnAuthedPageFrame";
 import { useAuth } from "contexts/auth";
 import { BrowserRouter, Redirect, Route, Switch } from "react-router-dom";
 
@@ -20,54 +22,105 @@ function App() {
 
   return (
     <BrowserRouter>
-      <PageFrame>
-        <Switch>
-          <Route exact path="/">
-            {auth.users?.fb != null ? (
-              <Redirect to="/dashboard" />
-            ) : (
-              <Homepage />
-            )}
-          </Route>
-          <Route path="/login">
-            {auth.users?.fb != null ? <Redirect to="/dashboard" /> : <Login />}
-          </Route>
-          <Route path="/signup">
-            {auth.users?.fb != null ? <Redirect to="/dashboard" /> : <SignUp />}
-          </Route>
-          <Route path={["/dashboard", "/activities", "/ascents"]}>
-            {auth.users?.fb != null ? <Dashboard /> : <Redirect to="/" />}
-          </Route>
-          <Route path="/settings">
-            {auth.users?.fb == null ? <Redirect to="/login" /> : <Settings />}
-          </Route>
-          <Route path="/activity/:activityId">
+      <Switch>
+        <Route exact path="/">
+          {auth.users?.fb != null ? (
+            <Redirect to="/dashboard" />
+          ) : (
+            <UnAuthedPageFrame>
+              <LandingPage />
+            </UnAuthedPageFrame>
+          )}
+        </Route>
+        <Route path="/login">
+          {auth.users?.fb != null ? (
+            <Redirect to="/dashboard" />
+          ) : (
+            <UnAuthedPageFrame>
+              <Login />
+            </UnAuthedPageFrame>
+          )}
+        </Route>
+        <Route path="/signup">
+          {auth.users?.fb != null ? (
+            <Redirect to="/dashboard" />
+          ) : (
+            <UnAuthedPageFrame>
+              <SignUp />
+            </UnAuthedPageFrame>
+          )}
+        </Route>
+        <Route path={["/dashboard", "/activities", "/ascents"]}>
+          {auth.users?.fb == null ? (
+            <Redirect to="/" />
+          ) : (
+            <PageFrame>
+              <Dashboard />
+            </PageFrame>
+          )}
+        </Route>
+        <Route path="/settings">
+          {auth.users?.fb == null ? (
+            <Redirect to="/login" />
+          ) : (
+            <PageFrame>
+              <Settings />
+            </PageFrame>
+          )}
+        </Route>
+        <Route path="/activity/:activityId">
+          <PageFrame>
             <Activity />
-          </Route>
-          <Route path="/list/:listId">
+          </PageFrame>
+        </Route>
+        <Route path="/list/:listId">
+          <PageFrame>
             <List />
-          </Route>
-          <Route path="/mountain/:mountainId">
+          </PageFrame>
+        </Route>
+        <Route path="/mountain/:mountainId">
+          <PageFrame>
             <Mountain />
-          </Route>
-          <Route path="/mountains">
+          </PageFrame>
+        </Route>
+        <Route path="/mountains">
+          <PageFrame>
             <MountainBrowser />
-          </Route>
-          <Route path="/add_ascent">
-            {auth.users?.fb == null ? <Redirect to="/login" /> : <AddAscent />}
-          </Route>
-          <Route path="/add_activity">
-            {auth.users?.fb == null ? (
-              <Redirect to="/login" />
-            ) : (
+          </PageFrame>
+        </Route>
+        <Route path="/add_ascent">
+          {auth.users?.fb == null ? (
+            <Redirect to="/login" />
+          ) : (
+            <PageFrame>
+              <AddAscent />
+            </PageFrame>
+          )}
+        </Route>
+        <Route path="/add_activity">
+          {auth.users?.fb == null ? (
+            <Redirect to="/login" />
+          ) : (
+            <PageFrame>
               <AddActivity />
-            )}
-          </Route>
-          <Route path="/add_list">
-            {auth.users?.fb == null ? <Redirect to="/login" /> : <AddList />}
-          </Route>
-        </Switch>
-      </PageFrame>
+            </PageFrame>
+          )}
+        </Route>
+        <Route path="/add_list">
+          {auth.users?.fb == null ? (
+            <Redirect to="/login" />
+          ) : (
+            <PageFrame>
+              <AddList />
+            </PageFrame>
+          )}
+        </Route>
+        <Route path="/TODO">
+          <UnAuthedPageFrame>
+            <TODO />
+          </UnAuthedPageFrame>
+        </Route>
+      </Switch>
     </BrowserRouter>
   );
 }
