@@ -5,7 +5,8 @@
   "main": "dist/app.js",
   "scripts": {
     "clean": "rimraf dist/*",
-    "client": "npm start --prefix app",
+    "client:build": "npm run build --prefix app",
+    "client:start": "npm start --prefix app",
     "format": "prettier --write src",
     "format:check": "prettier --check src",
     "lint:fix": "eslint --fix './src/**/*.ts'",
@@ -15,7 +16,8 @@
     "build": "npm-run-all clean format:check lint tsc",
     "dev:start": "npm-run-all build start",
     "dev:watch": "nodemon --watch src -e ts --exec npm run dev:start",
-    "dev": "concurrently \"npm run dev:watch\" \"npm run client\"",
+    "dev": "concurrently \"npm run dev:watch\" \"npm run client:start\"",
+    "prod": "npm-run-all client:build build start",
     "start": "node ."
   },
   "repository": {

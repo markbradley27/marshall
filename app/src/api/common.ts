@@ -1,10 +1,4 @@
-const BASE_URL = new URL(
-  "http://" +
-    process.env.REACT_APP_HOST +
-    ":" +
-    process.env.REACT_APP_PORT +
-    "/api/client/"
-);
+const BASE_URL = new URL("/api/client/", window.location.href);
 
 // Returns the auth header if an idToken is provided, empty object otherwise.
 function buildAuthHeader(idToken?: string): any {

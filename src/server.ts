@@ -1,3 +1,5 @@
+import path from "node:path";
+
 import express from "express";
 import admin from "firebase-admin";
 import { Logger } from "tslog";
@@ -48,8 +50,15 @@ class Server {
 
   // Bind controllers to routes
   routes() {
+    const reactBuildDir = path.join(process.cwd(), "app/build");
+    this.#app.use(express.static(reactBuildDir));
+
     this.#app.use("/api/client", this.#clientService.router);
     this.#app.use("/api/strava", this.#stravaService.router);
+
+    this.#app.get("*", (_req, res) => {
+      res.sendFile(path.join(reactBuildDir, "index.html"));
+    });
   }
 
   listen() {
