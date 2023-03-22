@@ -8,6 +8,7 @@ uploads/
 firebase-auth-util-config.json
 firebase-marshall-*-private-key.json
 **/*.id_token
+app_env_variables.yaml
 
 *.swp
 .ycm_extra_conf.py
