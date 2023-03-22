@@ -2,4 +2,4 @@ runtime: nodejs18
 manual_scaling:
   instances: 1
 includes:
-  app_env_variables.yaml
+  - app_env_variables.yaml
