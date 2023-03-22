@@ -1,0 +1,10 @@
+# Ignore everything
+/*
+
+# ...except these things
+!package.json
+!/dist
+!/app
+/app/*
+!/app/build
+!firebase-marshall-prod-private-key.json

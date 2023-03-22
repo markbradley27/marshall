@@ -1,0 +1,14 @@
+runtime: nodejs18
+env_variables:
+  PG_HOST: "db.snemslhjtnhocbadjbjq.supabase.co"
+  PG_USERNAME: "postgres"
+  PG_PASSWORD: "vReHwvdbvsJ9kJ3x"
+  PG_DATABASE: "postgres"
+  UPLOADS_DIR: "uploads"
+  STRAVA_CLIENT_ID: 5273
+  STRAVA_CLIENT_SECRET: "fa0415145c4137d2ed27c08f9a0838f56e8165f1"
+  GOOGLE_APPLICATION_CREDENTIALS: "firebase-marshall-prod-private-key.json"
+  REACT_APP_FIREBASE_API_KEY: "AIzaSyAl2RekWL7I-4tTo3qDpJIPD1UI-_O-NOg"
+  REACT_APP_GOOGLE_MAPS_API_KEY: "AIzaSyAP3qZxwHb0XAL9OcXnZmWsv8OJIaL0PyQ"
+manual_scaling:
+  instances: 1

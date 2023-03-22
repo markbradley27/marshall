@@ -18,6 +18,9 @@
 .env.test.local
 .env.production.local
 
+# Mark isn't ready to include .env.production yet, it scares him...
+.env.production
+
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*

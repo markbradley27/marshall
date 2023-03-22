@@ -6,7 +6,7 @@ uploads/
 
 .env
 firebase-auth-util-config.json
-firebase-private-key.json
+firebase-marshall-*-private-key.json
 **/*.id_token
 
 *.swp

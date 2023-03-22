@@ -50,7 +50,7 @@ class Server {
 
   // Bind controllers to routes
   routes() {
-    const reactBuildDir = path.join(process.cwd(), "app/build");
+    const reactBuildDir = path.join(__dirname, "../app/build");
     this.#app.use(express.static(reactBuildDir));
 
     this.#app.use("/api/client", this.#clientService.router);
