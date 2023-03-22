@@ -18,8 +18,8 @@
     "tsc:server": "tsc",
     "watch:client": "npm start --prefix app",
     "watch:server": "nodemon --watch src -e ts --exec npm run start:server:dev",
+    "deploy": "npm-run-all clean build && gcloud app deploy --project=marshall-prod --quiet",
     "dev": "concurrently \"npm run watch:server\" \"npm run watch:client\"",
-    "prod": "npm-run-all clean build start",
     "start": "node ."
   },
   "repository": {
