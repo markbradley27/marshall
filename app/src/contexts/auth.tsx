@@ -23,7 +23,7 @@ interface AuthUsers {
 interface AuthContextValue {
   users: AuthUsers | null;
   signup: (email: string, password: string, name: string) => void;
-  login: (email: string, password: string) => void;
+  login: (email: string, password: string) => Promise<void>;
   logout: () => void;
   updateDbUser: (options: any) => Promise<void>;
   refreshDbUser: () => Promise<void>;
@@ -32,7 +32,7 @@ interface AuthContextValue {
 const AuthContext = React.createContext<AuthContextValue>({
   users: null,
   signup: () => {},
-  login: () => {},
+  login: async () => {},
   logout: () => {},
   updateDbUser: async () => {},
   refreshDbUser: async () => {},
@@ -72,8 +72,8 @@ export const AuthProvider: FunctionComponent = ({ children }) => {
     }
   }
 
-  function login(email: string, password: string) {
-    signInWithEmailAndPassword(getAuth(), email, password);
+  async function login(email: string, password: string) {
+    await signInWithEmailAndPassword(getAuth(), email, password);
   }
 
   function logout() {
