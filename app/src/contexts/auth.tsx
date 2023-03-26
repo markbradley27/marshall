@@ -22,7 +22,7 @@ interface AuthUsers {
 
 interface AuthContextValue {
   users: AuthUsers | null;
-  signup: (email: string, password: string, name: string) => void;
+  signup: (email: string, password: string, name: string) => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
   updateDbUser: (options: any) => Promise<void>;
@@ -31,7 +31,7 @@ interface AuthContextValue {
 }
 const AuthContext = React.createContext<AuthContextValue>({
   users: null,
-  signup: () => {},
+  signup: async () => {},
   login: async () => {},
   logout: () => {},
   updateDbUser: async () => {},
@@ -51,22 +51,21 @@ export const AuthProvider: FunctionComponent = ({ children }) => {
   const [updatesDisabled, setUpdatesDisabled] = useState(false);
 
   async function signup(email: string, password: string, name: string) {
-    // Avoids rendering until the signup has completed and the browser has
-    // authenticated.
-    setUsers(null);
     // Disable updates until the signup flow is complete to avoid races.
-    setUpdatesDisabled(true);
     const auth = getAuth();
+
     await createUserWithEmailAndPassword(auth, email, password);
     try {
       const uid = auth.currentUser?.uid as string;
       const idToken = (await auth.currentUser?.getIdToken()) as string;
       await postUser(uid, idToken, { name });
+
       // Reload user to pick up any changes made by the above postUser call.
       await auth.currentUser?.reload();
       await refreshDbUser();
     } catch (error) {
       auth.currentUser?.delete();
+      throw error;
     } finally {
       setUpdatesDisabled(false);
     }

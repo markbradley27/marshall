@@ -1,5 +1,6 @@
-import { useCallback, useState } from "react";
-import { Button, Form, Image, Stack } from "react-bootstrap";
+import { FirebaseError } from "firebase/app";
+import { useState } from "react";
+import { Alert, Button, Form, Image, Stack } from "react-bootstrap";
 
 import { useAuth } from "../contexts/auth";
 
@@ -10,23 +11,47 @@ export default function SignUp() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [signingUp, setSigningUp] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
 
   const auth = useAuth();
 
-  const handleSubmit = useCallback(
-    (e: any) => {
-      e.preventDefault();
-      setSigningUp(true);
-      auth.signup(email, password, name);
-    },
-    [name, email, password, auth]
-  );
+  async function handleSubmit(e: any) {
+    e.preventDefault();
+    setErrorMsg("");
+    setSigningUp(true);
+    try {
+      await auth.signup(email, password, name);
+    } catch (error) {
+      if (error instanceof FirebaseError) {
+        const code = error.code;
+        if (code === "auth/email-already-in-use") {
+          setErrorMsg("Email is already in use.");
+        } else if (code === "auth/invalid-email") {
+          setErrorMsg("Email is invalid.");
+        } else if (code === "auth/weak-password") {
+          setErrorMsg("Password is too weak.");
+        } else {
+          setErrorMsg("Something went wrong.");
+          console.log("Signup error:", error.message);
+        }
+      } else {
+        setErrorMsg("Something went wrong.");
+        console.log("Signup error:", error);
+      }
+      setSigningUp(false);
+    }
+  }
 
   return (
     <UserManagementContainer>
       <div className="p-3 border">
         <Image src={"/graphics/logo_full_fontless.svg"} className="w-100" />
         <hr />
+        {errorMsg && (
+          <Alert variant="danger" onClose={() => setErrorMsg("")} dismissible>
+            {errorMsg}
+          </Alert>
+        )}
         <Form onSubmit={handleSubmit}>
           <Stack gap={3}>
             <Form.Group controlId="formBasicName">

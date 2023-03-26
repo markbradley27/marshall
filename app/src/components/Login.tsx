@@ -16,9 +16,9 @@ export default function Login() {
 
   async function handleSubmit(e: any) {
     e.preventDefault();
+    setErrorMsg("");
+    setLoggingIn(true);
     try {
-      setErrorMsg("");
-      setLoggingIn(true);
       await auth.login(email, password);
     } catch (error) {
       if (error instanceof FirebaseError) {
@@ -33,9 +33,11 @@ export default function Login() {
           setErrorMsg("Wrong password.");
         } else {
           setErrorMsg("Something went wrong.");
+          console.log("Login error:", error.message);
         }
       } else {
         setErrorMsg("Something went wrong.");
+        console.log("Login error:", error);
       }
       setLoggingIn(false);
     }
