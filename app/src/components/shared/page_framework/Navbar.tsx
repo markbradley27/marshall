@@ -15,11 +15,13 @@ function Navbar({ fullLogo = true }: NavbarProps) {
       <Container>
         <BsNavbar.Brand href="/">
           <Image
+            height={64}
             src={
               fullLogo
                 ? "/graphics/logo_full_fontless.svg"
                 : "/graphics/logo_icon.svg"
             }
+            width={fullLogo ? 180 : 64}
           />
         </BsNavbar.Brand>
         <BsNavbar.Collapse>

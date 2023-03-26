@@ -46,7 +46,7 @@ export default function Login() {
   return (
     <UserManagementContainer>
       <div className="p-3 border">
-        <Image src={"/graphics/logo_full_fontless.svg"} className="w-100" />
+        <Image height={122} src={"/graphics/logo_full_fontless.svg"} />
         <hr />
         {errorMsg && (
           <Alert variant="danger" onClose={() => setErrorMsg("")} dismissible>
