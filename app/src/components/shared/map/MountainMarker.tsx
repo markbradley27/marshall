@@ -25,11 +25,9 @@ export default function MountainMarker(props: MountainMarkerProps) {
         setZIndex(props.getNextZIndex());
         setShowInfoWindow(true);
       }}
-      /*
       onMouseOut={() => {
         setShowInfoWindow(false);
       }}
-      */
       zIndex={zIndex}
     >
       {showInfoWindow && (
