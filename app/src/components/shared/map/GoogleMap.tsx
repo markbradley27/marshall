@@ -1,14 +1,10 @@
-import {
-  GoogleMap as ReactGoogleMap,
-  MarkerClusterer,
-  Polyline,
-} from "@react-google-maps/api";
+import { GoogleMap as ReactGoogleMap, Polyline } from "@react-google-maps/api";
 import { MountainState } from "api/mountain_endpoints";
 import { geoJsonToCoords } from "api/util";
 import { Feature, FeatureCollection, LineString, Position } from "geojson";
 import toBBox from "geojson-bounding-box";
 import useGoogleMaps from "hooks/loadGoogleMaps";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 
 import MountainMarker from "./MountainMarker";
 
@@ -59,7 +55,6 @@ function getLatLngBounds(props: GoogleMapProps) {
   );
 }
 
-// TODO: Add option to disable clustering.
 interface GoogleMapProps {
   // Path that should be displayed on the map.
   path?: LineString;
@@ -71,6 +66,8 @@ interface GoogleMapProps {
 }
 
 export default function GoogleMap(props: GoogleMapProps) {
+  const [, setNextZIndex] = useState(0);
+
   const googleMapsLoaded = useGoogleMaps();
 
   const onLoad = useCallback(
@@ -92,6 +89,15 @@ export default function GoogleMap(props: GoogleMapProps) {
     [props]
   );
 
+  const getNextZIndex = useCallback(() => {
+    let current = 0;
+    setNextZIndex((zIndex) => {
+      current = zIndex;
+      return zIndex + 1;
+    });
+    return current;
+  }, []);
+
   return googleMapsLoaded &&
     (props.primary || props.secondaries || props.path) ? (
     <ReactGoogleMap
@@ -112,23 +118,21 @@ export default function GoogleMap(props: GoogleMapProps) {
         />
       )}
       {props.primary && (
-        <MountainMarker coords={geoJsonToCoords(props.primary.location)} />
+        <MountainMarker
+          coords={geoJsonToCoords(props.primary.location)}
+          getNextZIndex={getNextZIndex}
+          name={props.primary.name}
+        />
       )}
-      {props.secondaries && (
-        <MarkerClusterer>
-          {(clusterer) => {
-            return props.secondaries?.map((secondary) => {
-              return (
-                <MountainMarker
-                  key={secondary.id}
-                  coords={geoJsonToCoords(secondary.location)}
-                  clusterer={clusterer}
-                />
-              );
-            });
-          }}
-        </MarkerClusterer>
-      )}
+      {props.secondaries &&
+        props.secondaries.map((secondary) => (
+          <MountainMarker
+            coords={geoJsonToCoords(secondary.location)}
+            getNextZIndex={getNextZIndex}
+            key={secondary.id}
+            name={secondary.name}
+          />
+        ))}
     </ReactGoogleMap>
   ) : (
     <></>

@@ -1,27 +1,15 @@
-import { Marker } from "@react-google-maps/api";
+import { InfoWindow, Marker } from "@react-google-maps/api";
+import { useState } from "react";
 
 interface MountainMarkerProps {
+  name: string;
   coords: google.maps.LatLng;
   label?: string;
-  //  state?: MountainUiState;
-  // Should be type Clusterer from react-google-maps, but that type isn't
-  // exported.
-  clusterer?: any;
+  getNextZIndex: () => number;
 }
 export default function MountainMarker(props: MountainMarkerProps) {
-  let zIndex = 2;
-  /*
-  switch (props.state) {
-    case MountainUiState.NEUTRAL:
-      break;
-    case MountainUiState.SECONDARY:
-      zIndex = 1;
-      break;
-    case MountainUiState.HIGHLIGHTED:
-      zIndex = 3;
-      break;
-  }
-  */
+  const [showInfoWindow, setShowInfoWindow] = useState(false);
+  const [zIndex, setZIndex] = useState(0);
 
   const image = {
     url: "/graphics/mountain_marker.svg",
@@ -30,11 +18,25 @@ export default function MountainMarker(props: MountainMarkerProps) {
 
   return (
     <Marker
-      position={props.coords}
       icon={image}
       label={props.label}
+      position={props.coords}
+      onMouseOver={() => {
+        setZIndex(props.getNextZIndex());
+        setShowInfoWindow(true);
+      }}
+      /*
+      onMouseOut={() => {
+        setShowInfoWindow(false);
+      }}
+      */
       zIndex={zIndex}
-      clusterer={props.clusterer}
-    />
+    >
+      {showInfoWindow && (
+        <InfoWindow>
+          <div>{props.name}</div>
+        </InfoWindow>
+      )}
+    </Marker>
   );
 }

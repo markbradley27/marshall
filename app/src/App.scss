@@ -28,3 +28,9 @@ $tooltip-bg: $red;
   border-width: 1px;
   color: $danger;
 }
+
+// Disables blue border around google maps
+// (https://stackoverflow.com/questions/66669173/google-maps-js-api-shows-blue-focus-border)
+.gm-style iframe + div { border:none!important; }
+// Disables the x buttons in google maps info boxes.
+.gm-style-iw > button { display:none!important; }
