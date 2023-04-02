@@ -195,7 +195,6 @@ class StravaService {
     });
   }
 
-  // TODO: Handle privacy settings.
   async loadActivity(activity: StravaActivity, user: User) {
     if (!activity.map.polyline && !activity.map.summary_polyline) {
       logger.info(
@@ -215,6 +214,7 @@ class StravaService {
     const activityTimeZone = activity.timezone.split(" ")[1];
 
     let dbActivity = new Activity();
+    dbActivity.privacy = user.defaultActivityPrivacy;
     dbActivity.user = user;
     dbActivity.source = ActivitySource.STRAVA;
     dbActivity.sourceId = activity.id.toString();
@@ -240,6 +240,7 @@ class StravaService {
 
     await this.#db.getRepository(Ascent).insert(
       mountainsAlongPath.map((mountain) => ({
+        privacy: user.defaultAscentPrivacy,
         date: activityDate.toISODate(),
         time: activityDate.toISOTime(),
         timeZone: activityTimeZone,
