@@ -8,7 +8,6 @@ import bs4
 import datetime
 import inquirer
 import json
-import pprint
 import psycopg2
 import re
 import retry
@@ -22,6 +21,8 @@ FLAGS = flags.FLAGS
 flags.DEFINE_string('name', '', 'Name of mountain to search for and insert.')
 flags.DEFINE_string('uri', '', 'URI of mountain to insert.')
 flags.DEFINE_boolean('adk46', False, 'Load the ADK 46 high peaks.')
+flags.DEFINE_boolean('vt5', False, 'Load the Vermont 5 peaks.')
+flags.DEFINE_boolean('co14ers', False, 'Load the Colorado 14ers.')
 
 flags.DEFINE_integer(
     'n', 1,
@@ -91,6 +92,70 @@ _ADK_46_URIS = (
     "http://dbpedia.org/resource/Cliff_Mountain_(New_York)",
     "http://dbpedia.org/resource/Nye_Mountain",
     "http://dbpedia.org/resource/Couchsachraga_Peak")
+
+_VERMONT_5_URIS = ("http://dbpedia.org/resource/Mount_Mansfield",
+                   "http://dbpedia.org/resource/Killington_Peak",
+                   "http://dbpedia.org/resource/Camel's_Hump",
+                   "http://dbpedia.org/resource/Mount_Ellen_(Vermont)",
+                   "http://dbpedia.org/resource/Mount_Abraham_(Vermont)")
+
+_COLORADO_14ERS_URIS = (
+    "http://dbpedia.org/resource/Mount_Elbert",
+    "http://dbpedia.org/resource/Mount_Massive",
+    "http://dbpedia.org/resource/Mount_Harvard",
+    "http://dbpedia.org/resource/Blanca_Peak",
+    "http://dbpedia.org/resource/La_Plata_Peak",
+    "http://dbpedia.org/resource/Uncompahgre_Peak",
+    "http://dbpedia.org/resource/Crestone_Peak",
+    "http://dbpedia.org/resource/Mount_Lincoln_(Colorado)",
+    "http://dbpedia.org/resource/Castle_Peak_(Colorado)",
+    "http://dbpedia.org/resource/Grays_Peak",
+    "http://dbpedia.org/resource/Mount_Antero",
+    "http://dbpedia.org/resource/Torreys_Peak",
+    "http://dbpedia.org/resource/Quandary_Peak",
+    "http://dbpedia.org/resource/Mount_Evans",
+    "http://dbpedia.org/resource/Longs_Peak",
+    "http://dbpedia.org/resource/Mount_Wilson_(Colorado)",
+    "http://dbpedia.org/resource/Mount_Shavano",
+    "http://dbpedia.org/resource/Mount_Princeton",
+    "http://dbpedia.org/resource/Mount_Belford",
+    "http://dbpedia.org/resource/Crestone_Needle",
+    "http://dbpedia.org/resource/Mount_Yale",
+    "http://dbpedia.org/resource/Mount_Bross",
+    "http://dbpedia.org/resource/Kit_Carson_Peak",
+    # Not sure about this one.
+    "http://dbpedia.org/resource/Maroon_Bells",
+    "http://dbpedia.org/resource/Tabeguache_Peak",
+    "http://dbpedia.org/resource/Mount_Oxford_(Colorado)",
+    "http://dbpedia.org/resource/Mount_Sneffels",
+    "http://dbpedia.org/resource/Mount_Democrat",
+    "http://dbpedia.org/resource/Capitol_Peak_(Colorado)",
+    "http://dbpedia.org/resource/Pikes_Peak",
+    "http://dbpedia.org/resource/Snowmass_Mountain",
+    "http://dbpedia.org/resource/Windom_Peak",
+    "http://dbpedia.org/resource/Mount_Eolus",
+    "http://dbpedia.org/resource/Challenger_Point",
+    "http://dbpedia.org/resource/Mount_Columbia_(Colorado)",
+    "http://dbpedia.org/resource/Missouri_Mountain",
+    "http://dbpedia.org/resource/Humboldt_Peak_(Colorado)",
+    "http://dbpedia.org/resource/Mount_Bierstadt",
+    "http://dbpedia.org/resource/Sunlight_Peak",
+    "http://dbpedia.org/resource/Handies_Peak",
+    "http://dbpedia.org/resource/Culebra_Peak",
+    "http://dbpedia.org/resource/Ellingwood_Point",
+    "http://dbpedia.org/resource/Mount_Lindsey",
+    "http://dbpedia.org/resource/Little_Bear_Peak",
+    "http://dbpedia.org/resource/Mount_Sherman",
+    "http://dbpedia.org/resource/Redcloud_Peak",
+    "http://dbpedia.org/resource/Pyramid_Peak_(Colorado)",
+    "http://dbpedia.org/resource/Wilson_Peak",
+    "http://dbpedia.org/resource/San_Luis_Peak",
+    "http://dbpedia.org/resource/Wetterhorn_Peak",
+    "http://dbpedia.org/resource/Mount_of_the_Holy_Cross",
+    "http://dbpedia.org/resource/Huron_Peak",
+    "http://dbpedia.org/resource/Sunshine_Peak",
+)
+
 _DBPEDIA_SPARQL_ENDPOINT = "http://dbpedia.org/sparql"
 
 
@@ -428,6 +493,16 @@ def main(argv):
 
   if FLAGS.adk46:
     for uri in _ADK_46_URIS:
+      db.insert_mountain(get_mountain(uri))
+    return
+
+  if FLAGS.vt5:
+    for uri in _VERMONT_5_URIS:
+      db.insert_mountain(get_mountain(uri))
+    return
+
+  if FLAGS.co14ers:
+    for uri in _COLORADO_14ERS_URIS:
       db.insert_mountain(get_mountain(uri))
     return
 
