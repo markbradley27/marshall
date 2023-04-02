@@ -1,16 +1,17 @@
 import { postList } from "api/list_endpoints";
 import { fetchMountains, MountainState } from "api/mountain_endpoints";
 import { InvalidTooltip } from "components/shared/InvalidTooltip";
+import { PrivacySelector } from "components/shared/form/PrivacySelector";
 import MountainList from "components/shared/mountain/MountainList";
 import { useAuth } from "contexts/auth";
 import { Formik, FormikErrors } from "formik";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Alert, Button, Col, Form, Row, Stack } from "react-bootstrap";
+import { Alert, Button, Form, Stack } from "react-bootstrap";
 import { Typeahead } from "react-bootstrap-typeahead";
 
 interface Values {
   name: string;
-  isPrivate: boolean;
+  privacy: string;
   description: string;
   mountains: MountainState[];
 }
@@ -52,8 +53,7 @@ export default function AddListForm() {
         const res = await postList({
           idToken: (await auth.users?.fb?.getIdToken()) as string,
           name: values.name,
-          // TODO: This isn't working.
-          isPrivate: values.isPrivate,
+          privacy: values.privacy,
           description: values.description,
           mountainIds: values.mountains.map((mountain) => mountain.id),
         });
@@ -85,7 +85,8 @@ export default function AddListForm() {
         initialValues={
           {
             name: "",
-            isPrivate: false,
+            // TODO: Use an enum here.
+            privacy: "PUBLIC",
             description: "",
             mountains: [],
           } as Values
@@ -121,17 +122,12 @@ export default function AddListForm() {
                 />
               </Form.Group>
               <Stack direction="horizontal" gap={3}>
-                <Form.Group as={Row}>
-                  <Col xs="auto">
-                    Private{" "}
-                    <span className="text-muted">(only visible to you):</span>
-                  </Col>
-                  <Col>
-                    <Form.Check
-                      disabled={isSubmitting}
-                      {...getFieldProps("isPrivate")}
-                    ></Form.Check>
-                  </Col>
+                <Form.Group>
+                  <Form.Label>Visibility</Form.Label>
+                  <PrivacySelector
+                    disabled={isSubmitting}
+                    {...getFieldProps("privacy")}
+                  />
                 </Form.Group>
               </Stack>
               <Form.Group>

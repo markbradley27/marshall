@@ -10,17 +10,22 @@ import {
 
 import { Mountain } from "./Mountain";
 import { User } from "./User";
+import { PrivacySetting } from "./privacy_setting";
 
 @Entity()
 export class List {
   @PrimaryGeneratedColumn()
   id: number;
 
+  @Column({
+    type: "enum",
+    enum: PrivacySetting,
+    default: PrivacySetting.PRIVATE,
+  })
+  privacy: PrivacySetting;
+
   @Column()
   name: string;
-
-  @Column({ default: false })
-  private: boolean;
 
   @Column({ nullable: true })
   description: string;

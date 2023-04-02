@@ -1,6 +1,7 @@
 import { gpx as gpxToGeoJson } from "@tmcw/togeojson";
 import { fetchMountains } from "api/mountain_endpoints";
 import { InvalidTooltip } from "components/shared/InvalidTooltip";
+import { PrivacySelector } from "components/shared/form/PrivacySelector";
 import { FormikContextType, useFormikContext } from "formik";
 import { DateTime } from "luxon";
 import { useEffect, useRef } from "react";
@@ -119,11 +120,10 @@ export default function FileDependentFields() {
         </Form.Group>
         <Form.Group>
           <Form.Label>Visibility</Form.Label>
-          <Form.Select disabled={isSubmitting} {...getFieldProps("privacy")}>
-            <option value="PUBLIC">Public</option>
-            <option value="FOLLOWERS_ONLY">Followers Only</option>
-            <option value="PRIVATE">Private</option>
-          </Form.Select>
+          <PrivacySelector
+            disabled={isSubmitting}
+            {...getFieldProps("privacy")}
+          />
         </Form.Group>
       </Stack>
     </>

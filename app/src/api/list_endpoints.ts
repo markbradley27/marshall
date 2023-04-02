@@ -30,10 +30,29 @@ async function fetchList(id: number, options?: FetchListOptions) {
   return await apiFetchJson(url, options?.idToken);
 }
 
+interface FetchListsOptions {
+  idToken?: string;
+  page?: number;
+}
+async function fetchLists(options?: FetchListsOptions) {
+  const url = new URL(`lists`, BASE_URL);
+
+  if (options?.page) {
+    url.searchParams.set("page", options.page.toString());
+  }
+
+  const data = await apiFetchJson(url, options?.idToken);
+  return {
+    lists: data.lists.map(listApiToState),
+    count: data.count,
+    page: data.page,
+  };
+}
+
 interface PostListOptions {
   idToken: string;
   name: string;
-  isPrivate: boolean;
+  privacy: string;
   description?: string;
   mountainIds: number[];
 }
@@ -44,7 +63,7 @@ async function postList(options: PostListOptions) {
     url,
     {
       name: options.name,
-      isPrivate: options.isPrivate,
+      privacy: options.privacy,
       description: options.description,
       mountainIds: options.mountainIds,
     },
@@ -53,4 +72,4 @@ async function postList(options: PostListOptions) {
 }
 
 export type { ListState };
-export { fetchList, listApiToState, postList };
+export { fetchList, fetchLists, listApiToState, postList };

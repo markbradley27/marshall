@@ -1,3 +1,4 @@
+import { PrivacySelector } from "components/shared/form/PrivacySelector";
 import { useAuth } from "contexts/auth";
 import { useCallback, useState } from "react";
 import { Col, Form, Row, Stack } from "react-bootstrap";
@@ -41,15 +42,11 @@ export default function PrivacySettings() {
               Default visibility for new activities:
             </Form.Label>
             <Col>
-              <Form.Select
+              <PrivacySelector
                 defaultValue={auth.users?.db?.defaultActivityPrivacy}
                 disabled={savingDefaultActivityPrivacy}
                 onChange={onDefaultActivityPrivacyChange}
-              >
-                <option value="PUBLIC">Public</option>
-                <option value="FOLLOWERS_ONLY">Followers Only</option>
-                <option value="PRIVATE">Private</option>
-              </Form.Select>
+              />
             </Col>
           </Form.Group>
           <Form.Group as={Row}>
@@ -57,15 +54,11 @@ export default function PrivacySettings() {
               Default visibility for new ascents:
             </Form.Label>
             <Col>
-              <Form.Select
+              <PrivacySelector
                 defaultValue={auth.users?.db?.defaultAscentPrivacy}
                 disabled={savingDefaultAscentPrivacy}
                 onChange={onDefaultAscentPrivacyChange}
-              >
-                <option value="PUBLIC">Public</option>
-                <option value="FOLLOWERS_ONLY">Followers Only</option>
-                <option value="PRIVATE">Private</option>
-              </Form.Select>
+              />
             </Col>
           </Form.Group>
         </Stack>

@@ -1,11 +1,13 @@
 import express from "express";
-import { body, param } from "express-validator";
+import { body, param, query } from "express-validator";
 import { DataSource } from "typeorm";
 
+import { API_PAGE_SIZE } from "../../consts";
 import { ApiError } from "../../error";
 import { maybeVerifyIdToken, verifyIdToken } from "../../middleware/auth";
 import { checkValidation } from "../../middleware/validation";
 import { List } from "../../model/List";
+import { PrivacySetting } from "../../model/privacy_setting";
 import { isArrayOfNumbers } from "../../validators";
 
 import { listModelToApi } from "./list_api_model";
@@ -26,12 +28,20 @@ export class ListRoutes {
       maybeVerifyIdToken,
       this.getList.bind(this)
     );
+    this.router.get(
+      "/lists",
+      query("page").default(0).isNumeric(),
+      checkValidation,
+      maybeVerifyIdToken,
+      this.getLists.bind(this)
+    );
+
     // TODO: Suggest user use identical (or similar?) public list instead.
     // TODO: Some way to update lists, not just create.
     this.router.post(
       "/list",
       body("name").isString().notEmpty(),
-      body("isPrivate").isBoolean().toBoolean(),
+      body("privacy").isIn(Object.values(PrivacySetting)),
       body("description").optional().isString(),
       body("mountainIds").custom(isArrayOfNumbers),
       checkValidation,
@@ -53,7 +63,10 @@ export class ListRoutes {
     if (list == null) {
       return next(new ApiError(404, `list ${req.params.listId} not found`));
     }
-    if (list.private && (req.uid == null || req.uid !== list.owner.id)) {
+    if (
+      list.privacy !== PrivacySetting.PUBLIC &&
+      (req.uid == null || req.uid !== list.owner.id)
+    ) {
       return next(
         new ApiError(
           403,
@@ -65,12 +78,38 @@ export class ListRoutes {
     return res.json(listModelToApi(list));
   }
 
+  async getLists(req: express.Request, res: express.Response) {
+    const page = Number(req.query.page);
+
+    const query = this.#db
+      .getRepository(List)
+      .createQueryBuilder("list")
+      .leftJoinAndSelect("list.mountains", "mountain")
+      .take(API_PAGE_SIZE)
+      .skip(page * API_PAGE_SIZE)
+      .orderBy("list.name", "ASC");
+
+    if (req.uid) {
+      query.andWhere("(list.ownerId = :uid or list.privacy = 'PUBLIC')", {
+        uid: req.uid,
+      });
+    } else {
+      query.andWhere("list.privacy = 'PUBLIC'");
+    }
+
+    const [lists, count] = await query.getManyAndCount();
+    return res.json({
+      lists: lists.map(listModelToApi),
+      count,
+      page,
+    });
+  }
+
   async postList(req: express.Request, res: express.Response) {
-    console.log("req.body:", req.body);
     await this.#db.transaction(async (entityManager) => {
       const insertionResult = await entityManager.getRepository(List).insert({
         name: req.body.name,
-        private: req.body.isPrivate,
+        privacy: req.body.privacy as PrivacySetting,
         description: req.body.description,
         owner: { id: req.uid },
       });

@@ -1,6 +1,7 @@
 import { postAscent } from "api/ascent_endpoints";
 import { fetchMountains, MountainState } from "api/mountain_endpoints";
 import { InvalidTooltip } from "components/shared/InvalidTooltip";
+import { PrivacySelector } from "components/shared/form/PrivacySelector";
 import { useAuth } from "contexts/auth";
 import { Formik } from "formik";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -206,14 +207,10 @@ export default function AddAscentForm(props: AddAscentFormProps) {
                 </Form.Group>
                 <Form.Group>
                   <Form.Label>Visibility</Form.Label>
-                  <Form.Select
+                  <PrivacySelector
                     disabled={isSubmitting}
                     {...getFieldProps("privacy")}
-                  >
-                    <option value="PUBLIC">Public</option>
-                    <option value="FOLLOWERS_ONLY">Followers Only</option>
-                    <option value="PRIVATE">Private</option>
-                  </Form.Select>
+                  />
                 </Form.Group>
               </Stack>
               <Button
