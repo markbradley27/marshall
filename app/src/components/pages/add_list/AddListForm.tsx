@@ -8,6 +8,7 @@ import { Formik, FormikErrors } from "formik";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Alert, Button, Form, Stack } from "react-bootstrap";
 import { Typeahead } from "react-bootstrap-typeahead";
+import { useHistory } from "react-router-dom";
 
 interface Values {
   name: string;
@@ -18,6 +19,7 @@ interface Values {
 
 export default function AddListForm() {
   const auth = useAuth();
+  const history = useHistory();
 
   const [mountains, setMountains] = useState<MountainState[]>([]);
   const [alertMessage, setAlertMessage] = useState("");
@@ -48,7 +50,6 @@ export default function AddListForm() {
 
   const submit = useCallback(
     async (values: Values) => {
-      console.log("values:", values);
       try {
         const res = await postList({
           idToken: (await auth.users?.fb?.getIdToken()) as string,
@@ -57,14 +58,12 @@ export default function AddListForm() {
           description: values.description,
           mountainIds: values.mountains.map((mountain) => mountain.id),
         });
-        setAlertMessage(
-          `Some day this will redirect to the list page. Until then, you just get an id: ${res.id}`
-        );
+        history.push(`list/${res.id}`);
       } catch {
         setAlertMessage("Sorry, something went wrong.");
       }
     },
-    [auth.users?.fb]
+    [auth.users?.fb, history]
   );
 
   return (

@@ -7,6 +7,7 @@ import { Formik, FormikErrors } from "formik";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Alert, Button, Form, Stack } from "react-bootstrap";
 import { Typeahead } from "react-bootstrap-typeahead";
+import { useHistory } from "react-router-dom";
 import { dateTimeAreInFuture } from "validation";
 
 import FileDependentFields from "./FileDependentFields";
@@ -14,6 +15,7 @@ import { Values } from "./FormikValues";
 
 export default function AddActivityForm() {
   const auth = useAuth();
+  const history = useHistory();
 
   const [mountains, setMountains] = useState<MountainState[]>([]);
   const [alertMessage, setAlertMessage] = useState("");
@@ -80,14 +82,12 @@ export default function AddActivityForm() {
           description: values.description,
           ascendedMountainIds: values.ascended.map((mountain) => mountain.id),
         });
-        setAlertMessage(
-          `Some day this will redirect to the activity page. Until then, you just get an id: ${res.id}`
-        );
+        history.push(`activity/${res.id}`);
       } catch {
         setAlertMessage("Sorry, something went wrong.");
       }
     },
-    [auth.users?.fb]
+    [auth.users?.fb, history]
   );
 
   return (
