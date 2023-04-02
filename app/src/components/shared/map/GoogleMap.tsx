@@ -122,6 +122,7 @@ export default function GoogleMap(props: GoogleMapProps) {
           coords={geoJsonToCoords(props.primary.location)}
           getNextZIndex={getNextZIndex}
           name={props.primary.name}
+          id={props.primary.id}
         />
       )}
       {props.secondaries &&
@@ -131,6 +132,7 @@ export default function GoogleMap(props: GoogleMapProps) {
             getNextZIndex={getNextZIndex}
             key={secondary.id}
             name={secondary.name}
+            id={secondary.id}
           />
         ))}
     </ReactGoogleMap>

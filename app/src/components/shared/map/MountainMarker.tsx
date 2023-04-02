@@ -1,8 +1,10 @@
 import { InfoWindow, Marker } from "@react-google-maps/api";
 import { useState } from "react";
+import { useHistory } from "react-router-dom";
 
 interface MountainMarkerProps {
   name: string;
+  id: number;
   coords: google.maps.LatLng;
   label?: string;
   getNextZIndex: () => number;
@@ -10,6 +12,8 @@ interface MountainMarkerProps {
 export default function MountainMarker(props: MountainMarkerProps) {
   const [showInfoWindow, setShowInfoWindow] = useState(false);
   const [zIndex, setZIndex] = useState(0);
+
+  const history = useHistory();
 
   const image = {
     url: "/graphics/mountain_marker.svg",
@@ -20,7 +24,9 @@ export default function MountainMarker(props: MountainMarkerProps) {
     <Marker
       icon={image}
       label={props.label}
-      position={props.coords}
+      onClick={() => {
+        history.push(`mountain/${props.id}`);
+      }}
       onMouseOver={() => {
         setZIndex(props.getNextZIndex());
         setShowInfoWindow(true);
@@ -28,6 +34,7 @@ export default function MountainMarker(props: MountainMarkerProps) {
       onMouseOut={() => {
         setShowInfoWindow(false);
       }}
+      position={props.coords}
       zIndex={zIndex}
     >
       {showInfoWindow && (
