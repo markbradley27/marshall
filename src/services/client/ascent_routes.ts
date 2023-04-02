@@ -48,13 +48,11 @@ export class AscentRoutes {
 
     // It is always assumed that the provided time is specified in the time zone
     // of the mountain.
-    //
-    // TODO: Better validation of date, privacy enum.
     this.router.post(
       "/ascent",
       query("privacy").isIn(Object.values(PrivacySetting)),
       query("date").custom(isIsoDate),
-      query("time").custom(isIsoTime),
+      query("time").optional().custom(isIsoTime),
       query("mountainId").isNumeric(),
       checkValidation,
       verifyIdToken,
