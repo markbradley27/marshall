@@ -21,7 +21,10 @@ async function maybeParseJsonResponse(res: Response) {
 // Internal fetch method all other methods should use to hit API endpoints.
 //
 // Throws an error if the response is ever not 200.
-async function apiFetch(url: URL | string, options?: any): Promise<Response> {
+async function apiFetchInternal(
+  url: URL | string,
+  options?: any
+): Promise<Response> {
   const res = await fetch(url.toString(), options);
   if (res.status !== 200) {
     throw new Error(`API fetch failed: ${res.status} ${res.statusText}`);
@@ -29,11 +32,21 @@ async function apiFetch(url: URL | string, options?: any): Promise<Response> {
   return res;
 }
 
+// Fetches the given URL and returns the JSON response if present.
+//
+// Throws error if response is not 200.
+async function apiFetch(url: URL | string, idToken?: string) {
+  const res = await apiFetchInternal(url.toString(), {
+    headers: buildAuthHeader(idToken),
+  });
+  return maybeParseJsonResponse(res);
+}
+
 // Fetches the given URL and returns the JSON response.
 //
 // Throws error if response is not JSON.
 async function apiFetchJson(url: URL | string, idToken?: string) {
-  const res = await apiFetch(url.toString(), {
+  const res = await apiFetchInternal(url.toString(), {
     headers: buildAuthHeader(idToken),
   });
   return res.json();
@@ -41,7 +54,7 @@ async function apiFetchJson(url: URL | string, idToken?: string) {
 
 // Fetches the given URL and returns an object URL pointing to the fetched blob.
 async function apiFetchBlob(url: URL | string) {
-  const res = await apiFetch(url.toString());
+  const res = await apiFetchInternal(url.toString());
   if (res.status === 404) {
     return null;
   }
@@ -51,7 +64,7 @@ async function apiFetchBlob(url: URL | string) {
 
 // Posts to the given URL and returns the JSON data response if present.
 async function apiPost(url: URL | string, idToken?: string) {
-  const res = await apiFetch(url.toString(), {
+  const res = await apiFetchInternal(url.toString(), {
     headers: buildAuthHeader(idToken),
     method: "POST",
   });
@@ -61,7 +74,7 @@ async function apiPost(url: URL | string, idToken?: string) {
 // Posts the given JSON to the given URL and returns the JSON data response if
 // present.
 async function apiPostJson(url: URL | string, data: any, idToken?: string) {
-  const res = await apiFetch(url.toString(), {
+  const res = await apiFetchInternal(url.toString(), {
     headers: {
       ...buildAuthHeader(idToken),
       "content-type": "application/json",
@@ -82,7 +95,7 @@ async function apiPutBlob(
 ) {
   const formData = new FormData();
   formData.append(identifier, blob);
-  const res = await apiFetch(url.toString(), {
+  const res = await apiFetchInternal(url.toString(), {
     headers: buildAuthHeader(idToken),
     method: "PUT",
     body: formData,
@@ -91,6 +104,7 @@ async function apiPutBlob(
 }
 
 export {
+  apiFetch,
   apiFetchJson,
   apiFetchBlob,
   apiPost,

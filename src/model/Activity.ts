@@ -63,7 +63,7 @@ export class Activity {
 
   @Column({
     nullable: true,
-    spatialFeatureType: "LineStringZ",
+    spatialFeatureType: "LineString",
     type: "geography",
   })
   path: LineString;

@@ -1,4 +1,4 @@
-import { apiFetchJson } from "api/common";
+import { apiFetch } from "api/common";
 import { useAuth } from "contexts/auth";
 import { useCallback } from "react";
 import { Button, Image } from "react-bootstrap";
@@ -7,7 +7,7 @@ export default function StravaSettings() {
   const auth = useAuth();
 
   const deauthorizeStrava = useCallback(async () => {
-    await apiFetchJson(
+    await apiFetch(
       "/api/strava/deauthorize",
       await auth.users?.fb?.getIdToken()
     );
@@ -36,7 +36,7 @@ export default function StravaSettings() {
         </>
       ) : (
         <Button
-          href={`http://www.strava.com/oauth/authorize?client_id=${process.env.REACT_APP_STRAVA_CLIENT_ID}&redirect_uri=http://${process.env.REACT_APP_HOST}:${process.env.REACT_APP_PORT}/api/strava/authorize_callback&response_type=code&scope=activity:read,activity:read_all&state=${auth.users?.fb?.uid}`}
+          href={`http://www.strava.com/oauth/authorize?client_id=${process.env.REACT_APP_STRAVA_CLIENT_ID}&redirect_uri=http://${process.env.REACT_APP_ADDRESS}/api/strava/authorize_callback&response_type=code&scope=activity:read,activity:read_all&state=${auth.users?.fb?.uid}`}
           style={{
             backgroundColor: "#fc4c02",
             borderColor: "#fc4c02",

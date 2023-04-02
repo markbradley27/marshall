@@ -6,13 +6,17 @@ import express from "express";
 import { param, oneOf, query } from "express-validator";
 import geojsonPolyline from "geojson-polyline";
 import got from "got";
+import { DateTime } from "luxon";
 import { Logger } from "tslog";
 import { DataSource } from "typeorm";
 
+import { SUMMIT_PATH_PROXIMITY_THRESHOLD_M } from "../consts";
 import { verifyIdToken } from "../middleware/auth";
 import { logApiRequest } from "../middleware/debug";
 import { checkValidation } from "../middleware/validation";
 import { Activity, ActivitySource } from "../model/Activity";
+import { Ascent } from "../model/Ascent";
+import { Mountain } from "../model/Mountain";
 import { User } from "../model/User";
 
 const logger: Logger = new Logger();
@@ -45,6 +49,7 @@ interface StravaActivity {
   athlete: StravaAthlete;
   start_date: string;
   map: StravaActivityMap;
+  timezone: string;
 }
 
 interface SubscriptionCreationResponse {
@@ -194,28 +199,55 @@ class StravaService {
   async loadActivity(activity: StravaActivity, user: User) {
     if (!activity.map.polyline && !activity.map.summary_polyline) {
       logger.info(
-        `Not saving activity without map; id: ${activity.id}; name: ${activity.name}; athlete id: ${activity.athlete.id}`
+        `Not saving Strava activity without map; id: ${activity.id}; name: ${activity.name}; athlete id: ${activity.athlete.id}`
       );
       return;
     }
 
-    logger.info(`Saving activity; id: ${activity.id}; name: ${activity.name}`);
+    logger.info(
+      `Saving Strava activity; id: ${activity.id}; name: ${activity.name}; athlete id: ${activity.athlete.id}`
+    );
     const pathJson = geojsonPolyline.decode({
       type: "LineString",
       coordinates: activity.map.polyline || activity.map.summary_polyline,
     });
+    const activityDate = DateTime.fromISO(activity.start_date);
+    const activityTimeZone = activity.timezone.split(" ")[1];
 
-    const dbActivity = new Activity();
+    let dbActivity = new Activity();
     dbActivity.user = user;
     dbActivity.source = ActivitySource.STRAVA;
     dbActivity.sourceId = activity.id.toString();
     dbActivity.sourceUserId = activity.athlete.id.toString();
     dbActivity.name = activity.name;
-    // TODO: This is broken, eventually need to handle date, time, and timezone
-    // correctly.
-    dbActivity.date = activity.start_date;
+    dbActivity.date = activityDate.toISODate();
+    dbActivity.time = activityDate.toISOTime();
+    dbActivity.timeZone = activityTimeZone;
     dbActivity.path = pathJson;
-    this.#db.getRepository(Activity).save(dbActivity);
+    dbActivity = await this.#db.getRepository(Activity).save(dbActivity);
+
+    const mountainsAlongPath = await this.#db
+      .getRepository(Mountain)
+      .createQueryBuilder("mountain")
+      .where(
+        "ST_DWithin(mountain.location, ST_GeomFromGeoJSON(:alongPath), :threshold)",
+        {
+          alongPath: pathJson,
+          threshold: SUMMIT_PATH_PROXIMITY_THRESHOLD_M,
+        }
+      )
+      .getMany();
+
+    await this.#db.getRepository(Ascent).insert(
+      mountainsAlongPath.map((mountain) => ({
+        date: activityDate.toISODate(),
+        time: activityDate.toISOTime(),
+        timeZone: activityTimeZone,
+        activity: { id: dbActivity.id },
+        mountain: { id: mountain.id },
+        user: user,
+      }))
+    );
   }
 
   async loadActivityById(activityId: number, user: User) {
@@ -380,7 +412,7 @@ class StravaService {
     }
 
     await this.#db.getRepository(Activity).delete({
-      userId: user.id,
+      user: { id: user.id },
       source: ActivitySource.STRAVA,
       sourceUserId: user.stravaAthleteId.toString(),
     });
