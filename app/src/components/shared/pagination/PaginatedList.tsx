@@ -5,14 +5,14 @@ import PageSelector from "./PageSelector";
 
 interface PaginatedListProps {
   // Array of elements to be rendered as list items.
-  // If elements is null, will display loading indicator while more are fetched.
-  // If elements is initially empty, will immediately request first page of
-  // elements via fetchMoreElements.
-  elements: Array<ReactElement | undefined> | null;
+  // If elements is undefined, will display loading indicator and fetch the
+  // first element.
+  elements?: Array<ReactElement | undefined>;
   // Total number of elements that could be displayed (including any that aren't
   // currently displayed or loaded).
   // If count is zero, will display emptyPlaceholder message.
-  count: number;
+  // If elements is defined, count must also be defined.
+  count?: number;
   // Callback to fetch elements from index min up to but excluding index max.
   // The callback should populate props.elements with the requested elements,
   // filling in any gaps with 'undefined'.
@@ -28,9 +28,17 @@ export default function PaginatedList(props: PaginatedListProps) {
   const [page, setPage] = useState(0);
 
   useEffect(() => {
-    if (props.elements == null) {
+    // If no elements have been fetched, fetch the first one.
+    if (props.elements === undefined) {
+      props.fetchMoreElements(0, 1);
       return;
     }
+
+    if (props.count === undefined) {
+      console.error("if elements is defined, count must also be defined");
+      return;
+    }
+
     // Ensure all elements that should be displayed are provided in
     // props.elements. If not, fetch more.
     for (
@@ -39,10 +47,9 @@ export default function PaginatedList(props: PaginatedListProps) {
       ++i
     ) {
       if (props.elements[i] == null) {
-        props.fetchMoreElements(
-          page * props.pageLength,
-          Math.min((page + 1) * props.pageLength, props.count - 1)
-        );
+        const min = page * props.pageLength;
+        const max = Math.min((page + 1) * props.pageLength, props.count);
+        props.fetchMoreElements(min, max);
         break;
       }
     }
@@ -68,7 +75,7 @@ export default function PaginatedList(props: PaginatedListProps) {
           )
         )}
       </ListGroup>
-      {props.count > props.pageLength && (
+      {props.count != null && props.count > props.pageLength && (
         <Row className="justify-content-center">
           <Col xs={"auto"}>
             <PageSelector

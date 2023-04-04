@@ -4,8 +4,8 @@ import AscentListItem from "components/shared/ascent/AscentListItem";
 import PaginatedList from "../pagination/PaginatedList";
 
 interface AscentListProps {
-  ascents: Array<AscentState | undefined> | null;
-  count: number;
+  ascents?: Array<AscentState | undefined>;
+  count?: number;
   fetchMoreAscents: (min: number, max: number) => void;
   pageLength: number;
   emptyPlaceholder?: string;
